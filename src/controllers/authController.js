@@ -1,5 +1,6 @@
 const userModel = require('../models/userModel');
 
+//CONTROLADOR PARA REGISTRARSE
 const registerUser = async (req, res) => {
   try {
     const user = req.body;
@@ -16,6 +17,7 @@ const registerUser = async (req, res) => {
   }
 };
 
+//CONTROLADOR PARA INICIAR SESION
 const loginUser = async (req, res) => {
   try {
     const { correo, contraseña } = req.body;
