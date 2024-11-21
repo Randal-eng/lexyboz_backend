@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const authRoutes = require('./src/routes/authRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
 require('dotenv').config();
 
 const app = express();
@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: 'http://localhost:3000' }));
 
-app.use('/api/auth', authRoutes);
+app.use('/api', adminRoutes);
 
 const PORT = process.env.PORT || 3500;
 app.listen(PORT, () => {
