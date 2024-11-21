@@ -3,17 +3,11 @@ const userModel = require('../models/userModel');
 //CONTROLADOR PARA REGISTRARSE
 const registerUser = async (req, res) => {
   try {
-    const user = req.body;
-    const existingUser = await userModel.findUserByEmail(user.correo);
-
-    if (existingUser) {
-      return res.status(400).json({ message: 'El correo ya está registrado.' });
-    }
-
-    const newUser = await userModel.createUser(user);
-    res.status(201).json({ message: 'Usuario registrado con éxito.', user: newUser });
+      const nuevoUsuario = await userModel.createUser(req.body);
+      return res.status(201).json(nuevoUsuario);
   } catch (error) {
-    res.status(500).json({ message: 'Error al registrar el usuario.', error: error.message });
+      console.error('Error al registrar el usuario:', error);
+      return res.status(400).json({ message: error.message });
   }
 };
 
