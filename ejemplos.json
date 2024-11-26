@@ -1,0 +1,61 @@
+Doctores
+{
+    "nombre": "Dr. Juan Pérez",
+    "correo": "juan.perez@correo.com",
+    "contraseña": "contraseñaSegura123",
+    "fecha_de_nacimiento": "1980-05-15",
+    "numero_telefonico": "5512345678",
+    "sexo": "Masculino",
+    "tipo": "Doctor",
+    "especialidad": "Neurología",
+    "domicilio": "Avenida Siempre Viva 742"
+}
+
+{
+    "nombre": "Dr. Roberto Morales",
+    "correo": "roberto.morales@correo.com",
+    "contraseña": "claveRobusta",
+    "fecha_de_nacimiento": "1975-08-20",
+    "numero_telefonico": "5556789012",
+    "sexo": "Masculino",
+    "tipo": "Doctor",
+    "especialidad": "Pediatría",
+    "domicilio": "Calle Salud No. 456"
+}
+
+
+Pacientes
+{
+    "nombre": "María García",
+    "correo": "maria.garcia@correo.com",
+    "contraseña": "segura321",
+    "fecha_de_nacimiento": "2010-03-10",
+    "numero_telefonico": "5545678901",
+    "sexo": "Femenino",
+    "tipo": "Paciente",
+    "doctor_id": 2,
+    "escolaridad": "Primaria"
+}
+
+{
+    "nombre": "Ana López",
+    "correo": "ana.lopez@correo.com",
+    "contraseña": "password123",
+    "fecha_de_nacimiento": "2005-09-23",
+    "numero_telefonico": "5523456789",
+    "sexo": "Femenino",
+    "tipo": "Paciente",
+    "doctor_id": 1,
+    "escolaridad": "Secundaria"
+}
+
+Usuario generico
+{
+    "nombre": "Carlos Rivera",
+    "correo": "carlos.rivera@correo.com",
+    "contraseña": "1234Seguro",
+    "fecha_de_nacimiento": "1995-12-01",
+    "numero_telefonico": "5534567890",
+    "sexo": "Masculino",
+    "tipo": "Usuario"
+}
