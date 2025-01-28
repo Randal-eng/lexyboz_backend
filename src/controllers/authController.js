@@ -3,11 +3,11 @@ const userModel = require('../models/userModel');
 //CONTROLADOR PARA REGISTRARSE
 const registerUser = async (req, res) => {
   try {
-      const nuevoUsuario = await userModel.createUser(req.body);
-      return res.status(201).json(nuevoUsuario);
+    const nuevoUsuario = await userModel.createUser(req.body);
+    return res.status(201).json(nuevoUsuario);
   } catch (error) {
-      console.error('Error al registrar el usuario:', error);
-      return res.status(400).json({ message: error.message });
+    console.error('Error al registrar el usuario:', error);
+    return res.status(400).json({ message: error.message });
   }
 };
 
@@ -31,4 +31,3 @@ module.exports = {
   registerUser,
   loginUser,
 };
-  

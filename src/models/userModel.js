@@ -9,11 +9,13 @@ const userSchema = Joi.object({
     numero_telefonico: Joi.string().pattern(/^\d{10}$/).required(),
     sexo: Joi.string().valid('Masculino', 'Femenino', 'Otro').required(),
     tipo: Joi.string().valid('Usuario', 'Doctor', 'Paciente').required(),
+    apellido_paterno: Joi.string().min(2).max(50).optional(),
+    apellido_materno: Joi.string().min(2).max(50).optional(),
+    escolaridad: Joi.string().allow(null, '').when('tipo', { is: 'Paciente', then: Joi.required() }),
+    // doctor_id: Joi.number().integer().allow(null).when('tipo', { is: 'Paciente', then: Joi.required() }),
+    especialidad: Joi.string().allow(null, '').when('tipo', { is: 'Doctor', then: Joi.required() }),
+    domicilio: Joi.string().allow(null, '').when('tipo', { is: 'Doctor', then: Joi.required() }),
 
-    especialidad: Joi.string().when('tipo', { is: 'Doctor', then: Joi.required() }),
-    domicilio: Joi.string().when('tipo', { is: 'Doctor', then: Joi.required() }),
-    doctor_id: Joi.number().integer().when('tipo', { is: 'Paciente', then: Joi.required() }),
-    escolaridad: Joi.string().when('tipo', { is: 'Paciente', then: Joi.required() }),
 });
 
 const validateUser = (user) => {
@@ -26,14 +28,28 @@ const validateUser = (user) => {
 const createUser = async (user) => {
     validateUser(user);
 
-    const { nombre, correo, contraseña, fecha_de_nacimiento, numero_telefonico, sexo, tipo, especialidad, domicilio, doctor_id, escolaridad } = user;
+    const {
+        nombre,
+        correo,
+        contraseña,
+        fecha_de_nacimiento,
+        numero_telefonico,
+        sexo,
+        tipo,
+        especialidad,
+        domicilio,
+        doctor_id,
+        escolaridad,
+        apellido_paterno,
+        apellido_materno
+    } = user;
 
     const userQuery = `
-        INSERT INTO Usuario (nombre, correo, contraseña, fecha_de_nacimiento, numero_telefonico, sexo, tipo)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING *;
-    `;
-    const userValues = [nombre, correo, contraseña, fecha_de_nacimiento, numero_telefonico, sexo, tipo];
+    INSERT INTO Usuario (nombre, correo, contraseña, fecha_de_nacimiento, numero_telefonico, sexo, tipo, apellido_paterno, apellido_materno)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING *;
+`;
+    const userValues = [nombre, correo, contraseña, fecha_de_nacimiento, numero_telefonico, sexo, tipo, apellido_paterno, apellido_materno];
     const userResult = await pool.query(userQuery, userValues);
     const usuario = userResult.rows[0];
 
@@ -48,25 +64,25 @@ const createUser = async (user) => {
         return { ...usuario, doctor: doctorResult.rows[0] };
     }
 
-    if (tipo === 'Paciente') {
-        const pacienteQuery = `
-            INSERT INTO Paciente (usuario_ID, escolaridad)
-            VALUES ($1, $2)
-            RETURNING *;
-        `;
-        const pacienteValues = [usuario.usuario_id, escolaridad];
-        const pacienteResult = await pool.query(pacienteQuery, pacienteValues);
-        const paciente = pacienteResult.rows[0];
+    // if (tipo === 'Paciente') {
+    //     const pacienteQuery = `
+    //         INSERT INTO Paciente (usuario_ID, escolaridad)
+    //         VALUES ($1, $2)
+    //         RETURNING *;
+    //     `;
+    //     const pacienteValues = [usuario.usuario_id, escolaridad];
+    //     const pacienteResult = await pool.query(pacienteQuery, pacienteValues);
+    //     const paciente = pacienteResult.rows[0];
 
-        const doctorPacienteQuery = `
-            INSERT INTO Doctor_Paciente (doctor_ID, paciente_ID)
-            VALUES ($1, $2);
-        `;
-        const doctorPacienteValues = [doctor_id, paciente.paciente_id];
-        await pool.query(doctorPacienteQuery, doctorPacienteValues);
+    //     const doctorPacienteQuery = `
+    //         INSERT INTO Doctor_Paciente (doctor_ID, paciente_ID)
+    //         VALUES ($1, $2);
+    //     `;
+    //     const doctorPacienteValues = [doctor_id, paciente.paciente_id];
+    //     await pool.query(doctorPacienteQuery, doctorPacienteValues);
 
-        return { ...usuario, paciente };
-    }
+    //     return { ...usuario, paciente };
+    // }
 
     return usuario;
 };
