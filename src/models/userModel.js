@@ -64,26 +64,6 @@ const createUser = async (user) => {
         return { ...usuario, doctor: doctorResult.rows[0] };
     }
 
-    // if (tipo === 'Paciente') {
-    //     const pacienteQuery = `
-    //         INSERT INTO Paciente (usuario_ID, escolaridad)
-    //         VALUES ($1, $2)
-    //         RETURNING *;
-    //     `;
-    //     const pacienteValues = [usuario.usuario_id, escolaridad];
-    //     const pacienteResult = await pool.query(pacienteQuery, pacienteValues);
-    //     const paciente = pacienteResult.rows[0];
-
-    //     const doctorPacienteQuery = `
-    //         INSERT INTO Doctor_Paciente (doctor_ID, paciente_ID)
-    //         VALUES ($1, $2);
-    //     `;
-    //     const doctorPacienteValues = [doctor_id, paciente.paciente_id];
-    //     await pool.query(doctorPacienteQuery, doctorPacienteValues);
-
-    //     return { ...usuario, paciente };
-    // }
-
     return usuario;
 };
 
