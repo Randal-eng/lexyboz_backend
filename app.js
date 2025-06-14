@@ -3,6 +3,7 @@ const cors = require('cors');
 const adminRoutes = require('./src/routes/adminRoutes');
 const authRoutes = require('./src/routes/authRoutes');
 const doctorPacienteRoutes = require('./src/routes/doctorPacienteRoutes');
+const citaRoutes = require('./src/routes/citaRoutes');
 
 require('dotenv').config();
 
@@ -14,6 +15,7 @@ app.use(cors({ origin: 'http://localhost:3000' }));
 app.use('/api', adminRoutes);
 app.use('/api', authRoutes);
 app.use('/api/doctor-paciente', doctorPacienteRoutes);
+app.use('/api/citas', citaRoutes);
 
 const PORT = process.env.PORT || 3500;
 app.listen(PORT, () => {
