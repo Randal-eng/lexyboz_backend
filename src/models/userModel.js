@@ -1,6 +1,5 @@
 const Joi = require('joi');
 const pool = require('../db/connection');
-const { loginUser } = require('../controllers/authController');
 
 const userSchema = Joi.object({
     nombre: Joi.string().min(3).max(100).required(),
