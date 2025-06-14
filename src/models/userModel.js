@@ -81,7 +81,7 @@ const findUserByEmail = async (correo) => {
 };
 
 const loginUserMethod = async (correo, contraseña) => {
-    const query = 'SELECT correo, contraseña FROM Usuario WHERE correo = $1;';
+    const query = 'SELECT correo, contraseña, tipo FROM Usuario WHERE correo = $1;';
     const result = await pool.query(query, [correo]);
 
     return result.rows[0];

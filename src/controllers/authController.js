@@ -21,7 +21,9 @@ const loginUser = async (req, res) => {
       return res.status(401).json({ message: 'Correo o contraseña incorrectos.' });
     }
 
-    res.status(200).json({ message: 'Inicio de sesión exitoso.', user });
+    const { contraseña: _, ...userWithoutPassword } = user;
+
+    res.status(200).json({ message: 'Inicio de sesión exitoso.', user: userWithoutPassword });
   } catch (error) {
     res.status(500).json({ message: 'Error al iniciar sesión.', error: error.message });
   }
