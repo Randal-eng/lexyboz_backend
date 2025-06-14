@@ -15,7 +15,7 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { correo, contraseña } = req.body;
-    const user = await userModel.findUserByEmail(correo);
+    const user = await userModel.loginUserMethod(correo);
 
     if (!user || user.contraseña !== contraseña) {
       return res.status(401).json({ message: 'Correo o contraseña incorrectos.' });
