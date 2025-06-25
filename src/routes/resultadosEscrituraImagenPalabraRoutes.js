@@ -4,5 +4,6 @@ const controller = require('../controllers/resultadosEscrituraImagenPalabraContr
 
 router.post('/', controller.registrarResultado);
 router.get('/:usuario_id', controller.obtenerResultadosPorUsuario);
+router.get('/con-usuario/:usuario_id', controller.obtenerResultadosConUsuario);
 
 module.exports = router;

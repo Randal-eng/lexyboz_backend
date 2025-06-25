@@ -24,7 +24,24 @@ const obtenerResultadosPorUsuario = async (usuario_id) => {
     return result.rows;
 };
 
+const obtenerResultadosConUsuario = async (usuario_id) => {
+    const query = `
+        SELECT 
+            r.*,
+            u.nombre,
+            u.correo,
+            u.tipo
+        FROM Resultados_Escritura_Imagen_Palabra r
+        JOIN Usuario u ON r.usuario_id = u.usuario_id
+        WHERE r.usuario_id = $1
+        ORDER BY r.resultado_reactivo_id DESC
+    `;
+    const result = await pool.query(query, [usuario_id]);
+    return result.rows;
+};
+
 module.exports = {
     registrarResultado,
     obtenerResultadosPorUsuario,
+    obtenerResultadosConUsuario,
 };

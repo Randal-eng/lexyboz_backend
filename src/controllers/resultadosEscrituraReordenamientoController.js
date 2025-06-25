@@ -23,7 +23,18 @@ const obtenerResultadosPorUsuario = async (req, res) => {
     }
 };
 
+const obtenerResultadosConUsuario = async (req, res) => {
+    try {
+        const { usuario_id } = req.params;
+        const resultados = await resultadosModel.obtenerResultadosConUsuario(usuario_id);
+        return res.status(200).json(resultados);
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al obtener resultados con usuario.', error: error.message });
+    }
+};
+
 module.exports = {
     registrarResultado,
     obtenerResultadosPorUsuario,
+    obtenerResultadosConUsuario,
 };
