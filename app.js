@@ -13,6 +13,12 @@ const escrituraReordenamientoRoutes = require('./src/routes/escrituraReordenamie
 const escrituraImagenPalabraRoutes = require('./src/routes/escrituraImagenPalabraRoutes');
 const resultadosEscrituraReordenamientoRoutes = require('./src/routes/resultadosEscrituraReordenamientoRoutes');
 const resultadosEscrituraImagenPalabraRoutes = require('./src/routes/resultadosEscrituraImagenPalabraRoutes');
+const visualesRoutes = require('./src/routes/visualesRoutes');
+const paresRoutes = require('./src/routes/paresRoutes');
+const igualDiferenteRoutes = require('./src/routes/igualDiferenteRoutes');
+const imagenCorrectoRoutes = require('./src/routes/imagenCorrectoRoutes');
+const imagenesRoutes = require('./src/routes/imagenesRoutes');
+const palabraMalEscritoRoutes = require('./src/routes/palabraMalEscritoRoutes');
 
 require('dotenv').config();
 
@@ -34,6 +40,12 @@ app.use('/api/escritura-reordenamiento', escrituraReordenamientoRoutes);
 app.use('/api/escritura-imagen-palabra', escrituraImagenPalabraRoutes);
 app.use('/api/resultados-escritura-reordenamiento', resultadosEscrituraReordenamientoRoutes);
 app.use('/api/resultados-escritura-imagen-palabra', resultadosEscrituraImagenPalabraRoutes);
+app.use('/api/visuales', visualesRoutes);
+app.use('/api/pares', paresRoutes);
+app.use('/api/igual-diferente', igualDiferenteRoutes);
+app.use('/api/imagen-correcto', imagenCorrectoRoutes);
+app.use('/api/imagenes', imagenesRoutes);
+app.use('/api/palabra-mal-escrito', palabraMalEscritoRoutes);
 
 const PORT = process.env.PORT || 3500;
 app.listen(PORT, () => {
