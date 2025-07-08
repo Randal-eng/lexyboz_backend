@@ -25,7 +25,12 @@ require('dotenv').config();
 const app = express();
 
 app.use(express.json());
-app.use(cors({ origin: 'http://localhost:3000' }));
+app.use(cors({
+  origin: 'http://localhost:3000', // Cambia esto al dominio de tu frontend en producción
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use('/api', adminRoutes);
 app.use('/api', authRoutes);
