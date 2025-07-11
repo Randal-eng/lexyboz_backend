@@ -1,4 +1,4 @@
-const doctorPacienteModel = require('../models/doctorPacienteModel');
+const doctorPacienteModel = require('../models/DoctorPaciente');
 
 // Controlador para vincular doctor y paciente
 const vincularDoctorPaciente = async (req, res) => {

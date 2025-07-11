@@ -1,24 +1,35 @@
 const express = require('express');
 const cors = require('cors');
-const adminRoutes = require('./src/routes/adminRoutes');
-const authRoutes = require('./src/routes/authRoutes');
-const doctorPacienteRoutes = require('./src/routes/doctorPacienteRoutes');
-const citaRoutes = require('./src/routes/citaRoutes');
-const kitRoutes = require('./src/routes/kitRoutes');
-const ejercicioRoutes = require('./src/routes/ejercicioRoutes');
-const ejerciciosKitsRoutes = require('./src/routes/ejerciciosKitsRoutes');
-const kitsAsignadosRoutes = require('./src/routes/kitsAsignadosRoutes');
-const escritosRoutes = require('./src/routes/escritosRoutes');
-const escrituraReordenamientoRoutes = require('./src/routes/escrituraReordenamientoRoutes');
-const escrituraImagenPalabraRoutes = require('./src/routes/escrituraImagenPalabraRoutes');
-const resultadosEscrituraReordenamientoRoutes = require('./src/routes/resultadosEscrituraReordenamientoRoutes');
-const resultadosEscrituraImagenPalabraRoutes = require('./src/routes/resultadosEscrituraImagenPalabraRoutes');
-const visualesRoutes = require('./src/routes/visualesRoutes');
-const paresRoutes = require('./src/routes/paresRoutes');
-const igualDiferenteRoutes = require('./src/routes/igualDiferenteRoutes');
-const imagenCorrectoRoutes = require('./src/routes/imagenCorrectoRoutes');
-const imagenesRoutes = require('./src/routes/imagenesRoutes');
-const palabraMalEscritoRoutes = require('./src/routes/palabraMalEscritoRoutes');
+const path = require('path');
+
+// Importar rutas de autenticación
+const authRoutes = require('./src/modules/auth/routes/auth.routes');
+const adminRoutes = require('./src/modules/auth/routes/admin.routes');
+
+// Importar rutas de citas
+const citaRoutes = require('./src/modules/citas/routes/cita.routes');
+const doctorPacienteRoutes = require('./src/modules/citas/routes/doctorPaciente.routes');
+
+// Importar rutas de kits
+const kitRoutes = require('./src/modules/kits/routes/kit.routes');
+const kitsAsignadosRoutes = require('./src/modules/kits/routes/kitsAsignados.routes');
+const ejerciciosKitsRoutes = require('./src/modules/kits/routes/ejerciciosKits.routes');
+
+// Importar rutas de ejercicios
+const ejercicioRoutes = require('./src/modules/ejercicios/routes/ejercicio.routes');
+const escritosRoutes = require('./src/modules/ejercicios/routes/escritos.routes');
+const escrituraReordenamientoRoutes = require('./src/modules/ejercicios/routes/escrituraReordenamiento.routes');
+const escrituraImagenPalabraRoutes = require('./src/modules/ejercicios/routes/escrituraImagenPalabra.routes');
+const visualesRoutes = require('./src/modules/ejercicios/routes/visuales.routes');
+const paresRoutes = require('./src/modules/ejercicios/routes/pares.routes');
+const igualDiferenteRoutes = require('./src/modules/ejercicios/routes/igualDiferente.routes');
+const imagenCorrectoRoutes = require('./src/modules/ejercicios/routes/imagenCorrecto.routes');
+const imagenesRoutes = require('./src/modules/ejercicios/routes/imagenes.routes');
+const palabraMalEscritoRoutes = require('./src/modules/ejercicios/routes/palabraMalEscrito.routes');
+
+// Importar rutas de resultados
+const resultadosEscrituraReordenamientoRoutes = require('./src/modules/resultados/routes/resultadosEscrituraReordenamiento.routes');
+const resultadosEscrituraImagenPalabraRoutes = require('./src/modules/resultados/routes/resultadosEscrituraImagenPalabra.routes');
 
 require('dotenv').config();
 

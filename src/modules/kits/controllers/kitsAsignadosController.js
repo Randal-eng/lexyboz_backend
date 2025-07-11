@@ -1,4 +1,4 @@
-const kitsAsignadosModel = require('../models/kitsAsignadosModel');
+const kitsAsignadosModel = require('../models/KitAsignado');
 
 const asignarKit = async (req, res) => {
     try {

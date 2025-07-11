@@ -1,4 +1,4 @@
-const citaModel = require('../models/citaModel');
+const citaModel = require('../models/Cita');
 
 // Crear cita
 const crearCita = async (req, res) => {

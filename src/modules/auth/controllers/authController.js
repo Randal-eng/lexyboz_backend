@@ -1,4 +1,4 @@
-const userModel = require('../models/userModel');
+const userModel = require('../models/User');
 
 //CONTROLADOR PARA REGISTRARSE
 const registerUser = async (req, res) => {

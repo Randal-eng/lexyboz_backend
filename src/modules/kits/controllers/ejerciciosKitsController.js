@@ -1,4 +1,4 @@
-const ejerciciosKitsModel = require('../models/ejerciciosKitsModel');
+const ejerciciosKitsModel = require('../models/EjercicioKit');
 
 const agregarEjercicioAKit = async (req, res) => {
     try {
