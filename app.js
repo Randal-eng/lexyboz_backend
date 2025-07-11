@@ -52,6 +52,11 @@ app.use('/api/imagen-correcto', imagenCorrectoRoutes);
 app.use('/api/imagenes', imagenesRoutes);
 app.use('/api/palabra-mal-escrito', palabraMalEscritoRoutes);
 
+// Endpoint para mensaje de producción
+app.get('/api/hola-produccion', (req, res) => {
+  res.send('Hola desde produccion');
+});
+
 const PORT = process.env.PORT || 3500;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
