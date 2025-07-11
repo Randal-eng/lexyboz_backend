@@ -23,6 +23,9 @@ const validateUser = (user) => {
 };
 
 const createUser = async (user) => {
+    if (!user.tipo) {
+        user.tipo = "Usuario";
+    }
     validateUser(user);
 
     const {

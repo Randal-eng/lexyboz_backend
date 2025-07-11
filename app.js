@@ -26,7 +26,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:3000', // Cambia esto al dominio de tu frontend en producción
+  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
