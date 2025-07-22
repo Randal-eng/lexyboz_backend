@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 // Asociar ejercicio a kit
 const agregarEjercicioAKit = async (ejercicio_id, kit_id) => {

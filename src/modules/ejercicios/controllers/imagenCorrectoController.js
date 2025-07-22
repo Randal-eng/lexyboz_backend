@@ -1,4 +1,4 @@
-const imagenCorrectoModel = require('../models/imagenCorrectoModel');
+const imagenCorrectoModel = require('../models/ImagenCorrecta');
 
 const crearReactivo = async (req, res) => {
     try {

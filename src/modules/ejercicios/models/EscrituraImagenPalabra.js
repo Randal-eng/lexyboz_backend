@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 const crearReactivo = async ({ tipo_subtipo, tiempo_duracion, palabra_correcta, imagen_url }) => {
     const query = `

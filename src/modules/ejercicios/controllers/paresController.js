@@ -1,4 +1,4 @@
-const paresModel = require('../models/paresModel');
+const paresModel = require('../models/Par');
 
 const crearPar = async (req, res) => {
     try {

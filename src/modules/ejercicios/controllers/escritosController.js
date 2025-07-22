@@ -1,4 +1,4 @@
-const escritosModel = require('../models/escritosModel');
+const escritosModel = require('../models/Escrito');
 
 const crearEscrito = async (req, res) => {
     try {

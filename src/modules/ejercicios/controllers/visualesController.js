@@ -1,4 +1,4 @@
-const visualesModel = require('../models/visualesModel');
+const visualesModel = require('../models/Visual');
 
 const crearVisual = async (req, res) => {
     try {

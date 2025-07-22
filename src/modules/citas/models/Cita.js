@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 const ESTADOS_VALIDOS = ['Programada', 'Completada', 'Cancelada', 'Reprogramada'];
 

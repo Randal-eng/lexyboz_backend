@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 const crearDensa = async ({ tipo_subtipo, tiempo_duracion, lectura }) => {
     const query = `

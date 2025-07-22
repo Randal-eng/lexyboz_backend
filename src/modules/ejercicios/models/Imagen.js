@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 const crearImagen = async ({ reactivo_id, imagen_url, es_correcta }) => {
     const query = `

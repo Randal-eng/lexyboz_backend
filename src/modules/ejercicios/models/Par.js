@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 const crearPar = async ({ palabra, pseudopalabra, par_es_correcto }) => {
     const query = `

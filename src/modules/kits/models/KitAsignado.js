@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 // Asignar kit a paciente
 const asignarKit = async ({ kit_id, paciente_id, estado }) => {

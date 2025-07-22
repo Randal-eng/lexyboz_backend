@@ -1,4 +1,4 @@
-const resultadosModel = require('../models/resultadosEscrituraImagenPalabraModel');
+const resultadosModel = require('../models/ResultadoEscrituraImagenPalabra');
 
 const registrarResultado = async (req, res) => {
     try {

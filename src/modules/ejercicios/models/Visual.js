@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 const crearVisual = async ({ tipo_subtipo, tipo, subtipo }) => {
     const query = `

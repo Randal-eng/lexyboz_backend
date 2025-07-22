@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 // Crear kit
 const crearKit = async ({ nombre, descripcion, creado_por }) => {

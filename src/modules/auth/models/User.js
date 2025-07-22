@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 const userSchema = Joi.object({
     nombre: Joi.string().min(3).max(100).required(),
@@ -19,6 +19,63 @@ const validateUser = (user) => {
     const { error } = userSchema.validate(user);
     if (error) {
         throw new Error(`Error de validación: ${error.details[0].message}`);
+    }
+};
+
+const generateResetToken = () => {
+    return require('crypto').randomBytes(32).toString('hex');
+};
+
+const setResetToken = async (userId) => {
+    const resetToken = generateResetToken();
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // Token válido por 1 hora
+
+    const query = `
+        UPDATE Usuario 
+        SET reset_token = $1, reset_token_expiry = $2
+        WHERE usuario_id = $3
+        RETURNING *;
+    `;
+    
+    try {
+        const result = await pool.query(query, [resetToken, resetTokenExpiry, userId]);
+        if (result.rows.length === 0) {
+            throw new Error('Usuario no encontrado');
+        }
+        return resetToken;
+    } catch (error) {
+        console.error('Error en setResetToken:', error);
+        throw new Error('Error al generar el token de restablecimiento');
+    }
+};
+
+const validateResetToken = async (token) => {
+    const query = `
+        SELECT * FROM Usuario 
+        WHERE reset_token = $1 AND reset_token_expiry > NOW();
+    `;
+    
+    try {
+        const result = await pool.query(query, [token]);
+        return result.rows[0];
+    } catch (error) {
+        throw new Error('Token inválido o expirado');
+    }
+};
+
+const updatePassword = async (userId, newPassword) => {
+    const query = `
+        UPDATE Usuario 
+        SET contraseña = $1, reset_token = NULL, reset_token_expiry = NULL
+        WHERE id = $2
+        RETURNING *;
+    `;
+    
+    try {
+        const result = await pool.query(query, [newPassword, userId]);
+        return result.rows[0];
+    } catch (error) {
+        throw new Error('Error al actualizar la contraseña');
     }
 };
 
@@ -92,5 +149,8 @@ const loginUserMethod = async (correo, contraseña) => {
 module.exports = {
     createUser,
     findUserByEmail,
-    loginUserMethod
+    loginUserMethod,
+    setResetToken,
+    validateResetToken,
+    updatePassword
 };

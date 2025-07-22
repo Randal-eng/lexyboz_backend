@@ -1,4 +1,4 @@
-const escrituraImagenPalabraModel = require('../models/escrituraImagenPalabraModel');
+const escrituraImagenPalabraModel = require('../models/EscrituraImagenPalabra');
 
 const crearReactivo = async (req, res) => {
     try {

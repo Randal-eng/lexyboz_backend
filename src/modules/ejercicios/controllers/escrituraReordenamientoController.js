@@ -1,4 +1,4 @@
-const escrituraReordenamientoModel = require('../models/escrituraReordenamientoModel');
+const escrituraReordenamientoModel = require('../models/EscrituraReordenamiento');
 
 const crearReactivo = async (req, res) => {
     try {

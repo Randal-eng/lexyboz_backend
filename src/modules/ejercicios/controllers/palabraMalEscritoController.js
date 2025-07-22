@@ -1,4 +1,4 @@
-const palabraMalEscritoModel = require('../models/palabraMalEscritoModel');
+const palabraMalEscritoModel = require('../models/PalabraMalEscrita');
 
 const crearReactivo = async (req, res) => {
     try {

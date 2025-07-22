@@ -1,4 +1,4 @@
-const igualDiferenteModel = require('../models/igualDiferenteModel');
+const igualDiferenteModel = require('../models/IgualDiferente');
 
 const crearReactivo = async (req, res) => {
     try {

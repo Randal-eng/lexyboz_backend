@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 // Vincula un doctor con un paciente
 const vincularPacienteConDoctor = async (doctor_id, paciente_id) => {

@@ -1,4 +1,4 @@
-const pool = require('../db/connection');
+const pool = require('../../../db/connection');
 
 // Crear ejercicio
 const crearEjercicio = async ({ titulo, descripcion, tipo_ejercicio, creado_por }) => {
