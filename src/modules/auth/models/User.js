@@ -11,9 +11,9 @@ const userSchema = Joi.object({
     tipo: Joi.string().valid('Usuario', 'Doctor', 'Paciente').required(),
     escolaridad: Joi.string().allow(null, '').when('tipo', { is: 'Paciente', then: Joi.required() }),
     especialidad: Joi.string().allow(null, '').when('tipo', { is: 'Doctor', then: Joi.required() }),
-    domicilio: Joi.string().allow(null, '').when('tipo', { 
-        is: Joi.valid('Doctor', 'Paciente'), 
-        then: Joi.required() 
+    domicilio: Joi.string().allow(null, '').when('tipo', {
+        is: Joi.valid('Doctor', 'Paciente'),
+        then: Joi.required()
     }),
     codigo_postal: Joi.string().pattern(/^\d{5}$/).allow(null, '').when('tipo', {
         is: Joi.valid('Doctor', 'Paciente'),
@@ -42,7 +42,7 @@ const setResetToken = async (userId) => {
         WHERE usuario_id = $3
         RETURNING *;
     `;
-    
+
     try {
         const result = await pool.query(query, [resetToken, resetTokenExpiry, userId]);
         if (result.rows.length === 0) {
@@ -57,10 +57,12 @@ const setResetToken = async (userId) => {
 
 const validateResetToken = async (token) => {
     const query = `
-        SELECT * FROM Usuario 
-        WHERE reset_token = $1 AND reset_token_expiry > NOW();
+        SELECT usuario_id FROM Usuario 
+        WHERE reset_token = $1 
+        AND reset_token_expiry > NOW()
+        LIMIT 1;
     `;
-    
+
     try {
         const result = await pool.query(query, [token]);
         return result.rows[0];
@@ -73,10 +75,10 @@ const updatePassword = async (userId, newPassword) => {
     const query = `
         UPDATE Usuario 
         SET contraseña = $1, reset_token = NULL, reset_token_expiry = NULL
-        WHERE id = $2
+        WHERE usuario_id = $2
         RETURNING *;
     `;
-    
+
     try {
         const result = await pool.query(query, [newPassword, userId]);
         return result.rows[0];
@@ -141,7 +143,7 @@ const createUser = async (user) => {
 };
 
 const findUserByEmail = async (correo) => {
-    const query = `SELECT usuario_id, nombre, correo, fecha_de_nacimiento, numero_telefono, sexo, tipo FROM Usuario WHERE correo = $1;`;
+    const query = `SELECT * FROM Usuario WHERE correo = $1;`;
     const result = await pool.query(query, [correo]);
     return result.rows[0];
 };
