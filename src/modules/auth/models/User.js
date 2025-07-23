@@ -11,8 +11,14 @@ const userSchema = Joi.object({
     tipo: Joi.string().valid('Usuario', 'Doctor', 'Paciente').required(),
     escolaridad: Joi.string().allow(null, '').when('tipo', { is: 'Paciente', then: Joi.required() }),
     especialidad: Joi.string().allow(null, '').when('tipo', { is: 'Doctor', then: Joi.required() }),
-    domicilio: Joi.string().allow(null, '').when('tipo', { is: 'Doctor', then: Joi.required() }),
-
+    domicilio: Joi.string().allow(null, '').when('tipo', { 
+        is: Joi.valid('Doctor', 'Paciente'), 
+        then: Joi.required() 
+    }),
+    codigo_postal: Joi.string().pattern(/^\d{5}$/).allow(null, '').when('tipo', {
+        is: Joi.valid('Doctor', 'Paciente'),
+        then: Joi.required()
+    })
 });
 
 const validateUser = (user) => {
@@ -95,6 +101,7 @@ const createUser = async (user) => {
         tipo,
         especialidad,
         domicilio,
+        codigo_postal,
         doctor_id,
         escolaridad
     } = user;
@@ -110,22 +117,22 @@ const createUser = async (user) => {
 
     if (tipo === 'Doctor') {
         const doctorQuery = `
-            INSERT INTO Doctor (usuario_ID, especialidad, domicilio)
-            VALUES ($1, $2, $3)
+            INSERT INTO Doctor (usuario_ID, especialidad, domicilio, codigo_postal)
+            VALUES ($1, $2, $3, $4)
             RETURNING *;
         `;
-        const doctorValues = [usuario.usuario_id, especialidad, domicilio];
+        const doctorValues = [usuario.usuario_id, especialidad, domicilio, codigo_postal];
         const doctorResult = await pool.query(doctorQuery, doctorValues);
         return { ...usuario, doctor: doctorResult.rows[0] };
     }
 
     if (tipo === 'Paciente') {
         const pacienteQuery = `
-            INSERT INTO Paciente (usuario_ID, escolaridad)
-            VALUES ($1, $2)
+            INSERT INTO Paciente (usuario_ID, escolaridad, domicilio, codigo_postal)
+            VALUES ($1, $2, $3, $4)
             RETURNING *;
         `;
-        const pacienteValues = [usuario.usuario_id, escolaridad];
+        const pacienteValues = [usuario.usuario_id, escolaridad, domicilio, codigo_postal];
         const pacienteResult = await pool.query(pacienteQuery, pacienteValues);
         return { ...usuario, paciente: pacienteResult.rows[0] };
     }
