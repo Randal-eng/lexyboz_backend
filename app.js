@@ -1,6 +1,18 @@
+/**
+ * Archivo principal de configuración y arranque de la aplicación Express.
+ * 
+ * - Configura middlewares globales (CORS, JSON, etc.)
+ * - Inicializa la documentación Swagger en /api-docs
+ * - Importa y monta todas las rutas de la API
+ * - Maneja errores globales
+ * - Exporta la app para ser utilizada por el servidor HTTP
+ */
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
 // Importar rutas de autenticación
 const authRoutes = require('./src/modules/auth/routes/auth.routes');
@@ -34,6 +46,27 @@ const resultadosEscrituraImagenPalabraRoutes = require('./src/modules/resultados
 require('dotenv').config();
 
 const app = express();
+
+// Swagger Options
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Lexyboz API',
+      version: '1.0.0',
+      description: 'API para el proyecto Lexyboz',
+    },
+    servers: [
+      {
+        url: `http://localhost:${process.env.PORT || 3500}`,
+      },
+    ],
+  },
+  apis: ['./src/modules/**/*.routes.js'],
+};
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use(express.json());
 app.use(cors({

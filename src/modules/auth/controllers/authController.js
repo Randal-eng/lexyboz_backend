@@ -2,7 +2,13 @@ const userModel = require('../models/User');
 const { sendResetEmail } = require('../utils/emailService');
 const bcrypt = require('bcrypt');
 
-//CONTROLADOR PARA REGISTRARSE
+/**
+ * Registra un nuevo usuario en el sistema.
+ * @param {object} req - El objeto de solicitud de Express.
+ * @param {object} req.body - El cuerpo de la solicitud, que contiene los datos del nuevo usuario.
+ * @param {object} res - El objeto de respuesta de Express.
+ * @returns {object} Retorna el objeto del nuevo usuario creado o un mensaje de error.
+ */
 const registerUser = async (req, res) => {
   try {
     const nuevoUsuario = await userModel.createUser(req.body);
