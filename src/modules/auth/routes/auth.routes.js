@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
 const authController = require('../controllers/authController');
+const upload = require('../../../../middleware');
+
 // Registrarse e Iniciar sesiones
 
 /**
@@ -57,7 +60,21 @@ router.post('/auth/login', authController.loginUser);
  *       400:
  *         description: Error en la solicitud
  */
-router.post('/auth/register', authController.registerUser);
+router.post('/auth/register', upload.single('imagen'), async (req, res) => {
+    try {
+        if (req.fileValidationError) {
+            return res.status(400).json({ message: req.fileValidationError });
+        }
+
+        const nuevoUsuario = await authController.registerUser(req, res);
+        return nuevoUsuario;
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Error en el servidor',
+            error: error.message
+        });
+    }
+});
 /**
  * @swagger
  * /api/auth/forgot-password:

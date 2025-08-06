@@ -10,26 +10,27 @@ const bcrypt = require('bcrypt');
  * @returns {object} Retorna el objeto del nuevo usuario creado o un mensaje de error.
  */
 const registerUser = async (req, res) => {
-  try {
-    const nuevoUsuario = await userModel.createUser(req.body);
-    return res.status(201).json(nuevoUsuario);
-  } catch (error) {
-    console.error('Error al registrar el usuario:', error);
-    return res.status(400).json({ message: error.message });
-  }
+    try {
+        console.log('Datos recibidos en el controlador:', req.body);
+        const nuevoUsuario = await userModel.createUser(req.body, req.file);
+        return res.status(201).json(nuevoUsuario);
+    } catch (error) {
+        console.error('Error al registrar el usuario:', error);
+        return res.status(400).json({ message: error.message });
+    }
 };
 
 //CONTROLADOR PARA INICIAR SESION
 const loginUser = async (req, res) => {
   try {
-    const { correo, contraseña } = req.body;
+    const { correo, contrasenia } = req.body;
     const user = await userModel.loginUserMethod(correo);
 
-    if (!user || user.contraseña !== contraseña) {
+    if (!user || user.contrasenia !== contrasenia) {
       return res.status(401).json({ message: 'Correo o contraseña incorrectos.' });
     }
 
-    const { contraseña: _, ...userWithoutPassword } = user;
+    const { contrasenia: _, ...userWithoutPassword } = user;
 
     res.status(200).json({ message: 'Inicio de sesión exitoso.', user: userWithoutPassword });
   } catch (error) {
@@ -52,7 +53,7 @@ const requestPasswordReset = async (req, res) => {
 
     // Usamos usuario_id en lugar de id
     const resetToken = await userModel.setResetToken(user.usuario_id);
-    
+
     // En desarrollo, devolvemos el token en la respuesta
     if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
       console.log('Modo desarrollo: Token generado -', resetToken);
@@ -62,7 +63,7 @@ const requestPasswordReset = async (req, res) => {
         resetUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`
       });
     }
-    
+
     console.log('Modo producción: Intentando enviar correo...');
 
     // En producción, enviamos el correo
