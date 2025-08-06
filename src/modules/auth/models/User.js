@@ -100,7 +100,7 @@ const createUser = async (user) => {
         fecha_de_nacimiento,
         numero_telefono,
         sexo,
-        tipo,
+        tipo = 'Usuario',
         especialidad,
         domicilio,
         codigo_postal,
