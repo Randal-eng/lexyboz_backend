@@ -108,17 +108,25 @@ const validateResetToken = async (token) => {
  * @throws {Error} Si hay un error al actualizar la contraseña
  */
 const updatePassword = async (userId, newPassword) => {
+    // Encriptar la nueva contraseña
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
     const query = `
         UPDATE Usuario 
-        SET contraseña = $1, reset_token = NULL, reset_token_expiry = NULL
+        SET contrasenia = $1, reset_token = NULL, reset_token_expiry = NULL
         WHERE usuario_id = $2
         RETURNING *;
     `;
 
     try {
-        const result = await pool.query(query, [newPassword, userId]);
+        const result = await pool.query(query, [hashedPassword, userId]);
+        if (result.rows.length === 0) {
+            throw new Error('Usuario no encontrado');
+        }
         return result.rows[0];
     } catch (error) {
+        console.error('Error al actualizar contraseña:', error);
         throw new Error('Error al actualizar la contraseña');
     }
 };

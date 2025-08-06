@@ -86,28 +86,40 @@ const requestPasswordReset = async (req, res) => {
     // Usamos usuario_id en lugar de id
     const resetToken = await userModel.setResetToken(user.usuario_id);
 
-    // En desarrollo, devolvemos el token en la respuesta
-    if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
-      console.log('Modo desarrollo: Token generado -', resetToken);
-      return res.status(200).json({
-        message: 'Token de restablecimiento generado (solo para desarrollo)',
-        resetToken: resetToken,
-        resetUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${resetToken}`
-      });
-    }
+    console.log('Intentando enviar correo de restablecimiento...');
 
-    console.log('Modo producción: Intentando enviar correo...');
-
-    // En producción, enviamos el correo
     try {
+      // Intentar enviar el correo
       await sendResetEmail(correo, resetToken);
-      res.status(200).json({
+      
+      // En desarrollo, incluimos el token en la respuesta
+      if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+        console.log('Modo desarrollo: Token generado -', resetToken);
+        return res.status(200).json({
+          message: 'Se ha enviado un correo con las instrucciones. (Modo desarrollo)',
+          resetToken: resetToken,
+          resetUrl: `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
+        });
+      }
+
+      // En producción, solo confirmamos el envío
+      return res.status(200).json({
         message: 'Si el correo existe en nuestro sistema, recibirás un enlace para restablecer tu contraseña.'
       });
     } catch (emailError) {
-      console.error('Error al enviar el correo:', emailError);
-      // Aún así devolvemos éxito para no revelar si el correo existe o no
-      res.status(200).json({
+      console.error('Error detallado al enviar el correo:', emailError);
+      
+      // En desarrollo, mostramos más detalles del error
+      if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+        return res.status(500).json({
+          message: 'Error al enviar el correo',
+          error: emailError.message,
+          resetToken: resetToken // Incluimos el token para pruebas
+        });
+      }
+
+      // En producción, mensaje genérico
+      return res.status(200).json({
         message: 'Si el correo existe en nuestro sistema, recibirás un enlace para restablecer tu contraseña.'
       });
     }
