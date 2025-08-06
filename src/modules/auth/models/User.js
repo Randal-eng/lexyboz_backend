@@ -1,7 +1,12 @@
 const Joi = require('joi');
 const pool = require('../../../db/connection');
 const cloudinary = require('../../../config/cloudinary/cloudinaryConfig');
+const bcrypt = require('bcrypt');
 
+/**
+ * Esquema de validación para usuarios usando Joi.
+ * Define las reglas de validación para cada campo del usuario.
+ */
 const userSchema = Joi.object({
     nombre: Joi.string().min(3).max(100).required(),
     correo: Joi.string().email().required(),
@@ -24,6 +29,11 @@ const userSchema = Joi.object({
     }),
 });
 
+/**
+ * Valida los datos del usuario contra el esquema definido.
+ * @param {Object} user - Objeto con los datos del usuario a validar
+ * @throws {Error} Si la validación falla, lanza un error con el mensaje de validación
+ */
 const validateUser = (user) => {
     const { error } = userSchema.validate(user);
     if (error) {
@@ -31,10 +41,20 @@ const validateUser = (user) => {
     }
 };
 
+/**
+ * Genera un token aleatorio para el restablecimiento de contraseña.
+ * @returns {string} Token hexadecimal de 64 caracteres
+ */
 const generateResetToken = () => {
     return require('crypto').randomBytes(32).toString('hex');
 };
 
+/**
+ * Genera y guarda un token de restablecimiento de contraseña para un usuario.
+ * @param {string} userId - ID del usuario
+ * @returns {Promise<string>} Token generado
+ * @throws {Error} Si el usuario no existe o hay un error al generar el token
+ */
 const setResetToken = async (userId) => {
     const resetToken = generateResetToken();
     const resetTokenExpiry = new Date(Date.now() + 3600000); // Token válido por 1 hora
@@ -58,6 +78,12 @@ const setResetToken = async (userId) => {
     }
 };
 
+/**
+ * Valida un token de restablecimiento de contraseña.
+ * @param {string} token - Token de restablecimiento
+ * @returns {Promise<Object|null>} Datos del usuario si el token es válido, null si no lo es
+ * @throws {Error} Si el token es inválido o ha expirado
+ */
 const validateResetToken = async (token) => {
     const query = `
         SELECT usuario_id FROM Usuario 
@@ -74,6 +100,13 @@ const validateResetToken = async (token) => {
     }
 };
 
+/**
+ * Actualiza la contraseña de un usuario.
+ * @param {string} userId - ID del usuario
+ * @param {string} newPassword - Nueva contraseña (debe estar encriptada antes de llamar a esta función)
+ * @returns {Promise<Object>} Usuario actualizado
+ * @throws {Error} Si hay un error al actualizar la contraseña
+ */
 const updatePassword = async (userId, newPassword) => {
     const query = `
         UPDATE Usuario 
@@ -90,6 +123,24 @@ const updatePassword = async (userId, newPassword) => {
     }
 };
 
+/**
+ * Crea un nuevo usuario en el sistema.
+ * @param {Object} user - Datos del usuario a crear
+ * @param {string} user.nombre - Nombre completo del usuario
+ * @param {string} user.correo - Correo electrónico del usuario
+ * @param {string} user.contrasenia - Contraseña del usuario (será encriptada antes de almacenarse)
+ * @param {string} user.fecha_de_nacimiento - Fecha de nacimiento en formato ISO
+ * @param {string} user.numero_telefono - Número telefónico de 10 dígitos
+ * @param {string} user.sexo - Género del usuario ('Masculino', 'Femenino', 'Otro')
+ * @param {string} user.tipo - Tipo de usuario ('Usuario', 'Doctor', 'Paciente')
+ * @param {string} [user.especialidad] - Especialidad (requerido para Doctores)
+ * @param {string} [user.escolaridad] - Escolaridad (requerido para Pacientes)
+ * @param {string} [user.domicilio] - Dirección (requerido para Doctores y Pacientes)
+ * @param {string} [user.codigo_postal] - Código postal (requerido para Doctores y Pacientes)
+ * @param {Object} [imagen] - Archivo de imagen para el avatar del usuario
+ * @returns {Promise<Object>} Usuario creado con sus datos e imagen (si se proporcionó)
+ * @throws {Error} Si la validación falla o hay problemas con la subida de la imagen
+ */
 const createUser = async (user, imagen) => {
     if (!user.tipo) {
         user.tipo = "Usuario";
@@ -155,13 +206,17 @@ const createUser = async (user, imagen) => {
         escolaridad
     } = user;
 
+    // Encriptamos la contraseña antes de guardarla
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(contrasenia, salt);
+
     const userQuery = `
     INSERT INTO Usuario (nombre, correo, contrasenia, fecha_de_nacimiento, numero_telefono, sexo, tipo, imagen_url, imagen_id)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     RETURNING *;
 `;
     const userValues = [
-        nombre, correo, contrasenia, fecha_de_nacimiento,
+        nombre, correo, hashedPassword, fecha_de_nacimiento,
         numero_telefono, sexo, tipo, imagen_url, imagen_id
     ];
     const userResult = await pool.query(userQuery, userValues);
@@ -192,17 +247,85 @@ const createUser = async (user, imagen) => {
     return usuario;
 };
 
+/**
+ * Busca un usuario por su correo electrónico.
+ * @param {string} correo - Correo electrónico del usuario
+ * @returns {Promise<Object|null>} Datos del usuario o null si no se encuentra
+ */
 const findUserByEmail = async (correo) => {
     const query = `SELECT * FROM Usuario WHERE correo = $1;`;
     const result = await pool.query(query, [correo]);
     return result.rows[0];
 };
 
+/**
+ * Busca un usuario por su correo y obtiene todos sus datos, incluyendo información específica
+ * según su tipo (Doctor o Paciente).
+ * @param {string} correo - Correo electrónico del usuario
+ * @returns {Promise<Object|null>} Datos completos del usuario o null si no se encuentra
+ * @property {string} usuario_id - ID del usuario
+ * @property {string} nombre - Nombre del usuario
+ * @property {string} correo - Correo electrónico
+ * @property {string} contrasenia - Contraseña encriptada
+ * @property {string} fecha_de_nacimiento - Fecha de nacimiento
+ * @property {string} numero_telefono - Número de teléfono
+ * @property {string} sexo - Género del usuario
+ * @property {string} tipo - Tipo de usuario
+ * @property {string} [imagen_url] - URL de la imagen de perfil
+ * @property {string} [imagen_id] - ID de la imagen en Cloudinary
+ * @property {string} [especialidad] - Solo para doctores
+ * @property {string} [escolaridad] - Solo para pacientes
+ * @property {string} [domicilio] - Para doctores y pacientes
+ * @property {string} [codigo_postal] - Para doctores y pacientes
+ */
 const loginUserMethod = async (correo) => {
-    const query = 'SELECT correo, contrasenia, tipo FROM Usuario WHERE correo = $1;';
-    const result = await pool.query(query, [correo]);
+    // Primero obtenemos los datos básicos del usuario
+    const userQuery = `
+        SELECT 
+            usuario_id,
+            nombre,
+            correo,
+            contrasenia,
+            fecha_de_nacimiento,
+            numero_telefono,
+            sexo,
+            tipo,
+            imagen_url,
+            imagen_id
+        FROM Usuario 
+        WHERE correo = $1;
+    `;
+    const userResult = await pool.query(userQuery, [correo]);
+    const usuario = userResult.rows[0];
 
-    return result.rows[0];
+    if (!usuario) return null;
+
+    // Si es doctor o paciente, obtenemos sus datos adicionales
+    if (usuario.tipo === 'Doctor') {
+        const doctorQuery = `
+            SELECT especialidad, domicilio, codigo_postal
+            FROM Doctor
+            WHERE usuario_id = $1;
+        `;
+        const doctorResult = await pool.query(doctorQuery, [usuario.usuario_id]);
+        if (doctorResult.rows[0]) {
+            return { ...usuario, ...doctorResult.rows[0] };
+        }
+    }
+
+    if (usuario.tipo === 'Paciente') {
+        const pacienteQuery = `
+            SELECT escolaridad, domicilio, codigo_postal
+            FROM Paciente
+            WHERE usuario_id = $1;
+        `;
+        const pacienteResult = await pool.query(pacienteQuery, [usuario.usuario_id]);
+        if (pacienteResult.rows[0]) {
+            return { ...usuario, ...pacienteResult.rows[0] };
+        }
+    }
+
+    return usuario;
 };
 
 module.exports = {

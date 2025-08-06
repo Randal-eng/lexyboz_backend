@@ -20,24 +20,56 @@ const registerUser = async (req, res) => {
     }
 };
 
-//CONTROLADOR PARA INICIAR SESION
+/**
+ * Autentica un usuario en el sistema.
+ * @param {object} req - El objeto de solicitud de Express.
+ * @param {object} req.body - El cuerpo de la solicitud.
+ * @param {string} req.body.correo - Correo electrónico del usuario.
+ * @param {string} req.body.contrasenia - Contraseña del usuario.
+ * @param {object} res - El objeto de respuesta de Express.
+ * @returns {object} Retorna los datos del usuario (sin contraseña) y el estado de la autenticación.
+ */
 const loginUser = async (req, res) => {
   try {
     const { correo, contrasenia } = req.body;
     const user = await userModel.loginUserMethod(correo);
 
-    if (!user || user.contrasenia !== contrasenia) {
+    if (!user) {
       return res.status(401).json({ message: 'Correo o contraseña incorrectos.' });
     }
 
+    const validPassword = await bcrypt.compare(contrasenia, user.contrasenia);
+    if (!validPassword) {
+      return res.status(401).json({ message: 'Correo o contraseña incorrectos.' });
+    }
+
+    // Removemos la contraseña del objeto de usuario
     const { contrasenia: _, ...userWithoutPassword } = user;
 
-    res.status(200).json({ message: 'Inicio de sesión exitoso.', user: userWithoutPassword });
+    res.status(200).json({ 
+      success: true,
+      message: 'Inicio de sesión exitoso.', 
+      user: userWithoutPassword 
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error al iniciar sesión.', error: error.message });
+    console.error('Error en login:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error al iniciar sesión.', 
+      error: error.message 
+    });
   }
 };
-// Solicitar restablecimiento de contraseña
+/**
+ * Inicia el proceso de restablecimiento de contraseña.
+ * @param {object} req - El objeto de solicitud de Express.
+ * @param {object} req.body - El cuerpo de la solicitud.
+ * @param {string} req.body.correo - Correo electrónico del usuario.
+ * @param {object} res - El objeto de respuesta de Express.
+ * @returns {object} Mensaje genérico por seguridad, no indica si el correo existe.
+ * @description En modo desarrollo, retorna el token y URL de restablecimiento.
+ *              En producción, envía un correo electrónico al usuario.
+ */
 const requestPasswordReset = async (req, res) => {
   try {
     const { correo } = req.body;
@@ -87,7 +119,15 @@ const requestPasswordReset = async (req, res) => {
   }
 };
 
-// Validar token y restablecer contraseña
+/**
+ * Restablece la contraseña del usuario usando un token válido.
+ * @param {object} req - El objeto de solicitud de Express.
+ * @param {object} req.body - El cuerpo de la solicitud.
+ * @param {string} req.body.token - Token de restablecimiento.
+ * @param {string} req.body.newPassword - Nueva contraseña del usuario.
+ * @param {object} res - El objeto de respuesta de Express.
+ * @returns {object} Mensaje de éxito o error en el restablecimiento.
+ */
 const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
