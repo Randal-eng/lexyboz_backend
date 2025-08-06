@@ -4,11 +4,29 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 /**
+ * @fileoverview Controlador de autenticación y gestión de usuarios
+ * @module AuthController
+ * @requires '../models/User'
+ * @requires '../utils/emailService'
+ * @requires 'bcrypt'
+ * @requires 'jsonwebtoken'
+ */
+
+/**
  * Registra un nuevo usuario en el sistema.
+ * @async
  * @param {object} req - El objeto de solicitud de Express.
- * @param {object} req.body - El cuerpo de la solicitud, que contiene los datos del nuevo usuario.
+ * @param {object} req.body - El cuerpo de la solicitud con los datos del usuario.
+ * @param {string} req.body.nombre - Nombre completo del usuario.
+ * @param {string} req.body.correo - Correo electrónico del usuario.
+ * @param {string} req.body.contrasenia - Contraseña del usuario (será encriptada).
+ * @param {string} req.body.fecha_de_nacimiento - Fecha de nacimiento (YYYY-MM-DD).
+ * @param {string} req.body.numero_telefono - Número telefónico.
+ * @param {string} req.body.sexo - Género del usuario.
+ * @param {object} [req.file] - Archivo de imagen del usuario (opcional).
  * @param {object} res - El objeto de respuesta de Express.
- * @returns {object} Retorna el objeto del nuevo usuario creado o un mensaje de error.
+ * @returns {Promise<object>} Objeto con los datos del usuario creado.
+ * @throws {Error} Si hay un error en la validación o creación del usuario.
  */
 const registerUser = async (req, res) => {
     try {
@@ -22,13 +40,34 @@ const registerUser = async (req, res) => {
 };
 
 /**
- * Autentica un usuario en el sistema.
+ * Autentica un usuario y genera un token JWT.
+ * @async
  * @param {object} req - El objeto de solicitud de Express.
  * @param {object} req.body - El cuerpo de la solicitud.
  * @param {string} req.body.correo - Correo electrónico del usuario.
  * @param {string} req.body.contrasenia - Contraseña del usuario.
  * @param {object} res - El objeto de respuesta de Express.
- * @returns {object} Retorna los datos del usuario (sin contraseña) y el estado de la autenticación.
+ * @returns {Promise<object>} Objeto con el token JWT y datos del usuario.
+ * @throws {Error} Si las credenciales son inválidas o hay un error en el servidor.
+ * @example
+ * // Respuesta exitosa:
+ * {
+ *   success: true,
+ *   message: 'Inicio de sesión exitoso.',
+ *   token: 'eyJhbGciOiJIUzI1NiIs...', // Token JWT válido por 24 horas
+ *   user: {
+ *     usuario_id: '123',
+ *     correo: 'usuario@ejemplo.com',
+ *     rol: 'usuario',
+ *     // otros datos del usuario sin la contraseña
+ *   }
+ * }
+ * 
+ * // Respuesta de error:
+ * {
+ *   success: false,
+ *   message: 'Correo o contraseña incorrectos.'
+ * }
  */
 const loginUser = async (req, res) => {
   try {
@@ -75,13 +114,25 @@ const loginUser = async (req, res) => {
 };
 /**
  * Inicia el proceso de restablecimiento de contraseña.
+ * @async
  * @param {object} req - El objeto de solicitud de Express.
  * @param {object} req.body - El cuerpo de la solicitud.
  * @param {string} req.body.correo - Correo electrónico del usuario.
  * @param {object} res - El objeto de respuesta de Express.
- * @returns {object} Mensaje genérico por seguridad, no indica si el correo existe.
- * @description En modo desarrollo, retorna el token y URL de restablecimiento.
- *              En producción, envía un correo electrónico al usuario.
+ * @returns {Promise<object>} Mensaje de confirmación y detalles adicionales en modo desarrollo.
+ * @throws {Error} Si hay un error al enviar el correo o procesar la solicitud.
+ * @example
+ * // Respuesta en producción:
+ * {
+ *   message: 'Si el correo existe en nuestro sistema, recibirás un enlace para restablecer tu contraseña.'
+ * }
+ * 
+ * // Respuesta en desarrollo:
+ * {
+ *   message: 'Se ha enviado un correo con las instrucciones. (Modo desarrollo)',
+ *   resetToken: 'token123...',
+ *   resetUrl: 'http://localhost:3500/reset-password/token123...'
+ * }
  */
 const requestPasswordReset = async (req, res) => {
   try {
@@ -146,12 +197,24 @@ const requestPasswordReset = async (req, res) => {
 
 /**
  * Restablece la contraseña del usuario usando un token válido.
+ * @async
  * @param {object} req - El objeto de solicitud de Express.
  * @param {object} req.body - El cuerpo de la solicitud.
- * @param {string} req.body.token - Token de restablecimiento.
+ * @param {string} req.body.token - Token de restablecimiento generado previamente.
  * @param {string} req.body.newPassword - Nueva contraseña del usuario.
  * @param {object} res - El objeto de respuesta de Express.
- * @returns {object} Mensaje de éxito o error en el restablecimiento.
+ * @returns {Promise<object>} Mensaje de confirmación del cambio de contraseña.
+ * @throws {Error} Si el token es inválido o ha expirado.
+ * @example
+ * // Respuesta exitosa:
+ * {
+ *   message: 'Contraseña actualizada exitosamente.'
+ * }
+ * 
+ * // Respuesta de error:
+ * {
+ *   message: 'El token de restablecimiento es inválido o ha expirado.'
+ * }
  */
 const resetPassword = async (req, res) => {
   try {
