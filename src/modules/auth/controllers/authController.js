@@ -162,7 +162,7 @@ const requestPasswordReset = async (req, res) => {
         return res.status(200).json({
           message: 'Se ha enviado un correo con las instrucciones. (Modo desarrollo)',
           resetToken: resetToken,
-          resetUrl: `${process.env.FRONTEND_URL}/reset-password/${resetToken}`
+          resetUrl: `${process.env.FRONTEND_ORIGIN}/reset-password/${resetToken}`
         });
       }
 

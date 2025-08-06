@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 // Configuración del transportador de correo
 const getTransporter = () => {
     // Verificar variables de entorno requeridas
-    const requiredEnvVars = ['EMAIL_USER', 'EMAIL_PASS', 'FRONTEND_URL'];
+    const requiredEnvVars = ['EMAIL_USER', 'EMAIL_PASS', 'FRONTEND_ORIGIN'];
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
     
     if (missingVars.length > 0) {
@@ -62,7 +62,7 @@ const sendResetEmail = async (email, resetToken) => {
         }
     }
 
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_ORIGIN}/reset-password/${resetToken}`;
     
     const mailOptions = {
         from: `"Lexyboz Support" <${process.env.EMAIL_USER}>`,
@@ -120,7 +120,7 @@ const sendResetEmail = async (email, resetToken) => {
             subject: mailOptions.subject,
             emailUser: process.env.EMAIL_USER,
             hasPassword: !!process.env.EMAIL_PASS,
-            frontendUrl: process.env.FRONTEND_URL
+            frontendUrl: process.env.FRONTEND_ORIGIN
         });
 
         console.log('Intentando enviar correo a:', email);
