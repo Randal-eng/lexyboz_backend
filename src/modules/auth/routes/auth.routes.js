@@ -3,6 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const authController = require('../controllers/authController');
 const upload = require('../../../../middleware');
+const { verifyToken } = require('../middleware/authMiddleware');
 
 /**
  * Rutas de autenticación

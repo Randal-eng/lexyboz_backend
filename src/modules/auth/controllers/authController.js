@@ -1,6 +1,7 @@
 const userModel = require('../models/User');
 const { sendResetEmail } = require('../utils/emailService');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 /**
  * Registra un nuevo usuario en el sistema.
@@ -46,9 +47,21 @@ const loginUser = async (req, res) => {
     // Removemos la contraseña del objeto de usuario
     const { contrasenia: _, ...userWithoutPassword } = user;
 
+    // Generamos el token JWT
+    const token = jwt.sign(
+      { 
+        id: user.usuario_id,
+        email: user.correo,
+        role: user.rol // Si tienes roles en tu sistema
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
     res.status(200).json({ 
       success: true,
-      message: 'Inicio de sesión exitoso.', 
+      message: 'Inicio de sesión exitoso.',
+      token,
       user: userWithoutPassword 
     });
   } catch (error) {

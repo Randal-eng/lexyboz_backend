@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ejercicioController = require('../controllers/ejercicioController');
+const { verifyToken } = require('../../auth/middleware/authMiddleware');
 
 /**
  * @swagger
@@ -27,7 +28,7 @@ const ejercicioController = require('../controllers/ejercicioController');
  *       400:
  *         description: Error en la solicitud
  */
-router.post('/', ejercicioController.crearEjercicio);
+router.post('/', verifyToken, ejercicioController.crearEjercicio);
 /**
  * @swagger
  * /api/ejercicios:
@@ -40,7 +41,7 @@ router.post('/', ejercicioController.crearEjercicio);
  *       400:
  *         description: Error en la solicitud
  */
-router.get('/', ejercicioController.obtenerEjercicios);
+router.get('/', verifyToken, ejercicioController.obtenerEjercicios);
 /**
  * @swagger
  * /api/ejercicios/{id}:
@@ -60,7 +61,7 @@ router.get('/', ejercicioController.obtenerEjercicios);
  *       404:
  *         description: Ejercicio no encontrado
  */
-router.get('/:id', ejercicioController.obtenerEjercicioPorId);
+router.get('/:id', verifyToken, ejercicioController.obtenerEjercicioPorId);
 /**
  * @swagger
  * /api/ejercicios/{id}:
@@ -95,7 +96,7 @@ router.get('/:id', ejercicioController.obtenerEjercicioPorId);
  *       404:
  *         description: Ejercicio no encontrado
  */
-router.put('/:id', ejercicioController.editarEjercicio);
+router.put('/:id', verifyToken, ejercicioController.editarEjercicio);
 /**
  * @swagger
  * /api/ejercicios/{id}:
@@ -115,6 +116,6 @@ router.put('/:id', ejercicioController.editarEjercicio);
  *       404:
  *         description: Ejercicio no encontrado
  */
-router.delete('/:id', ejercicioController.eliminarEjercicio);
+router.delete('/:id', verifyToken, ejercicioController.eliminarEjercicio);
 
 module.exports = router;

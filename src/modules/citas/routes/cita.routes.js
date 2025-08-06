@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const citaController = require('../controllers/citaController');
+const { verifyToken } = require('../../auth/middleware/authMiddleware');
 
 /**
  * @swagger
@@ -31,7 +32,7 @@ const citaController = require('../controllers/citaController');
  *       400:
  *         description: Error en la solicitud
  */
-router.post('/crear-cita', citaController.crearCita);
+router.post('/crear-cita', verifyToken, citaController.crearCita);
 /**
  * @swagger
  * /api/citas/obtener-citas:
@@ -44,7 +45,7 @@ router.post('/crear-cita', citaController.crearCita);
  *       400:
  *         description: Error en la solicitud
  */
-router.get('/obtener-citas', citaController.obtenerCitas);
+router.get('/obtener-citas', verifyToken, citaController.obtenerCitas);
 /**
  * @swagger
  * /api/citas/obtener-cita-id/{id}:
@@ -64,7 +65,7 @@ router.get('/obtener-citas', citaController.obtenerCitas);
  *       404:
  *         description: Cita no encontrada
  */
-router.get('/obtener-cita-id/:id', citaController.obtenerCitaPorId);
+router.get('/obtener-cita-id/:id', verifyToken, citaController.obtenerCitaPorId);
 /**
  * @swagger
  * /api/citas/editar-cita/{id}:
@@ -97,7 +98,7 @@ router.get('/obtener-cita-id/:id', citaController.obtenerCitaPorId);
  *       404:
  *         description: Cita no encontrada
  */
-router.put('/editar-cita/:id', citaController.editarCita);
+router.put('/editar-cita/:id', verifyToken, citaController.editarCita);
 /**
  * @swagger
  * /api/citas/eliminar-cita/{id}:
@@ -117,6 +118,6 @@ router.put('/editar-cita/:id', citaController.editarCita);
  *       404:
  *         description: Cita no encontrada
  */
-router.delete('/eliminar-cita/:id', citaController.eliminarCita);
+router.delete('/eliminar-cita/:id', verifyToken, citaController.eliminarCita);
 
 module.exports = router;
