@@ -54,6 +54,10 @@ const { verifyToken } = require('../middleware/authMiddleware');
  *                 message:
  *                   type: string
  *                   example: "Inicio de sesión exitoso"
+ *                 token:
+ *                   type: string
+ *                   description: Token JWT para autenticación (válido por 24 horas)
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjMiLCJlbWFpbCI6InVzdWFyaW9AZWplbXBsby5jb20iLCJyb2wiOiJ1c3VhcmlvIiwiaWF0IjoxNjk5OTk5OTk5LCJleHAiOjE3MDAwODYzOTl9.example"
  *                 user:
  *                   type: object
  *                   properties:
