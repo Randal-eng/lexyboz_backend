@@ -55,6 +55,10 @@ const { verifyToken } = require('../middleware/authMiddleware');
  *                 message:
  *                   type: string
  *                   example: "Inicio de sesión exitoso"
+ *                 token:
+ *                   type: string
+ *                   description: Token JWT válido por 24 horas
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
  *                 user:
  *                   type: object
  *                   properties:
@@ -89,6 +93,23 @@ const { verifyToken } = require('../middleware/authMiddleware');
  *                     codigo_postal:
  *                       type: string
  *                       description: Para doctores y pacientes
+ *             examples:
+ *               success:
+ *                 summary: Ejemplo exitoso
+ *                 value:
+ *                   success: true
+ *                   message: "Inicio de sesión exitoso."
+ *                   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.sample.token"
+ *                   user:
+ *                     usuario_id: "123"
+ *                     nombre: "Juan Pérez"
+ *                     correo: "juan@ejemplo.com"
+ *                     fecha_de_nacimiento: "1990-01-01"
+ *                     numero_telefono: "5512345678"
+ *                     sexo: "Masculino"
+ *                     tipo: "Usuario"
+ *                     imagen_url: "https://res.cloudinary.com/demo/image/upload/v1/usuarios/u123.jpg"
+ *                     imagen_id: "usuarios/u123"
  *       401:
  *         description: Credenciales inválidas
  *       500:
@@ -251,9 +272,11 @@ router.post('/auth/register', upload.single('imagen'), async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               email:
+ *               correo:
  *                 type: string
  *                 description: Correo electrónico del usuario
+ *           example:
+ *             correo: "usuario@ejemplo.com"
  *     responses:
  *       200:
  *         description: Solicitud de restablecimiento enviada
@@ -312,13 +335,73 @@ router.post('/auth/reset-password', authController.resetPassword);
  * @swagger
  * /api/auth/doctors:
  *   get:
- *     summary: Lista todos los doctores
+ *     summary: Lista todos los doctores (con paginación)
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Página a retornar (por defecto 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Tamaño de página (por defecto 10, máx 100)
  *     responses:
  *       200:
  *         description: Lista de doctores
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedDoctorsResponse'
+ *             examples:
+ *               success:
+ *                 summary: Página con resultados
+ *                 value:
+ *                   page: 1
+ *                   limit: 10
+ *                   total: 2
+ *                   count: 2
+ *                   doctors:
+ *                     - usuario_id: "d1"
+ *                       nombre: "Dra. Ana López"
+ *                       correo: "ana@ejemplo.com"
+ *                       fecha_de_nacimiento: "1985-03-22"
+ *                       numero_telefono: "5512345678"
+ *                       sexo: "Femenino"
+ *                       tipo: "Doctor"
+ *                       imagen_url: "https://res.cloudinary.com/demo/image/upload/v1/usuarios/d1.jpg"
+ *                       imagen_id: "usuarios/d1"
+ *                       especialidad: "Neurología"
+ *                       domicilio: "Av. Reforma 100"
+ *                       codigo_postal: "06000"
+ *                     - usuario_id: "d2"
+ *                       nombre: "Dr. Carlos Pérez"
+ *                       correo: "carlos@ejemplo.com"
+ *                       fecha_de_nacimiento: "1980-09-10"
+ *                       numero_telefono: "5598765432"
+ *                       sexo: "Masculino"
+ *                       tipo: "Doctor"
+ *                       imagen_url: null
+ *                       imagen_id: null
+ *                       especialidad: "Pediatría"
+ *                       domicilio: "Insurgentes Sur 200"
+ *                       codigo_postal: "03100"
+ *               empty:
+ *                 summary: Sin resultados
+ *                 value:
+ *                   page: 1
+ *                   limit: 10
+ *                   total: 0
+ *                   count: 0
+ *                   doctors: []
+ *                   message: "No hay doctores registrados."
  */
 router.get('/auth/doctors', verifyToken, directoryController.getDoctors);
 
@@ -326,13 +409,73 @@ router.get('/auth/doctors', verifyToken, directoryController.getDoctors);
  * @swagger
  * /api/auth/patients:
  *   get:
- *     summary: Lista todos los pacientes
+ *     summary: Lista todos los pacientes (con paginación)
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Página a retornar (por defecto 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Tamaño de página (por defecto 10, máx 100)
  *     responses:
  *       200:
  *         description: Lista de pacientes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedPatientsResponse'
+ *             examples:
+ *               success:
+ *                 summary: Página con resultados
+ *                 value:
+ *                   page: 1
+ *                   limit: 10
+ *                   total: 2
+ *                   count: 2
+ *                   patients:
+ *                     - usuario_id: "p1"
+ *                       nombre: "María Gómez"
+ *                       correo: "maria@ejemplo.com"
+ *                       fecha_de_nacimiento: "2010-05-14"
+ *                       numero_telefono: "5588887777"
+ *                       sexo: "Femenino"
+ *                       tipo: "Paciente"
+ *                       imagen_url: "https://res.cloudinary.com/demo/image/upload/v1/usuarios/p1.jpg"
+ *                       imagen_id: "usuarios/p1"
+ *                       escolaridad: "Primaria"
+ *                       domicilio: "Calle 1 #123"
+ *                       codigo_postal: "07700"
+ *                     - usuario_id: "p2"
+ *                       nombre: "Juan Ruiz"
+ *                       correo: "juan@ejemplo.com"
+ *                       fecha_de_nacimiento: "2008-11-02"
+ *                       numero_telefono: "5577778888"
+ *                       sexo: "Masculino"
+ *                       tipo: "Paciente"
+ *                       imagen_url: null
+ *                       imagen_id: null
+ *                       escolaridad: "Secundaria"
+ *                       domicilio: "Calle 2 #456"
+ *                       codigo_postal: "07800"
+ *               empty:
+ *                 summary: Sin resultados
+ *                 value:
+ *                   page: 1
+ *                   limit: 10
+ *                   total: 0
+ *                   count: 0
+ *                   patients: []
+ *                   message: "No hay pacientes registrados."
  */
 router.get('/auth/patients', verifyToken, directoryController.getPatients);
 
@@ -340,13 +483,69 @@ router.get('/auth/patients', verifyToken, directoryController.getPatients);
  * @swagger
  * /api/auth/doctor-patient-links:
  *   get:
- *     summary: Lista vínculos doctor-paciente
+ *     summary: Lista vínculos doctor-paciente (con paginación)
  *     tags: [Auth]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Página a retornar (por defecto 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Tamaño de página (por defecto 10, máx 100)
  *     responses:
  *       200:
  *         description: Lista de vínculos con información básica de doctor y paciente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedLinksResponse'
+ *             examples:
+ *               success:
+ *                 summary: Página con resultados
+ *                 value:
+ *                   page: 1
+ *                   limit: 10
+ *                   total: 2
+ *                   count: 2
+ *                   links:
+ *                     - doctor_id: "d1"
+ *                       paciente_id: "p1"
+ *                       doctor_nombre: "Dra. Ana López"
+ *                       doctor_correo: "ana@ejemplo.com"
+ *                       doctor_imagen_url: "https://res.cloudinary.com/demo/image/upload/v1/usuarios/d1.jpg"
+ *                       doctor_especialidad: "Neurología"
+ *                       paciente_nombre: "María Gómez"
+ *                       paciente_correo: "maria@ejemplo.com"
+ *                       paciente_imagen_url: "https://res.cloudinary.com/demo/image/upload/v1/usuarios/p1.jpg"
+ *                       paciente_escolaridad: "Primaria"
+ *                     - doctor_id: "d2"
+ *                       paciente_id: "p2"
+ *                       doctor_nombre: "Dr. Carlos Pérez"
+ *                       doctor_correo: "carlos@ejemplo.com"
+ *                       doctor_imagen_url: null
+ *                       doctor_especialidad: "Pediatría"
+ *                       paciente_nombre: "Juan Ruiz"
+ *                       paciente_correo: "juan@ejemplo.com"
+ *                       paciente_imagen_url: null
+ *                       paciente_escolaridad: "Secundaria"
+ *               empty:
+ *                 summary: Sin resultados
+ *                 value:
+ *                   page: 1
+ *                   limit: 10
+ *                   total: 0
+ *                   count: 0
+ *                   links: []
+ *                   message: "No hay vínculos doctor-paciente registrados."
  */
 router.get('/auth/doctor-patient-links', verifyToken, directoryController.getDoctorPatientLinks);
 
@@ -375,6 +574,52 @@ router.get('/auth/doctor-patient-links', verifyToken, directoryController.getDoc
  *     responses:
  *       200:
  *         description: Lista de usuarios
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedUsersResponse'
+ *             examples:
+ *               success:
+ *                 summary: Página con resultados
+ *                 value:
+ *                   page: 1
+ *                   limit: 10
+ *                   total: 2
+ *                   count: 2
+ *                   users:
+ *                     - usuario_id: "d1"
+ *                       nombre: "Dra. Ana López"
+ *                       correo: "ana@ejemplo.com"
+ *                       fecha_de_nacimiento: "1985-03-22"
+ *                       numero_telefono: "5512345678"
+ *                       sexo: "Femenino"
+ *                       tipo: "Doctor"
+ *                       imagen_url: "https://res.cloudinary.com/demo/image/upload/v1/usuarios/d1.jpg"
+ *                       imagen_id: "usuarios/d1"
+ *                       doctor_especialidad: "Neurología"
+ *                       domicilio: "Av. Reforma 100"
+ *                       codigo_postal: "06000"
+ *                     - usuario_id: "p1"
+ *                       nombre: "María Gómez"
+ *                       correo: "maria@ejemplo.com"
+ *                       fecha_de_nacimiento: "2010-05-14"
+ *                       numero_telefono: "5588887777"
+ *                       sexo: "Femenino"
+ *                       tipo: "Paciente"
+ *                       imagen_url: "https://res.cloudinary.com/demo/image/upload/v1/usuarios/p1.jpg"
+ *                       imagen_id: "usuarios/p1"
+ *                       paciente_escolaridad: "Primaria"
+ *                       domicilio: "Calle 1 #123"
+ *                       codigo_postal: "07700"
+ *               empty:
+ *                 summary: Sin resultados
+ *                 value:
+ *                   page: 1
+ *                   limit: 10
+ *                   total: 0
+ *                   count: 0
+ *                   users: []
+ *                   message: "No hay usuarios registrados."
  */
 router.get('/auth/users', verifyToken, directoryController.getAllUsers);
 
