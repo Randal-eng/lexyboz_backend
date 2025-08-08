@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const authController = require('../controllers/authController');
+const directoryController = require('../controllers/directoryController');
 const upload = require('../../../../middleware');
 const { verifyToken } = require('../middleware/authMiddleware');
 
@@ -306,6 +307,76 @@ router.post('/auth/forgot-password', authController.requestPasswordReset);
  * @returns {object} Mensaje de éxito o error
  */
 router.post('/auth/reset-password', authController.resetPassword);
+
+/**
+ * @swagger
+ * /api/auth/doctors:
+ *   get:
+ *     summary: Lista todos los doctores
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de doctores
+ */
+router.get('/auth/doctors', verifyToken, directoryController.getDoctors);
+
+/**
+ * @swagger
+ * /api/auth/patients:
+ *   get:
+ *     summary: Lista todos los pacientes
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de pacientes
+ */
+router.get('/auth/patients', verifyToken, directoryController.getPatients);
+
+/**
+ * @swagger
+ * /api/auth/doctor-patient-links:
+ *   get:
+ *     summary: Lista vínculos doctor-paciente
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de vínculos con información básica de doctor y paciente
+ */
+router.get('/auth/doctor-patient-links', verifyToken, directoryController.getDoctorPatientLinks);
+
+/**
+ * @swagger
+ * /api/auth/users:
+ *   get:
+ *     summary: Lista todos los usuarios (con paginación)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Página a retornar (por defecto 1)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *         description: Tamaño de página (por defecto 10, máx 100)
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios
+ */
+router.get('/auth/users', verifyToken, directoryController.getAllUsers);
 
 
 

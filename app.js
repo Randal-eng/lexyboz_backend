@@ -69,12 +69,40 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use(express.json());
-app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
+
+// CORS robusto con múltiples orígenes permitidos (separados por comas en FRONTEND_ORIGIN)
+const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((s) => s.trim());
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permitir herramientas como Postman/Thunder Client (sin origin)
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS_NOT_ALLOWED'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
+
+app.use(cors(corsOptions));
+// Manejo de preflight para todas las rutas
+app.options('*', cors(corsOptions));
+
+// Manejador de errores de CORS para responder en JSON
+app.use((err, req, res, next) => {
+  if (err && err.message === 'CORS_NOT_ALLOWED') {
+    return res.status(403).json({
+      message: 'Origen no permitido por CORS',
+      origin: req.headers.origin || null,
+      allowedOrigins
+    });
+  }
+  return next(err);
+});
 
 app.use('/api', adminRoutes);
 app.use('/api', authRoutes);
