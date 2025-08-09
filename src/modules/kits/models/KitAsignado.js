@@ -50,9 +50,34 @@ const eliminarAsignacion = async (asignacion_id) => {
     return result.rows[0];
 };
 
+// Historial de kits por paciente con estado y datos del kit (paginado)
+const obtenerHistorialPorPaciente = async ({ paciente_id, limit, offset }) => {
+    const query = `
+        SELECT 
+            ka.asignacion_id,
+            ka.estado,
+            ka.fecha_asignacion,
+            k.kit_id,
+            k.nombre,
+            k.descripcion,
+            k.creado_por,
+            COUNT(*) OVER() AS total_count
+        FROM Kits_Asignados ka
+        INNER JOIN Kits k ON k.kit_id = ka.kit_id
+        WHERE ka.paciente_id = $1
+        ORDER BY ka.fecha_asignacion DESC
+        LIMIT $2 OFFSET $3;
+    `;
+    const result = await pool.query(query, [paciente_id, limit, offset]);
+    const rows = result.rows;
+    const total = rows[0] ? Number(rows[0].total_count) : 0;
+    return { rows: rows.map(({ total_count, ...r }) => r), total };
+};
+
 module.exports = {
     asignarKit,
     obtenerAsignaciones,
     editarEstadoAsignacion,
     eliminarAsignacion,
+    obtenerHistorialPorPaciente,
 };

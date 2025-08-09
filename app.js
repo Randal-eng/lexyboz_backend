@@ -56,6 +56,128 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'API para el proyecto Lexyboz',
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT'
+        }
+      },
+      schemas: {
+        Doctor: {
+          type: 'object',
+          properties: {
+            usuario_id: { type: 'string' },
+            nombre: { type: 'string' },
+            correo: { type: 'string' },
+            fecha_de_nacimiento: { type: 'string', format: 'date' },
+            numero_telefono: { type: 'string' },
+            sexo: { type: 'string' },
+            tipo: { type: 'string', example: 'Doctor' },
+            imagen_url: { type: 'string', nullable: true },
+            imagen_id: { type: 'string', nullable: true },
+            especialidad: { type: 'string' },
+            domicilio: { type: 'string' },
+            codigo_postal: { type: 'string' }
+          }
+        },
+        Patient: {
+          type: 'object',
+          properties: {
+            usuario_id: { type: 'string' },
+            nombre: { type: 'string' },
+            correo: { type: 'string' },
+            fecha_de_nacimiento: { type: 'string', format: 'date' },
+            numero_telefono: { type: 'string' },
+            sexo: { type: 'string' },
+            tipo: { type: 'string', example: 'Paciente' },
+            imagen_url: { type: 'string', nullable: true },
+            imagen_id: { type: 'string', nullable: true },
+            escolaridad: { type: 'string' },
+            domicilio: { type: 'string' },
+            codigo_postal: { type: 'string' }
+          }
+        },
+        LinkDoctorPaciente: {
+          type: 'object',
+          properties: {
+            doctor_id: { type: 'string' },
+            paciente_id: { type: 'string' },
+            doctor_nombre: { type: 'string' },
+            doctor_correo: { type: 'string' },
+            doctor_imagen_url: { type: 'string', nullable: true },
+            doctor_especialidad: { type: 'string' },
+            paciente_nombre: { type: 'string' },
+            paciente_correo: { type: 'string' },
+            paciente_imagen_url: { type: 'string', nullable: true },
+            paciente_escolaridad: { type: 'string' }
+          }
+        },
+        User: {
+          type: 'object',
+          properties: {
+            usuario_id: { type: 'string' },
+            nombre: { type: 'string' },
+            correo: { type: 'string' },
+            fecha_de_nacimiento: { type: 'string', format: 'date' },
+            numero_telefono: { type: 'string' },
+            sexo: { type: 'string' },
+            tipo: { type: 'string', enum: ['Usuario', 'Doctor', 'Paciente'] },
+            imagen_url: { type: 'string', nullable: true },
+            imagen_id: { type: 'string', nullable: true },
+            doctor_especialidad: { type: 'string', nullable: true },
+            paciente_escolaridad: { type: 'string', nullable: true },
+            domicilio: { type: 'string', nullable: true },
+            codigo_postal: { type: 'string', nullable: true }
+          }
+        },
+        PaginatedDoctorsResponse: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', example: 1 },
+            limit: { type: 'integer', example: 10 },
+            total: { type: 'integer', example: 25 },
+            count: { type: 'integer', example: 10 },
+            doctors: { type: 'array', items: { $ref: '#/components/schemas/Doctor' } },
+            message: { type: 'string', nullable: true }
+          }
+        },
+        PaginatedPatientsResponse: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', example: 1 },
+            limit: { type: 'integer', example: 10 },
+            total: { type: 'integer', example: 25 },
+            count: { type: 'integer', example: 10 },
+            patients: { type: 'array', items: { $ref: '#/components/schemas/Patient' } },
+            message: { type: 'string', nullable: true }
+          }
+        },
+        PaginatedLinksResponse: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', example: 1 },
+            limit: { type: 'integer', example: 10 },
+            total: { type: 'integer', example: 25 },
+            count: { type: 'integer', example: 10 },
+            links: { type: 'array', items: { $ref: '#/components/schemas/LinkDoctorPaciente' } },
+            message: { type: 'string', nullable: true }
+          }
+        },
+        PaginatedUsersResponse: {
+          type: 'object',
+          properties: {
+            page: { type: 'integer', example: 1 },
+            limit: { type: 'integer', example: 10 },
+            total: { type: 'integer', example: 25 },
+            count: { type: 'integer', example: 10 },
+            users: { type: 'array', items: { $ref: '#/components/schemas/User' } },
+            message: { type: 'string', nullable: true }
+          }
+        }
+      }
+    },
     servers: [
       {
         url: `http://localhost:${process.env.PORT || 3500}`,
@@ -69,12 +191,40 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.use(express.json());
-app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000',
+
+// CORS robusto con múltiples orígenes permitidos (separados por comas en FRONTEND_ORIGIN)
+const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((s) => s.trim());
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permitir herramientas como Postman/Thunder Client (sin origin)
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS_NOT_ALLOWED'));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization']
-}));
+};
+
+app.use(cors(corsOptions));
+// Manejo de preflight para todas las rutas
+app.options('*', cors(corsOptions));
+
+// Manejador de errores de CORS para responder en JSON
+app.use((err, req, res, next) => {
+  if (err && err.message === 'CORS_NOT_ALLOWED') {
+    return res.status(403).json({
+      message: 'Origen no permitido por CORS',
+      origin: req.headers.origin || null,
+      allowedOrigins
+    });
+  }
+  return next(err);
+});
 
 app.use('/api', adminRoutes);
 app.use('/api', authRoutes);

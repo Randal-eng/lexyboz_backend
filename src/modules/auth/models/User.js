@@ -342,5 +342,127 @@ module.exports = {
     loginUserMethod,
     setResetToken,
     validateResetToken,
-    updatePassword
+    updatePassword,
+    /**
+     * Obtiene todos los doctores con sus datos de usuario y detalle de Doctor.
+     * @returns {Promise<Array>} Lista de doctores
+     */
+    getAllDoctors: async ({ limit, offset }) => {
+        const query = `
+            SELECT 
+                u.usuario_id,
+                u.nombre,
+                u.correo,
+                u.fecha_de_nacimiento,
+                u.numero_telefono,
+                u.sexo,
+                u.tipo,
+                u.imagen_url,
+                u.imagen_id,
+                d.especialidad,
+                d.domicilio,
+                d.codigo_postal,
+                COUNT(*) OVER() AS total_count
+            FROM Usuario u
+            INNER JOIN Doctor d ON d.usuario_id = u.usuario_id
+            ORDER BY u.nombre ASC
+            LIMIT $1 OFFSET $2;
+        `;
+        const result = await pool.query(query, [limit, offset]);
+        const rows = result.rows;
+        const total = rows[0] ? Number(rows[0].total_count) : 0;
+        return { rows: rows.map(({ total_count, ...r }) => r), total };
+    },
+    /**
+     * Obtiene todos los pacientes con sus datos de usuario y detalle de Paciente.
+     * @returns {Promise<Array>} Lista de pacientes
+     */
+    getAllPatients: async ({ limit, offset }) => {
+        const query = `
+            SELECT 
+                u.usuario_id,
+                u.nombre,
+                u.correo,
+                u.fecha_de_nacimiento,
+                u.numero_telefono,
+                u.sexo,
+                u.tipo,
+                u.imagen_url,
+                u.imagen_id,
+                p.escolaridad,
+                p.domicilio,
+                p.codigo_postal,
+                COUNT(*) OVER() AS total_count
+            FROM Usuario u
+            INNER JOIN Paciente p ON p.usuario_id = u.usuario_id
+            ORDER BY u.nombre ASC
+            LIMIT $1 OFFSET $2;
+        `;
+        const result = await pool.query(query, [limit, offset]);
+        const rows = result.rows;
+        const total = rows[0] ? Number(rows[0].total_count) : 0;
+        return { rows: rows.map(({ total_count, ...r }) => r), total };
+    },
+    /**
+     * Obtiene relaciones doctor-paciente con info de ambos usuarios.
+     * @returns {Promise<Array>} Listado de vínculos doctor-paciente
+     */
+    getDoctorPatientLinks: async ({ limit, offset }) => {
+        const query = `
+            SELECT 
+                dp.doctor_id,
+                dp.paciente_id,
+                du.nombre  AS doctor_nombre,
+                du.correo  AS doctor_correo,
+                du.imagen_url AS doctor_imagen_url,
+                d.especialidad AS doctor_especialidad,
+                pu.nombre  AS paciente_nombre,
+                pu.correo  AS paciente_correo,
+                pu.imagen_url AS paciente_imagen_url,
+                p.escolaridad AS paciente_escolaridad,
+                COUNT(*) OVER() AS total_count
+            FROM doctor_paciente dp
+            INNER JOIN Usuario du ON du.usuario_id = dp.doctor_id
+            INNER JOIN Doctor d   ON d.usuario_id   = dp.doctor_id
+            INNER JOIN Usuario pu ON pu.usuario_id = dp.paciente_id
+            INNER JOIN Paciente p ON p.usuario_id   = dp.paciente_id
+            ORDER BY doctor_nombre ASC, paciente_nombre ASC
+            LIMIT $1 OFFSET $2;
+        `;
+        const result = await pool.query(query, [limit, offset]);
+        const rows = result.rows;
+        const total = rows[0] ? Number(rows[0].total_count) : 0;
+        return { rows: rows.map(({ total_count, ...r }) => r), total };
+    },
+    /**
+     * Obtiene todos los usuarios con datos básicos y detalles si aplican, con paginación.
+     */
+    getAllUsers: async ({ limit, offset }) => {
+        const query = `
+            SELECT 
+                u.usuario_id,
+                u.nombre,
+                u.correo,
+                u.fecha_de_nacimiento,
+                u.numero_telefono,
+                u.sexo,
+                u.tipo,
+                u.imagen_url,
+                u.imagen_id,
+                d.especialidad AS doctor_especialidad,
+                p.escolaridad  AS paciente_escolaridad,
+                COALESCE(d.domicilio, p.domicilio) AS domicilio,
+                COALESCE(d.codigo_postal, p.codigo_postal) AS codigo_postal,
+                COUNT(*) OVER() AS total_count
+            FROM Usuario u
+            LEFT JOIN Doctor d ON d.usuario_id = u.usuario_id
+            LEFT JOIN Paciente p ON p.usuario_id = u.usuario_id
+            ORDER BY u.nombre ASC
+            LIMIT $1 OFFSET $2;
+        `;
+        const result = await pool.query(query, [limit, offset]);
+        const rows = result.rows;
+        const total = rows[0] ? Number(rows[0].total_count) : 0;
+        return { rows: rows.map(({ total_count, ...r }) => r), total };
+    }
 };
