@@ -14,6 +14,7 @@ const kitController = require('../controllers/kitController');
  *         application/json:
  *           schema:
  *             type: object
+ *             required: [nombre, creado_por]
  *             properties:
  *               nombre:
  *                 type: string
@@ -21,6 +22,12 @@ const kitController = require('../controllers/kitController');
  *               descripcion:
  *                 type: string
  *                 description: Descripción del kit
+ *               creado_por:
+ *                 type: string
+ *                 description: Usuario que crea el kit (ej. "admin")
+ *           examples:
+ *             ejemplo:
+ *               value: { nombre: "Kit Lectura Básico", descripcion: "Ejercicios introductorios", creado_por: "admin" }
  *     responses:
  *       201:
  *         description: Kit creado exitosamente
