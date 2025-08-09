@@ -22,8 +22,25 @@ const { verifyToken } = require('../../auth/middleware/authMiddleware');
  *               kit_id: { type: integer, description: ID del kit }
  *               paciente_id: { type: integer, description: ID del paciente }
  *               estado: { type: string, description: Estado inicial del kit }
+ *           examples:
+ *             ejemplo:
+ *               value: { kit_id: 5, paciente_id: 42, estado: "en_progreso" }
  *     responses:
- *       201: { description: Kit asignado exitosamente }
+ *       201:
+ *         description: Kit asignado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 asignacion_id: { type: integer }
+ *                 kit_id: { type: integer }
+ *                 paciente_id: { type: integer }
+ *                 estado: { type: string }
+ *                 fecha_asignacion: { type: string, format: date-time }
+ *             examples:
+ *               ejemplo:
+ *                 value: { asignacion_id: 101, kit_id: 5, paciente_id: 42, estado: "en_progreso", fecha_asignacion: "2025-01-15T10:00:00.000Z" }
  *       400: { description: Error en la solicitud }
  */
 router.post('/', verifyToken, kitsAsignadosController.asignarKit);
@@ -53,6 +70,19 @@ router.post('/', verifyToken, kitsAsignadosController.asignarKit);
  *     responses:
  *       201:
  *         description: Kit asignado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 asignacion_id: { type: integer }
+ *                 kit_id: { type: integer }
+ *                 paciente_id: { type: integer }
+ *                 estado: { type: string }
+ *                 fecha_asignacion: { type: string, format: date-time }
+ *             examples:
+ *               ejemplo:
+ *                 value: { asignacion_id: 101, kit_id: 5, paciente_id: 42, estado: "en_progreso", fecha_asignacion: "2025-01-15T10:00:00.000Z" }
  *       400:
  *         description: Error en la solicitud
  */
@@ -76,7 +106,23 @@ router.post('/asignar', verifyToken, kitsAsignadosController.asignarKit);
  *         schema: { type: integer }
  *         required: false
  *     responses:
- *       200: { description: Lista de asignaciones }
+ *       200:
+ *         description: Lista de asignaciones
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   asignacion_id: { type: integer }
+ *                   kit_id: { type: integer }
+ *                   paciente_id: { type: integer }
+ *                   estado: { type: string }
+ *                   fecha_asignacion: { type: string, format: date-time }
+ *             examples:
+ *               ejemplo:
+ *                 value: [ { asignacion_id: 101, kit_id: 5, paciente_id: 42, estado: "en_progreso", fecha_asignacion: "2025-01-15T10:00:00.000Z" } ]
  *       400: { description: Error en la solicitud }
  */
 router.get('/', verifyToken, kitsAsignadosController.obtenerAsignaciones);
@@ -100,6 +146,21 @@ router.get('/', verifyToken, kitsAsignadosController.obtenerAsignaciones);
  *     responses:
  *       200:
  *         description: Lista de asignaciones
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   asignacion_id: { type: integer }
+ *                   kit_id: { type: integer }
+ *                   paciente_id: { type: integer }
+ *                   estado: { type: string }
+ *                   fecha_asignacion: { type: string, format: date-time }
+ *             examples:
+ *               ejemplo:
+ *                 value: [ { asignacion_id: 101, kit_id: 5, paciente_id: 42, estado: "en_progreso", fecha_asignacion: "2025-01-15T10:00:00.000Z" } ]
  *       400:
  *         description: Error en la solicitud
  */
@@ -127,8 +188,25 @@ router.get('/listado', verifyToken, kitsAsignadosController.obtenerAsignaciones)
  *             required: [estado]
  *             properties:
  *               estado: { type: string, description: Nuevo estado (ej. en_progreso, completado) }
+ *           examples:
+ *             ejemplo:
+ *               value: { estado: "completado" }
  *     responses:
- *       200: { description: Asignación editada exitosamente }
+ *       200:
+ *         description: Asignación editada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 asignacion_id: { type: integer }
+ *                 kit_id: { type: integer }
+ *                 paciente_id: { type: integer }
+ *                 estado: { type: string }
+ *                 fecha_asignacion: { type: string, format: date-time }
+ *             examples:
+ *               ejemplo:
+ *                 value: { asignacion_id: 101, kit_id: 5, paciente_id: 42, estado: "completado", fecha_asignacion: "2025-01-15T10:00:00.000Z" }
  *       400: { description: Error en la solicitud }
  *       404: { description: Asignación no encontrada }
  */
@@ -179,7 +257,25 @@ router.put('/:id/estado', verifyToken, kitsAsignadosController.editarEstadoAsign
  *         schema: { type: integer }
  *         required: true
  *     responses:
- *       200: { description: Asignación eliminada exitosamente }
+ *       200:
+ *         description: Asignación eliminada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *                 asignacion:
+ *                   type: object
+ *                   properties:
+ *                     asignacion_id: { type: integer }
+ *                     kit_id: { type: integer }
+ *                     paciente_id: { type: integer }
+ *                     estado: { type: string }
+ *                     fecha_asignacion: { type: string, format: date-time }
+ *             examples:
+ *               ejemplo:
+ *                 value: { message: "Asignación eliminada.", asignacion: { asignacion_id: 101, kit_id: 5, paciente_id: 42, estado: "completado", fecha_asignacion: "2025-01-15T10:00:00.000Z" } }
  *       404: { description: Asignación no encontrada }
  */
 router.delete('/:id', verifyToken, kitsAsignadosController.eliminarAsignacion);
@@ -197,7 +293,25 @@ router.delete('/:id', verifyToken, kitsAsignadosController.eliminarAsignacion);
  *         schema: { type: integer }
  *         required: true
  *     responses:
- *       200: { description: Asignación eliminada exitosamente }
+ *       200:
+ *         description: Asignación eliminada exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message: { type: string }
+ *                 asignacion:
+ *                   type: object
+ *                   properties:
+ *                     asignacion_id: { type: integer }
+ *                     kit_id: { type: integer }
+ *                     paciente_id: { type: integer }
+ *                     estado: { type: string }
+ *                     fecha_asignacion: { type: string, format: date-time }
+ *             examples:
+ *               ejemplo:
+ *                 value: { message: "Asignación eliminada.", asignacion: { asignacion_id: 101, kit_id: 5, paciente_id: 42, estado: "completado", fecha_asignacion: "2025-01-15T10:00:00.000Z" } }
  *       404: { description: Asignación no encontrada }
  */
 router.delete('/:id/eliminar', verifyToken, kitsAsignadosController.eliminarAsignacion);
@@ -306,7 +420,32 @@ router.get('/historial/:paciente_id', verifyToken, kitsAsignadosController.obten
  *         name: limit
  *         schema: { type: integer, default: 10 }
  *     responses:
- *       200: { description: Historial paginado }
+ *       200:
+ *         description: Historial paginado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 page: { type: integer }
+ *                 limit: { type: integer }
+ *                 total: { type: integer }
+ *                 count: { type: integer }
+ *                 historial:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       asignacion_id: { type: integer }
+ *                       estado: { type: string }
+ *                       fecha_asignacion: { type: string, format: date-time }
+ *                       kit_id: { type: integer }
+ *                       nombre: { type: string }
+ *                       descripcion: { type: string }
+ *                       creado_por: { type: string }
+ *             examples:
+ *               ejemplo:
+ *                 value: { page: 1, limit: 10, total: 1, count: 1, historial: [ { asignacion_id: 101, estado: "completado", fecha_asignacion: "2025-01-15T10:00:00.000Z", kit_id: 5, nombre: "Kit Lectura Basico", descripcion: "Ejercicios introductorios de lectura", creado_por: "admin" } ] }
  */
 router.get('/pacientes/:paciente_id/historial', verifyToken, kitsAsignadosController.obtenerHistorialPorPaciente);
 
