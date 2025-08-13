@@ -91,7 +91,7 @@ const loginUser = async (req, res) => {
       { 
         id: user.usuario_id,
         email: user.correo,
-        role: user.rol // Si tienes roles en tu sistema
+        role: user.tipo // Usar 'tipo' en lugar de 'rol'
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }

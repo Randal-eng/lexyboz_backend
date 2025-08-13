@@ -55,6 +55,10 @@ const { verifyToken } = require('../middleware/authMiddleware');
  *                 message:
  *                   type: string
  *                   example: "Inicio de sesión exitoso"
+ *                 token:
+ *                   type: string
+ *                   description: Token JWT para autenticación
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.sample.token"
  *                 user:
  *                   type: object
  *                   properties:
@@ -103,9 +107,12 @@ const { verifyToken } = require('../middleware/authMiddleware');
  *                     fecha_de_nacimiento: "1990-01-01"
  *                     numero_telefono: "5512345678"
  *                     sexo: "Masculino"
- *                     tipo: "Usuario"
+ *                     tipo: "Doctor"
  *                     imagen_url: "https://res.cloudinary.com/demo/image/upload/v1/usuarios/u123.jpg"
  *                     imagen_id: "usuarios/u123"
+ *                     especialidad: "Cardiología"
+ *                     domicilio: "Av. Principal 123, Col. Centro"
+ *                     codigo_postal: "12345"
  *       401:
  *         description: Credenciales inválidas
  *       500:
