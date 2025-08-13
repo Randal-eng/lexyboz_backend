@@ -19,6 +19,16 @@ const reactivoSchema = Joi.object({
         'string.empty': 'La pseudopalabra es requerida',
         'string.max': 'La pseudopalabra no puede exceder 100 caracteres',
         'any.required': 'La pseudopalabra es requerida'
+    }),
+    ejercicio_id: Joi.number().integer().positive().optional().allow(null).messages({
+        'number.base': 'El ID del ejercicio debe ser un número',
+        'number.integer': 'El ID del ejercicio debe ser un número entero',
+        'number.positive': 'El ID del ejercicio debe ser positivo'
+    }),
+    orden_reactivo: Joi.number().integer().min(1).optional().messages({
+        'number.base': 'El orden debe ser un número',
+        'number.integer': 'El orden debe ser un número entero',
+        'number.min': 'El orden debe ser mayor a 0'
     })
 });
 
@@ -38,6 +48,16 @@ const reactivoUpdateSchema = Joi.object({
     pseudopalabra: Joi.string().max(100).optional().messages({
         'string.empty': 'La pseudopalabra no puede estar vacía',
         'string.max': 'La pseudopalabra no puede exceder 100 caracteres'
+    }),
+    ejercicio_id: Joi.number().integer().positive().optional().allow(null).messages({
+        'number.base': 'El ID del ejercicio debe ser un número',
+        'number.integer': 'El ID del ejercicio debe ser un número entero',
+        'number.positive': 'El ID del ejercicio debe ser positivo'
+    }),
+    orden_reactivo: Joi.number().integer().min(1).optional().messages({
+        'number.base': 'El orden debe ser un número',
+        'number.integer': 'El orden debe ser un número entero',
+        'number.min': 'El orden debe ser mayor a 0'
     })
 });
 
@@ -54,19 +74,27 @@ class ReactivoLecturaPseudopalabra {
             throw new Error(`Error de validación: ${error.details[0].message}`);
         }
 
-        const { id_sub_tipo, tiempo_duracion, pseudopalabra } = value;
+        const { id_sub_tipo, tiempo_duracion, pseudopalabra, ejercicio_id, orden_reactivo } = value;
 
         try {
             const query = `
-                INSERT INTO reactivo_lectura_pseudopalabras (id_sub_tipo, tiempo_duracion, pseudopalabra) 
-                VALUES ($1, $2, $3) 
-                RETURNING id_reactivo, id_sub_tipo, tiempo_duracion, pseudopalabra, created_at, updated_at
+                INSERT INTO reactivo_lectura_pseudopalabras 
+                (id_sub_tipo, tiempo_duracion, pseudopalabra, ejercicio_id, orden_reactivo) 
+                VALUES ($1, $2, $3, $4, COALESCE($5, 1)) 
+                RETURNING id_reactivo, id_sub_tipo, tiempo_duracion, pseudopalabra, 
+                         ejercicio_id, orden_reactivo, created_at, updated_at
             `;
-            const result = await pool.query(query, [id_sub_tipo, tiempo_duracion, pseudopalabra]);
+            const result = await pool.query(query, [id_sub_tipo, tiempo_duracion, pseudopalabra, ejercicio_id, orden_reactivo]);
             return result.rows[0];
         } catch (error) {
             if (error.code === '23503') { // Foreign key violation
+                if (error.constraint?.includes('fk_reactivo_ejercicio')) {
+                    throw new Error('El ejercicio especificado no existe');
+                }
                 throw new Error('El sub-tipo especificado no existe');
+            }
+            if (error.message.includes('no puede agregarse al ejercicio')) {
+                throw new Error(error.message);
             }
             throw error;
         }
@@ -365,6 +393,214 @@ class ReactivoLecturaPseudopalabra {
                 LIMIT $2
             `;
             const result = await pool.query(query, [id_sub_tipo, cantidad]);
+            return result.rows;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Asignar reactivo a un ejercicio
+     * @param {number} id_reactivo - ID del reactivo
+     * @param {number} ejercicio_id - ID del ejercicio
+     * @param {number} orden_reactivo - Orden del reactivo en el ejercicio
+     * @returns {Object} - Reactivo actualizado
+     */
+    static async asignarReactivoAEjercicio(id_reactivo, ejercicio_id, orden_reactivo = 1) {
+        try {
+            const query = `
+                UPDATE reactivo_lectura_pseudopalabras 
+                SET ejercicio_id = $1, orden_reactivo = $2, updated_at = CURRENT_TIMESTAMP
+                WHERE id_reactivo = $3
+                RETURNING id_reactivo, id_sub_tipo, pseudopalabra, tiempo_duracion, 
+                         ejercicio_id, orden_reactivo, created_at, updated_at
+            `;
+            const result = await pool.query(query, [ejercicio_id, orden_reactivo, id_reactivo]);
+            
+            if (result.rows.length === 0) {
+                throw new Error('Reactivo no encontrado');
+            }
+            
+            return result.rows[0];
+        } catch (error) {
+            if (error.code === '23503') {
+                throw new Error('El ejercicio especificado no existe');
+            }
+            if (error.message.includes('no puede agregarse al ejercicio')) {
+                throw new Error(error.message);
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * Quitar reactivo de un ejercicio
+     * @param {number} id_reactivo - ID del reactivo
+     * @returns {Object} - Reactivo actualizado
+     */
+    static async quitarReactivoDeEjercicio(id_reactivo) {
+        try {
+            const query = `
+                UPDATE reactivo_lectura_pseudopalabras 
+                SET ejercicio_id = NULL, orden_reactivo = 1, updated_at = CURRENT_TIMESTAMP
+                WHERE id_reactivo = $1
+                RETURNING id_reactivo, id_sub_tipo, pseudopalabra, tiempo_duracion, 
+                         ejercicio_id, orden_reactivo, created_at, updated_at
+            `;
+            const result = await pool.query(query, [id_reactivo]);
+            
+            if (result.rows.length === 0) {
+                throw new Error('Reactivo no encontrado');
+            }
+            
+            return result.rows[0];
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener reactivos de un ejercicio específico
+     * @param {number} ejercicio_id - ID del ejercicio
+     * @returns {Array} - Lista de reactivos del ejercicio
+     */
+    static async getReactivosPorEjercicio(ejercicio_id) {
+        try {
+            const query = `
+                SELECT 
+                    r.id_reactivo,
+                    r.id_sub_tipo,
+                    r.pseudopalabra,
+                    r.tiempo_duracion,
+                    r.ejercicio_id,
+                    r.orden_reactivo,
+                    r.created_at,
+                    r.updated_at,
+                    st.sub_tipo_nombre,
+                    t.tipo_nombre,
+                    e.titulo as ejercicio_titulo
+                FROM reactivo_lectura_pseudopalabras r
+                JOIN Sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
+                JOIN Tipos t ON st.tipo = t.id_tipo
+                LEFT JOIN Ejercicios e ON r.ejercicio_id = e.ejercicio_id
+                WHERE r.ejercicio_id = $1
+                ORDER BY r.orden_reactivo ASC, r.created_at ASC
+            `;
+            const result = await pool.query(query, [ejercicio_id]);
+            return result.rows;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener reactivos sin asignar a ningún ejercicio
+     * @param {Object} filters - Filtros opcionales
+     * @returns {Array} - Lista de reactivos libres
+     */
+    static async getReactivosLibres(filters = {}) {
+        try {
+            let query = `
+                SELECT 
+                    r.id_reactivo,
+                    r.id_sub_tipo,
+                    r.pseudopalabra,
+                    r.tiempo_duracion,
+                    r.created_at,
+                    r.updated_at,
+                    st.sub_tipo_nombre,
+                    t.tipo_nombre
+                FROM reactivo_lectura_pseudopalabras r
+                JOIN Sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
+                JOIN Tipos t ON st.tipo = t.id_tipo
+                WHERE r.ejercicio_id IS NULL
+            `;
+            
+            const params = [];
+            const conditions = [];
+
+            // Filtro por sub-tipo
+            if (filters.id_sub_tipo) {
+                conditions.push(`r.id_sub_tipo = $${params.length + 1}`);
+                params.push(filters.id_sub_tipo);
+            }
+
+            // Filtro por tipo
+            if (filters.tipo) {
+                conditions.push(`t.id_tipo = $${params.length + 1}`);
+                params.push(filters.tipo);
+            }
+
+            if (conditions.length > 0) {
+                query += ` AND ${conditions.join(' AND ')}`;
+            }
+
+            query += ` ORDER BY r.created_at DESC`;
+
+            const result = await pool.query(query, params);
+            return result.rows;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Actualizar orden de reactivos en un ejercicio
+     * @param {number} ejercicio_id - ID del ejercicio
+     * @param {Array} ordenReactivos - Array de {id_reactivo, orden_reactivo}
+     * @returns {boolean} - Éxito de la operación
+     */
+    static async actualizarOrdenReactivos(ejercicio_id, ordenReactivos) {
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+            
+            for (const item of ordenReactivos) {
+                const query = `
+                    UPDATE reactivo_lectura_pseudopalabras 
+                    SET orden_reactivo = $1, updated_at = CURRENT_TIMESTAMP
+                    WHERE id_reactivo = $2 AND ejercicio_id = $3
+                `;
+                await client.query(query, [item.orden_reactivo, item.id_reactivo, ejercicio_id]);
+            }
+            
+            await client.query('COMMIT');
+            return true;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Obtener reactivos aleatorios de un ejercicio específico
+     * @param {number} ejercicio_id - ID del ejercicio
+     * @param {number} cantidad - Cantidad de reactivos aleatorios
+     * @returns {Array} - Reactivos aleatorios del ejercicio
+     */
+    static async getReactivosAleatoriosDeEjercicio(ejercicio_id, cantidad = 5) {
+        try {
+            const query = `
+                SELECT 
+                    r.id_reactivo,
+                    r.id_sub_tipo,
+                    r.pseudopalabra,
+                    r.tiempo_duracion,
+                    r.ejercicio_id,
+                    r.orden_reactivo,
+                    st.sub_tipo_nombre,
+                    t.tipo_nombre
+                FROM reactivo_lectura_pseudopalabras r
+                JOIN Sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
+                JOIN Tipos t ON st.tipo = t.id_tipo
+                WHERE r.ejercicio_id = $1
+                ORDER BY RANDOM()
+                LIMIT $2
+            `;
+            const result = await pool.query(query, [ejercicio_id, cantidad]);
             return result.rows;
         } catch (error) {
             throw error;

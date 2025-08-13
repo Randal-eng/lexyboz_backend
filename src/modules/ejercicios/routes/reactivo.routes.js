@@ -37,4 +37,10 @@ router.get('/aleatorios', ReactivoController.obtenerReactivosAleatorios);
 // Obtener estadísticas de reactivos
 router.get('/estadisticas', ReactivoController.obtenerEstadisticas);
 
+// Rutas de ejercicios con reactivos
+router.post('/asignar-ejercicio', ReactivoController.asignarReactivoAEjercicio);
+router.post('/quitar-ejercicio', ReactivoController.quitarReactivoDeEjercicio);
+router.get('/libres', ReactivoController.obtenerReactivosLibres);
+router.post('/actualizar-orden', ReactivoController.actualizarOrdenReactivos);
+
 module.exports = router;

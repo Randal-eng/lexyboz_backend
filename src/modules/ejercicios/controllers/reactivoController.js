@@ -574,6 +574,225 @@ class ReactivoController {
             res.status(500).json({ error: 'Error interno del servidor' });
         }
     }
+
+    /**
+     * @swagger
+     * /api/reactivos/asignar-ejercicio:
+     *   post:
+     *     summary: Asignar reactivo a ejercicio
+     *     description: Asigna un reactivo libre a un ejercicio específico
+     *     tags: [Reactivos]
+     *     security:
+     *       - bearerAuth: []
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - reactivo_id
+     *               - ejercicio_id
+     *               - orden_reactivo
+     *             properties:
+     *               reactivo_id:
+     *                 type: integer
+     *                 example: 1
+     *               ejercicio_id:
+     *                 type: integer
+     *                 example: 5
+     *               orden_reactivo:
+     *                 type: integer
+     *                 example: 1
+     *     responses:
+     *       200:
+     *         description: Reactivo asignado exitosamente
+     */
+    static async asignarReactivoAEjercicio(req, res) {
+        try {
+            const { reactivo_id, ejercicio_id, orden_reactivo } = req.body;
+            
+            if (!reactivo_id || !ejercicio_id || !orden_reactivo) {
+                return res.status(400).json({ 
+                    error: 'Los campos reactivo_id, ejercicio_id y orden_reactivo son requeridos' 
+                });
+            }
+
+            const resultado = await ReactivoLecturaPseudopalabra.asignarReactivoAEjercicio(
+                reactivo_id, 
+                ejercicio_id, 
+                orden_reactivo
+            );
+            
+            res.json({
+                message: 'Reactivo asignado al ejercicio exitosamente',
+                reactivo: resultado
+            });
+        } catch (error) {
+            console.error('Error al asignar reactivo al ejercicio:', error);
+            if (error.message.includes('ya está asignado') || 
+                error.message.includes('no existe') ||
+                error.message.includes('no coincide')) {
+                return res.status(400).json({ error: error.message });
+            }
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/reactivos/quitar-ejercicio:
+     *   post:
+     *     summary: Quitar reactivo de ejercicio
+     *     description: Quita un reactivo de un ejercicio (lo deja libre)
+     *     tags: [Reactivos]
+     *     security:
+     *       - bearerAuth: []
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - reactivo_id
+     *             properties:
+     *               reactivo_id:
+     *                 type: integer
+     *                 example: 1
+     *     responses:
+     *       200:
+     *         description: Reactivo quitado del ejercicio exitosamente
+     */
+    static async quitarReactivoDeEjercicio(req, res) {
+        try {
+            const { reactivo_id } = req.body;
+            
+            if (!reactivo_id) {
+                return res.status(400).json({ 
+                    error: 'El campo reactivo_id es requerido' 
+                });
+            }
+
+            const resultado = await ReactivoLecturaPseudopalabra.quitarReactivoDeEjercicio(reactivo_id);
+            
+            res.json({
+                message: 'Reactivo quitado del ejercicio exitosamente',
+                reactivo: resultado
+            });
+        } catch (error) {
+            console.error('Error al quitar reactivo del ejercicio:', error);
+            if (error.message.includes('no encontrado') || 
+                error.message.includes('no está asignado')) {
+                return res.status(404).json({ error: error.message });
+            }
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/reactivos/libres:
+     *   get:
+     *     summary: Obtener reactivos libres
+     *     description: Obtiene todos los reactivos que no están asignados a ningún ejercicio
+     *     tags: [Reactivos]
+     *     security:
+     *       - bearerAuth: []
+     *     parameters:
+     *       - in: query
+     *         name: tipo_reactivo
+     *         schema:
+     *           type: integer
+     *         description: Filtrar por tipo de reactivo
+     *     responses:
+     *       200:
+     *         description: Reactivos libres obtenidos exitosamente
+     */
+    static async obtenerReactivosLibres(req, res) {
+        try {
+            const tipoReactivo = req.query.tipo_reactivo ? parseInt(req.query.tipo_reactivo) : null;
+            const reactivos = await ReactivoLecturaPseudopalabra.getReactivosLibres(tipoReactivo);
+            
+            res.json({
+                message: 'Reactivos libres obtenidos exitosamente',
+                reactivos,
+                total: reactivos.length
+            });
+        } catch (error) {
+            console.error('Error al obtener reactivos libres:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/reactivos/actualizar-orden:
+     *   post:
+     *     summary: Actualizar orden de reactivos en ejercicio
+     *     description: Actualiza el orden de los reactivos dentro de un ejercicio
+     *     tags: [Reactivos]
+     *     security:
+     *       - bearerAuth: []
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - ejercicio_id
+     *               - reactivos_orden
+     *             properties:
+     *               ejercicio_id:
+     *                 type: integer
+     *                 example: 5
+     *               reactivos_orden:
+     *                 type: array
+     *                 items:
+     *                   type: object
+     *                   properties:
+     *                     reactivo_id:
+     *                       type: integer
+     *                     orden_reactivo:
+     *                       type: integer
+     *                 example:
+     *                   - reactivo_id: 1
+     *                     orden_reactivo: 1
+     *                   - reactivo_id: 3
+     *                     orden_reactivo: 2
+     *     responses:
+     *       200:
+     *         description: Orden de reactivos actualizado exitosamente
+     */
+    static async actualizarOrdenReactivos(req, res) {
+        try {
+            const { ejercicio_id, reactivos_orden } = req.body;
+            
+            if (!ejercicio_id || !reactivos_orden || !Array.isArray(reactivos_orden)) {
+                return res.status(400).json({ 
+                    error: 'Los campos ejercicio_id y reactivos_orden (array) son requeridos' 
+                });
+            }
+
+            const resultado = await ReactivoLecturaPseudopalabra.actualizarOrdenReactivos(
+                ejercicio_id, 
+                reactivos_orden
+            );
+            
+            res.json({
+                message: 'Orden de reactivos actualizado exitosamente',
+                reactivos_actualizados: resultado
+            });
+        } catch (error) {
+            console.error('Error al actualizar orden de reactivos:', error);
+            if (error.message.includes('no pertenece') || 
+                error.message.includes('no existe')) {
+                return res.status(400).json({ error: error.message });
+            }
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    }
 }
 
 module.exports = ReactivoController;

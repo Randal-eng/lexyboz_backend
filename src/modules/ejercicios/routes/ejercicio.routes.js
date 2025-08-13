@@ -1,121 +1,33 @@
 const express = require('express');
-const router = express.Router();
-const ejercicioController = require('../controllers/ejercicioController');
+const EjercicioController = require('../controllers/ejercicioController');
 const { verifyToken } = require('../../auth/middleware/authMiddleware');
+
+const router = express.Router();
+
+// Middleware de autenticación para todas las rutas
+router.use(verifyToken);
 
 /**
  * @swagger
- * /api/ejercicios:
- *   post:
- *     summary: Crea un nuevo ejercicio
- *     tags: [Ejercicios]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               nombre:
- *                 type: string
- *                 description: Nombre del ejercicio
- *               descripcion:
- *                 type: string
- *                 description: Descripción del ejercicio
- *     responses:
- *       201:
- *         description: Ejercicio creado exitosamente
- *       400:
- *         description: Error en la solicitud
+ * tags:
+ *   name: Ejercicios
+ *   description: Gestión de ejercicios con reactivos específicos
  */
-router.post('/', verifyToken, ejercicioController.crearEjercicio);
-/**
- * @swagger
- * /api/ejercicios:
- *   get:
- *     summary: Obtiene todos los ejercicios
- *     tags: [Ejercicios]
- *     responses:
- *       200:
- *         description: Lista de ejercicios
- *       400:
- *         description: Error en la solicitud
- */
-router.get('/', verifyToken, ejercicioController.obtenerEjercicios);
-/**
- * @swagger
- * /api/ejercicios/{id}:
- *   get:
- *     summary: Obtiene un ejercicio por ID
- *     tags: [Ejercicios]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: ID del ejercicio
- *     responses:
- *       200:
- *         description: Ejercicio encontrado
- *       404:
- *         description: Ejercicio no encontrado
- */
-router.get('/:id', verifyToken, ejercicioController.obtenerEjercicioPorId);
-/**
- * @swagger
- * /api/ejercicios/{id}:
- *   put:
- *     summary: Edita un ejercicio existente
- *     tags: [Ejercicios]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: ID del ejercicio
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               nombre:
- *                 type: string
- *                 description: Nuevo nombre del ejercicio
- *               descripcion:
- *                 type: string
- *                 description: Nueva descripción del ejercicio
- *     responses:
- *       200:
- *         description: Ejercicio editado exitosamente
- *       400:
- *         description: Error en la solicitud
- *       404:
- *         description: Ejercicio no encontrado
- */
-router.put('/:id', verifyToken, ejercicioController.editarEjercicio);
-/**
- * @swagger
- * /api/ejercicios/{id}:
- *   delete:
- *     summary: Elimina un ejercicio
- *     tags: [Ejercicios]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: string
- *         required: true
- *         description: ID del ejercicio
- *     responses:
- *       200:
- *         description: Ejercicio eliminado exitosamente
- *       404:
- *         description: Ejercicio no encontrado
- */
-router.delete('/:id', verifyToken, ejercicioController.eliminarEjercicio);
+
+// Rutas básicas de ejercicios
+router.post('/crear', EjercicioController.crearEjercicio);
+router.get('/listado', EjercicioController.obtenerEjercicios);
+router.get('/obtener/:id', EjercicioController.obtenerEjercicioPorId);
+router.put('/actualizar/:id', EjercicioController.actualizarEjercicio);
+router.delete('/eliminar/:id', EjercicioController.eliminarEjercicio);
+
+// Rutas de búsqueda y filtrado
+router.get('/buscar', EjercicioController.buscarEjercicios);
+router.get('/tipo/:tipo_reactivo', EjercicioController.obtenerEjerciciosPorTipo);
+router.get('/estadisticas', EjercicioController.obtenerEstadisticas);
+
+// Rutas de gestión de reactivos en ejercicios
+router.get('/:id/reactivos', EjercicioController.obtenerReactivosEjercicio);
+router.get('/:id/reactivos/aleatorios', EjercicioController.obtenerReactivosAleatorios);
 
 module.exports = router;
