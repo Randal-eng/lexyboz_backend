@@ -19,14 +19,8 @@ const userSchema = Joi.object({
     imagen_id: Joi.string().allow(null, ''),
     escolaridad: Joi.string().allow(null, '').when('tipo', { is: 'Paciente', then: Joi.required() }),
     especialidad: Joi.string().allow(null, '').when('tipo', { is: 'Doctor', then: Joi.required() }),
-    domicilio: Joi.string().allow(null, '').when('tipo', {
-        is: Joi.valid('Doctor', 'Paciente'),
-        then: Joi.required()
-    }),
-    codigo_postal: Joi.string().pattern(/^\d{5}$/).allow(null, '').when('tipo', {
-        is: Joi.valid('Doctor', 'Paciente'),
-        then: Joi.required()
-    }),
+    domicilio: Joi.string().required(),
+    codigo_postal: Joi.string().pattern(/^\d{5}$/).required(),
 });
 
 /**
@@ -219,13 +213,13 @@ const createUser = async (user, imagen) => {
     const hashedPassword = await bcrypt.hash(contrasenia, salt);
 
     const userQuery = `
-    INSERT INTO Usuario (nombre, correo, contrasenia, fecha_de_nacimiento, numero_telefono, sexo, tipo, imagen_url, imagen_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    INSERT INTO Usuario (nombre, correo, contrasenia, fecha_de_nacimiento, numero_telefono, sexo, tipo, imagen_url, imagen_id, domicilio, codigo_postal)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *;
 `;
     const userValues = [
         nombre, correo, hashedPassword, fecha_de_nacimiento,
-        numero_telefono, sexo, tipo, imagen_url, imagen_id
+        numero_telefono, sexo, tipo, imagen_url, imagen_id, domicilio, codigo_postal
     ];
     const userResult = await pool.query(userQuery, userValues);
     const usuario = userResult.rows[0];
@@ -299,7 +293,9 @@ const loginUserMethod = async (correo) => {
             sexo,
             tipo,
             imagen_url,
-            imagen_id
+            imagen_id,
+            domicilio,
+            codigo_postal
         FROM Usuario 
         WHERE correo = $1;
     `;

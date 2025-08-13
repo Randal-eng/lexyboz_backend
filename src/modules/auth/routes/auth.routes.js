@@ -147,6 +147,8 @@ router.post('/auth/login', authController.loginUser);
  *               - fecha_de_nacimiento
  *               - numero_telefono
  *               - sexo
+ *               - domicilio
+ *               - codigo_postal
  *             properties:
  *               nombre:
  *                 type: string
@@ -189,11 +191,11 @@ router.post('/auth/login', authController.loginUser);
  *                 description: Nivel de escolaridad (requerido si tipo es Paciente)
  *               domicilio:
  *                 type: string
- *                 description: Dirección completa (requerido para Doctor y Paciente)
+ *                 description: Dirección completa (requerido para todos los tipos)
  *               codigo_postal:
  *                 type: string
  *                 pattern: ^[0-9]{5}$
- *                 description: Código postal (requerido para Doctor y Paciente)
+ *                 description: Código postal (requerido para todos los tipos)
  *               imagen:
  *                 type: string
  *                 format: binary
