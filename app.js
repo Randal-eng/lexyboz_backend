@@ -29,19 +29,8 @@ const ejerciciosKitsRoutes = require('./src/modules/kits/routes/ejerciciosKits.r
 
 // Importar rutas de ejercicios
 const ejercicioRoutes = require('./src/modules/ejercicios/routes/ejercicio.routes');
-const escritosRoutes = require('./src/modules/ejercicios/routes/escritos.routes');
-const escrituraReordenamientoRoutes = require('./src/modules/ejercicios/routes/escrituraReordenamiento.routes');
-const escrituraImagenPalabraRoutes = require('./src/modules/ejercicios/routes/escrituraImagenPalabra.routes');
-const visualesRoutes = require('./src/modules/ejercicios/routes/visuales.routes');
-const paresRoutes = require('./src/modules/ejercicios/routes/pares.routes');
-const igualDiferenteRoutes = require('./src/modules/ejercicios/routes/igualDiferente.routes');
-const imagenCorrectoRoutes = require('./src/modules/ejercicios/routes/imagenCorrecto.routes');
-const imagenesRoutes = require('./src/modules/ejercicios/routes/imagenes.routes');
-const palabraMalEscritoRoutes = require('./src/modules/ejercicios/routes/palabraMalEscrito.routes');
 
-// Importar rutas de resultados
-const resultadosEscrituraReordenamientoRoutes = require('./src/modules/resultados/routes/resultadosEscrituraReordenamiento.routes');
-const resultadosEscrituraImagenPalabraRoutes = require('./src/modules/resultados/routes/resultadosEscrituraImagenPalabra.routes');
+// Importar rutas de resultados (ya no hay)
 
 require('dotenv').config();
 
@@ -234,17 +223,6 @@ app.use('/api/kits', kitRoutes);
 app.use('/api/ejercicios', ejercicioRoutes);
 app.use('/api/ejercicios-kits', ejerciciosKitsRoutes);
 app.use('/api/kits-asignados', kitsAsignadosRoutes);
-app.use('/api/escritos', escritosRoutes);
-app.use('/api/escritura-reordenamiento', escrituraReordenamientoRoutes);
-app.use('/api/escritura-imagen-palabra', escrituraImagenPalabraRoutes);
-app.use('/api/resultados-escritura-reordenamiento', resultadosEscrituraReordenamientoRoutes);
-app.use('/api/resultados-escritura-imagen-palabra', resultadosEscrituraImagenPalabraRoutes);
-app.use('/api/visuales', visualesRoutes);
-app.use('/api/pares', paresRoutes);
-app.use('/api/igual-diferente', igualDiferenteRoutes);
-app.use('/api/imagen-correcto', imagenCorrectoRoutes);
-app.use('/api/imagenes', imagenesRoutes);
-app.use('/api/palabra-mal-escrito', palabraMalEscritoRoutes);
 
 // Endpoint para mensaje de producción
 app.get('/api/hola-produccion', (req, res) => {
