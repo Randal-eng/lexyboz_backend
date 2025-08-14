@@ -1,4 +1,5 @@
 const ejercicioModel = require('../models/Ejercicio');
+const reactivoModel = require('../../reactivos/models/Reactivo');
 
 // =====================================================
 // CONTROLADORES DE EJERCICIOS
@@ -9,8 +10,10 @@ const ejercicioModel = require('../models/Ejercicio');
  */
 const crearEjercicio = async (req, res) => {
     try {
-        const { titulo, descripcion, id_reactivo, tipo_ejercicio } = req.body;
-        const creado_por = req.user.usuario_id; // Obtener del middleware de autenticación
+        const { titulo, descripcion, tipo_ejercicio, creado_por } = req.body;
+        
+        // Usar creado_por del JSON si está presente, sino del token JWT
+        const creadorId = creado_por || req.user?.usuario_id;
 
         if (!titulo) {
             return res.status(400).json({ 
@@ -18,11 +21,16 @@ const crearEjercicio = async (req, res) => {
             });
         }
 
+        if (!creadorId) {
+            return res.status(400).json({ 
+                message: 'El campo creado_por es requerido.' 
+            });
+        }
+
         const nuevoEjercicio = await ejercicioModel.crearEjercicio({
             titulo,
             descripcion,
-            creado_por,
-            id_reactivo: id_reactivo || null,
+            creado_por: creadorId,
             tipo_ejercicio: tipo_ejercicio || null
         });
 
@@ -416,7 +424,274 @@ const obtenerMisEjercicios = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error al obtener mis ejercicios:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
+// =====================================================
+// CONTROLADORES PARA GESTIÓN DE REACTIVOS EN EJERCICIOS
+// =====================================================
+
+/**
+ * Agregar reactivos a un ejercicio
+ */
+const agregarReactivosAEjercicio = async (req, res) => {
+    try {
+        const { ejercicioId } = req.params;
+        const { reactivos } = req.body;
+        const usuario_id = req.user.usuario_id;
+
+        // Validar que el usuario es el creador del ejercicio
+        const ejercicio = await ejercicioModel.obtenerEjercicioPorId(ejercicioId);
+        if (!ejercicio) {
+            return res.status(404).json({ 
+                message: 'Ejercicio no encontrado' 
+            });
+        }
+
+        if (ejercicio.creado_por !== usuario_id) {
+            return res.status(403).json({ 
+                message: 'No tienes permiso para modificar este ejercicio' 
+            });
+        }
+
+        // Validar formato de reactivos
+        if (!reactivos || !Array.isArray(reactivos) || reactivos.length === 0) {
+            return res.status(400).json({
+                message: 'Debe proporcionar al menos un reactivo',
+                format: 'reactivos: [{ id_reactivo: number, orden: number }]'
+            });
+        }
+
+        const resultado = await reactivoModel.agregarReactivosAEjercicio(ejercicioId, reactivos);
+
+        res.status(200).json({
+            message: 'Reactivos agregados exitosamente al ejercicio',
+            resultado
+        });
+
+    } catch (error) {
+        console.error('Error al agregar reactivos al ejercicio:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Obtener reactivos de un ejercicio
+ */
+const obtenerReactivosDeEjercicio = async (req, res) => {
+    try {
+        const { ejercicioId } = req.params;
+
+        // Verificar que el ejercicio existe
+        const ejercicio = await ejercicioModel.obtenerEjercicioPorId(ejercicioId);
+        if (!ejercicio) {
+            return res.status(404).json({ 
+                message: 'Ejercicio no encontrado' 
+            });
+        }
+
+        const reactivos = await reactivoModel.obtenerReactivosDeEjercicio(ejercicioId);
+
+        res.status(200).json({
+            message: 'Reactivos obtenidos exitosamente',
+            ejercicio: {
+                ejercicio_id: ejercicio.ejercicio_id,
+                titulo: ejercicio.titulo,
+                descripcion: ejercicio.descripcion
+            },
+            reactivos,
+            total_reactivos: reactivos.length
+        });
+
+    } catch (error) {
+        console.error('Error al obtener reactivos del ejercicio:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Remover un reactivo de un ejercicio
+ */
+const removerReactivoDeEjercicio = async (req, res) => {
+    try {
+        const { ejercicioId, reactivoId } = req.params;
+        const usuario_id = req.user.usuario_id;
+
+        // Verificar que el usuario es el creador del ejercicio
+        const ejercicio = await ejercicioModel.obtenerEjercicioPorId(ejercicioId);
+        if (!ejercicio) {
+            return res.status(404).json({ 
+                message: 'Ejercicio no encontrado' 
+            });
+        }
+
+        if (ejercicio.creado_por !== usuario_id) {
+            return res.status(403).json({ 
+                message: 'No tienes permiso para modificar este ejercicio' 
+            });
+        }
+
+        const resultado = await reactivoModel.removerReactivoDeEjercicio(ejercicioId, reactivoId);
+
+        res.status(200).json({
+            message: 'Reactivo removido exitosamente del ejercicio',
+            resultado
+        });
+
+    } catch (error) {
+        console.error('Error al remover reactivo del ejercicio:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Reordenar reactivos en un ejercicio
+ */
+const reordenarReactivosEnEjercicio = async (req, res) => {
+    try {
+        const { ejercicioId } = req.params;
+        const { nuevosOrdenes } = req.body;
+        const usuario_id = req.user.usuario_id;
+
+        // Verificar que el usuario es el creador del ejercicio
+        const ejercicio = await ejercicioModel.obtenerEjercicioPorId(ejercicioId);
+        if (!ejercicio) {
+            return res.status(404).json({ 
+                message: 'Ejercicio no encontrado' 
+            });
+        }
+
+        if (ejercicio.creado_por !== usuario_id) {
+            return res.status(403).json({ 
+                message: 'No tienes permiso para modificar este ejercicio' 
+            });
+        }
+
+        // Validar formato de nuevos órdenes
+        if (!nuevosOrdenes || !Array.isArray(nuevosOrdenes) || nuevosOrdenes.length === 0) {
+            return res.status(400).json({
+                message: 'Debe proporcionar el nuevo orden de los reactivos',
+                format: 'nuevosOrdenes: [{ reactivo_id: number, orden: number }]'
+            });
+        }
+
+        const resultado = await reactivoModel.reordenarReactivosEnEjercicio(ejercicioId, nuevosOrdenes);
+
+        res.status(200).json({
+            message: 'Reactivos reordenados exitosamente',
+            resultado
+        });
+
+    } catch (error) {
+        console.error('Error al reordenar reactivos:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Crear ejercicio con reactivos (función completa)
+ */
+const crearEjercicioConReactivos = async (req, res) => {
+    try {
+        const { titulo, descripcion, tipo_ejercicio, reactivos, creado_por } = req.body;
+        
+        // Usar creado_por del JSON si está presente, sino del token JWT
+        const creadorId = creado_por || req.user?.usuario_id;
+
+        if (!titulo) {
+            return res.status(400).json({ 
+                message: 'El título del ejercicio es requerido.' 
+            });
+        }
+
+        if (!creadorId) {
+            return res.status(400).json({ 
+                message: 'El campo creado_por es requerido.' 
+            });
+        }
+
+        // Crear el ejercicio primero
+        const nuevoEjercicio = await ejercicioModel.crearEjercicio({
+            titulo,
+            descripcion,
+            creado_por: creadorId,
+            tipo_ejercicio: tipo_ejercicio || null
+        });
+
+        let resultado = {
+            ejercicio: nuevoEjercicio,
+            reactivos_agregados: []
+        };
+
+        // Si se proporcionaron reactivos, agregarlos
+        if (reactivos && Array.isArray(reactivos) && reactivos.length > 0) {
+            try {
+                const reactivosResult = await reactivoModel.agregarReactivosAEjercicio(
+                    nuevoEjercicio.ejercicio_id, 
+                    reactivos
+                );
+                resultado.reactivos_agregados = reactivosResult.reactivos_agregados;
+                resultado.tipo_reactivos = reactivosResult.tipo;
+            } catch (reactivosError) {
+                // Si hay error con reactivos, el ejercicio ya fue creado
+                console.warn('Error al agregar reactivos, pero ejercicio fue creado:', reactivosError.message);
+                resultado.warning = `Ejercicio creado pero error al agregar reactivos: ${reactivosError.message}`;
+            }
+        }
+
+        res.status(201).json({
+            message: 'Ejercicio creado exitosamente',
+            ...resultado
+        });
+
+    } catch (error) {
+        console.error('Error al crear ejercicio con reactivos:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Verificar compatibilidad de reactivos con ejercicio
+ */
+const verificarCompatibilidadReactivos = async (req, res) => {
+    try {
+        const { ejercicioId } = req.params;
+        const { tipoId } = req.query;
+
+        if (!tipoId) {
+            return res.status(400).json({
+                message: 'El parámetro tipoId es requerido'
+            });
+        }
+
+        const compatibilidad = await reactivoModel.verificarCompatibilidadTipo(ejercicioId, parseInt(tipoId));
+
+        res.status(200).json({
+            message: 'Verificación de compatibilidad completada',
+            compatibilidad
+        });
+
+    } catch (error) {
+        console.error('Error al verificar compatibilidad:', error);
         res.status(500).json({ 
             message: 'Error interno del servidor',
             error: error.message 
@@ -434,5 +709,12 @@ module.exports = {
     obtenerEjerciciosDisponibles,
     obtenerEstadisticasEjercicios,
     duplicarEjercicio,
-    obtenerMisEjercicios
+    obtenerMisEjercicios,
+    // Nuevas funciones para gestión de reactivos
+    agregarReactivosAEjercicio,
+    obtenerReactivosDeEjercicio,
+    removerReactivoDeEjercicio,
+    reordenarReactivosEnEjercicio,
+    crearEjercicioConReactivos,
+    verificarCompatibilidadReactivos
 };

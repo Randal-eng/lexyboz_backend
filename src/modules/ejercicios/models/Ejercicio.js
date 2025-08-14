@@ -9,7 +9,6 @@ const ejercicioSchema = Joi.object({
     titulo: Joi.string().min(3).max(255).required(),
     descripcion: Joi.string().max(1000).optional(),
     creado_por: Joi.number().integer().required(),
-    id_reactivo: Joi.number().integer().optional(),
     tipo_ejercicio: Joi.number().integer().optional(),
     activo: Joi.boolean().optional().default(true)
 });
@@ -17,7 +16,6 @@ const ejercicioSchema = Joi.object({
 const ejercicioUpdateSchema = Joi.object({
     titulo: Joi.string().min(3).max(255).optional(),
     descripcion: Joi.string().max(1000).optional(),
-    id_reactivo: Joi.number().integer().optional(),
     tipo_ejercicio: Joi.number().integer().optional(),
     activo: Joi.boolean().optional()
 });
@@ -43,15 +41,15 @@ const validateEjercicioUpdate = (data) => {
 /**
  * Crear un nuevo ejercicio
  */
-const crearEjercicio = async ({ titulo, descripcion, creado_por, id_reactivo, tipo_ejercicio, activo = true }) => {
-    validateEjercicio({ titulo, descripcion, creado_por, id_reactivo, tipo_ejercicio, activo });
+const crearEjercicio = async ({ titulo, descripcion, creado_por, tipo_ejercicio = null, activo = true }) => {
+    validateEjercicio({ titulo, descripcion, creado_por, tipo_ejercicio, activo });
 
     const query = `
-        INSERT INTO ejercicios (titulo, descripcion, creado_por, id_reactivo, tipo_ejercicio, activo)
-        VALUES ($1, $2, $3, $4, $5, $6)
+        INSERT INTO ejercicios (titulo, descripcion, creado_por, tipo_ejercicio, activo)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING *;
     `;
-    const values = [titulo, descripcion, creado_por, id_reactivo, tipo_ejercicio, activo];
+    const values = [titulo, descripcion, creado_por, tipo_ejercicio, activo];
     const result = await pool.query(query, values);
     return result.rows[0];
 };
@@ -104,25 +102,24 @@ const obtenerEjercicios = async ({
             e.titulo,
             e.descripcion,
             e.creado_por,
-            e.id_reactivo,
             e.tipo_ejercicio,
             e.created_at,
             e.updated_at,
             e.activo,
             u.nombre as creador_nombre,
             u.correo as creador_correo,
-            t.tipo_nombre as tipo_nombre,
-            r.pseudopalabra as reactivo_pseudopalabra,
-            r.tiempo_duracion as reactivo_tiempo_duracion,
+            t.nombre as tipo_nombre,
+            t.descripcion as tipo_descripcion,
+            COUNT(er.reactivo_id) as total_reactivos,
             COUNT(ek.kit_id) as total_kits,
             COUNT(*) OVER() as total_count
         FROM ejercicios e
         INNER JOIN Usuario u ON e.creado_por = u.usuario_id
-        LEFT JOIN tipos t ON e.tipo_ejercicio = t.id_tipo
-        LEFT JOIN reactivo_lectura_pseudopalabras r ON e.id_reactivo = r.id_reactivo
+        LEFT JOIN tipos t ON e.tipo_ejercicio = t.tipo_id
+        LEFT JOIN ejercicio_reactivos er ON e.ejercicio_id = er.ejercicio_id AND er.activo = true
         LEFT JOIN ejercicios_kits ek ON e.ejercicio_id = ek.ejercicio_id
         ${whereClause}
-        GROUP BY e.ejercicio_id, u.nombre, u.correo, t.tipo_nombre, r.pseudopalabra, r.tiempo_duracion
+        GROUP BY e.ejercicio_id, u.nombre, u.correo, t.nombre, t.descripcion
         ORDER BY e.created_at DESC
         LIMIT $${valueIndex} OFFSET $${valueIndex + 1};
     `;
@@ -149,22 +146,17 @@ const obtenerEjercicioPorId = async (ejercicioId) => {
             e.titulo,
             e.descripcion,
             e.creado_por,
-            e.id_reactivo,
             e.tipo_ejercicio,
             e.created_at,
             e.updated_at,
             e.activo,
             u.nombre as creador_nombre,
             u.correo as creador_correo,
-            t.tipo_nombre as tipo_nombre,
-            r.pseudopalabra as reactivo_pseudopalabra,
-            r.tiempo_duracion as reactivo_tiempo_duracion,
-            st.sub_tipo_nombre as reactivo_sub_tipo
+            t.nombre as tipo_nombre,
+            t.descripcion as tipo_descripcion
         FROM ejercicios e
         INNER JOIN Usuario u ON e.creado_por = u.usuario_id
-        LEFT JOIN tipos t ON e.tipo_ejercicio = t.id_tipo
-        LEFT JOIN reactivo_lectura_pseudopalabras r ON e.id_reactivo = r.id_reactivo
-        LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
+        LEFT JOIN tipos t ON e.tipo_ejercicio = t.tipo_id
         WHERE e.ejercicio_id = $1;
     `;
     const result = await pool.query(query, [ejercicioId]);
