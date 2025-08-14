@@ -120,6 +120,79 @@ router.post('/', verifyToken, kitController.crearKit);
 
 /**
  * @swagger
+ * /api/kits/con-ejercicios:
+ *   post:
+ *     summary: Crear un nuevo kit con ejercicios
+ *     tags: [Kits]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 255
+ *                 description: Nombre del kit
+ *                 example: "Kit de Lectura Básica"
+ *               descripcion:
+ *                 type: string
+ *                 maxLength: 1000
+ *                 description: Descripción del kit
+ *                 example: "Kit para evaluar habilidades básicas de lectura"
+ *               creado_por:
+ *                 type: integer
+ *                 description: ID del usuario creador (opcional si está autenticado)
+ *                 example: 1
+ *               ejercicios:
+ *                 type: array
+ *                 description: Lista de ejercicios a agregar al kit
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     ejercicio_id:
+ *                       type: integer
+ *                       description: ID del ejercicio
+ *                       example: 1
+ *                     orden:
+ *                       type: integer
+ *                       description: Orden del ejercicio en el kit
+ *                       example: 1
+ *     responses:
+ *       201:
+ *         description: Kit creado exitosamente con ejercicios
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 kit:
+ *                   $ref: '#/components/schemas/Kit'
+ *                 ejercicios_agregados:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 total_ejercicios:
+ *                   type: integer
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post('/con-ejercicios', verifyToken, kitController.crearKitConEjercicios);
+
+/**
+ * @swagger
  * /api/kits:
  *   get:
  *     summary: Obtener todos los kits con paginación y filtros

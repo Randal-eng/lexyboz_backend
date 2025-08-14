@@ -39,6 +39,49 @@ const crearKit = async (req, res) => {
 };
 
 /**
+ * Crear un nuevo kit con ejercicios
+ */
+const crearKitConEjercicios = async (req, res) => {
+    try {
+        const { name, descripcion, ejercicios = [] } = req.body;
+        
+        // Usar creado_por del JSON si está presente, sino del token JWT
+        const creado_por = req.body.creado_por || req.user?.usuario_id;
+
+        if (!name) {
+            return res.status(400).json({ 
+                message: 'El nombre del kit es requerido.' 
+            });
+        }
+
+        if (!creado_por) {
+            return res.status(400).json({ 
+                message: 'El campo creado_por es requerido.' 
+            });
+        }
+
+        const resultado = await kitModel.crearKitConEjercicios({
+            name,
+            descripcion,
+            creado_por,
+            ejercicios
+        });
+
+        res.status(201).json({
+            message: 'Kit creado exitosamente con ejercicios',
+            ...resultado
+        });
+
+    } catch (error) {
+        console.error('Error al crear kit con ejercicios:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
+/**
  * Obtener todos los kits con paginación y filtros
  */
 const obtenerKits = async (req, res) => {
@@ -474,6 +517,7 @@ const removerEjerciciosDeKit = async (req, res) => {
 
 module.exports = {
     crearKit,
+    crearKitConEjercicios,
     obtenerKits,
     obtenerKitPorId,
     actualizarKit,

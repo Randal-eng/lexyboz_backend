@@ -62,6 +62,82 @@ const crearKit = async ({ name, descripcion, creado_por, activo = true }) => {
 };
 
 /**
+ * Crear un nuevo kit con ejercicios
+ */
+const crearKitConEjercicios = async ({ name, descripcion, creado_por, activo = true, ejercicios = [] }) => {
+    validateKit({ name, descripcion, creado_por, activo });
+
+    // Validar ejercicios si se proporcionan
+    if (ejercicios.length > 0) {
+        const { error } = ejerciciosKitSchema.validate({ ejercicios });
+        if (error) {
+            throw new Error(`Datos de ejercicios inválidos: ${error.details[0].message}`);
+        }
+    }
+
+    const client = await pool.connect();
+    
+    try {
+        await client.query('BEGIN');
+
+        // 1. Crear el kit
+        const kitQuery = `
+            INSERT INTO kits (name, descripcion, creado_por, activo)
+            VALUES ($1, $2, $3, $4)
+            RETURNING *;
+        `;
+        const kitValues = [name, descripcion, creado_por, activo];
+        const kitResult = await client.query(kitQuery, kitValues);
+        const nuevoKit = kitResult.rows[0];
+
+        let ejerciciosAgregados = [];
+
+        // 2. Si hay ejercicios, agregarlos al kit
+        if (ejercicios.length > 0) {
+            // Verificar que todos los ejercicios existen
+            const ejercicioIds = ejercicios.map(e => e.ejercicio_id);
+            const ejerciciosResult = await client.query(`
+                SELECT 
+                    ejercicio_id,
+                    titulo
+                FROM ejercicios 
+                WHERE ejercicio_id = ANY($1) AND activo = true
+            `, [ejercicioIds]);
+
+            if (ejerciciosResult.rows.length !== ejercicioIds.length) {
+                throw new Error('Algunos ejercicios no existen o están inactivos');
+            }
+
+            // Insertar ejercicios en el kit
+            const insertPromises = ejercicios.map(ejercicio => {
+                return client.query(`
+                    INSERT INTO ejercicios_kits (kit_id, ejercicio_id, orden_en_kit)
+                    VALUES ($1, $2, $3)
+                    RETURNING *
+                `, [nuevoKit.kit_id, ejercicio.ejercicio_id, ejercicio.orden]);
+            });
+
+            const insertResults = await Promise.all(insertPromises);
+            ejerciciosAgregados = insertResults.map(result => result.rows[0]);
+        }
+
+        await client.query('COMMIT');
+
+        return {
+            kit: nuevoKit,
+            ejercicios_agregados: ejerciciosAgregados,
+            total_ejercicios: ejerciciosAgregados.length
+        };
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(`Error al crear kit con ejercicios: ${error.message}`);
+    } finally {
+        client.release();
+    }
+};
+
+/**
  * Obtener todos los kits con información del creador
  */
 const obtenerKits = async ({ 
@@ -488,6 +564,7 @@ const removerEjerciciosDeKit = async (kitId, ejercicioIds) => {
 
 module.exports = {
     crearKit,
+    crearKitConEjercicios,
     obtenerKits,
     obtenerKitPorId,
     actualizarKit,
