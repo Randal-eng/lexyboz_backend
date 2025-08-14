@@ -25,6 +25,9 @@ const doctorPacienteRoutes = require('./src/modules/citas/routes/doctorPaciente.
 // Importar rutas de kits
 const kitRoutes = require('./src/modules/kits/routes/kit.routes');
 
+// Importar rutas de kits asignados
+const kitsAsignadosRoutes = require('./src/modules/kitsAsignados/routes/kitAsignado.routes');
+
 // Importar rutas de ejercicios
 const ejercicioRoutes = require('./src/modules/ejercicios/routes/ejercicio.routes');
 
@@ -222,10 +225,10 @@ app.use('/api', authRoutes);
 app.use('/api/doctor-paciente', doctorPacienteRoutes);
 app.use('/api/citas', citaRoutes);
 app.use('/api/kits', kitRoutes);
+app.use('/api/kits-asignados', kitsAsignadosRoutes);
 app.use('/api/ejercicios', ejercicioRoutes);
 app.use('/api/reactivos', reactivoRoutes);
 // app.use('/api/ejercicios-kits', ejerciciosKitsRoutes); // TODO: Crear estas rutas
-// app.use('/api/kits-asignados', kitsAsignadosRoutes); // TODO: Crear estas rutas
 // app.use('/api/resultados', resultadoRoutes);
 
 // Endpoint para mensaje de producción
