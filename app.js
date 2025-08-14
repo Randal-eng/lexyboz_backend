@@ -27,12 +27,12 @@ const kitRoutes = require('./src/modules/kits/routes/kit.routes');
 
 // Importar rutas de ejercicios
 const ejercicioRoutes = require('./src/modules/ejercicios/routes/ejercicio.routes');
-const tipoRoutes = require('./src/modules/ejercicios/routes/tipo.routes');
-const subTipoRoutes = require('./src/modules/ejercicios/routes/subTipo.routes');
-const reactivoRoutes = require('./src/modules/ejercicios/routes/reactivo.routes');
+// const tipoRoutes = require('./src/modules/ejercicios/routes/tipo.routes');
+// const subTipoRoutes = require('./src/modules/ejercicios/routes/subTipo.routes');
+// const reactivoRoutes = require('./src/modules/ejercicios/routes/reactivo.routes');
 
 // Importar rutas de resultados
-const resultadoRoutes = require('./src/modules/resultados/routes/resultado.routes');
+// const resultadoRoutes = require('./src/modules/resultados/routes/resultado.routes');
 
 require('dotenv').config();
 
@@ -223,12 +223,12 @@ app.use('/api/doctor-paciente', doctorPacienteRoutes);
 app.use('/api/citas', citaRoutes);
 app.use('/api/kits', kitRoutes);
 app.use('/api/ejercicios', ejercicioRoutes);
-app.use('/api/tipos', tipoRoutes);
-app.use('/api/subtipos', subTipoRoutes);
-app.use('/api/reactivos', reactivoRoutes);
+// app.use('/api/tipos', tipoRoutes);
+// app.use('/api/subtipos', subTipoRoutes);
+// app.use('/api/reactivos', reactivoRoutes);
 // app.use('/api/ejercicios-kits', ejerciciosKitsRoutes); // TODO: Crear estas rutas
 // app.use('/api/kits-asignados', kitsAsignadosRoutes); // TODO: Crear estas rutas
-app.use('/api/resultados', resultadoRoutes);
+// app.use('/api/resultados', resultadoRoutes);
 
 // Endpoint para mensaje de producción
 app.get('/api/hola-produccion', (req, res) => {

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const kitController = require('../controllers/kitController');
-const { authenticateToken } = require('../../auth/middleware/authMiddleware');
+const { verifyToken } = require('../../auth/middleware/authMiddleware');
 
 // =====================================================
 // RUTAS DE KITS
@@ -116,7 +116,7 @@ const { authenticateToken } = require('../../auth/middleware/authMiddleware');
  *       500:
  *         description: Error interno del servidor
  */
-router.post('/', authenticateToken, kitController.crearKit);
+router.post('/', verifyToken, kitController.crearKit);
 
 /**
  * @swagger
@@ -187,7 +187,7 @@ router.post('/', authenticateToken, kitController.crearKit);
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/', authenticateToken, kitController.obtenerKits);
+router.get('/', verifyToken, kitController.obtenerKits);
 
 /**
  * @swagger
@@ -225,7 +225,7 @@ router.get('/', authenticateToken, kitController.obtenerKits);
  *       500:
  *         description: Error interno del servidor
  */
-router.get('/:id', authenticateToken, kitController.obtenerKitPorId);
+router.get('/:id', verifyToken, kitController.obtenerKitPorId);
 
 /**
  * @swagger
@@ -281,7 +281,7 @@ router.get('/:id', authenticateToken, kitController.obtenerKitPorId);
  *       500:
  *         description: Error interno del servidor
  */
-router.put('/:id', authenticateToken, kitController.actualizarKit);
+router.put('/:id', verifyToken, kitController.actualizarKit);
 
 /**
  * @swagger
@@ -321,7 +321,7 @@ router.put('/:id', authenticateToken, kitController.actualizarKit);
  *       500:
  *         description: Error interno del servidor
  */
-router.delete('/:id', authenticateToken, kitController.eliminarKit);
+router.delete('/:id', verifyToken, kitController.eliminarKit);
 
 /**
  * @swagger
@@ -367,7 +367,7 @@ router.delete('/:id', authenticateToken, kitController.eliminarKit);
  *       500:
  *         description: Error interno del servidor
  */
-router.post('/:id/ejercicios', authenticateToken, kitController.agregarEjercicioAKit);
+router.post('/:id/ejercicios', verifyToken, kitController.agregarEjercicioAKit);
 
 /**
  * @swagger
@@ -404,7 +404,7 @@ router.post('/:id/ejercicios', authenticateToken, kitController.agregarEjercicio
  *       500:
  *         description: Error interno del servidor
  */
-router.delete('/:id/ejercicios/:ejercicio_id', authenticateToken, kitController.removerEjercicioDeKit);
+router.delete('/:id/ejercicios/:ejercicio_id', verifyToken, kitController.removerEjercicioDeKit);
 
 /**
  * @swagger
@@ -453,6 +453,6 @@ router.delete('/:id/ejercicios/:ejercicio_id', authenticateToken, kitController.
  *       500:
  *         description: Error interno del servidor
  */
-router.put('/:id/reordenar', authenticateToken, kitController.reordenarEjerciciosEnKit);
+router.put('/:id/reordenar', verifyToken, kitController.reordenarEjerciciosEnKit);
 
 module.exports = router;
