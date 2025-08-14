@@ -28,6 +28,10 @@ const kitRoutes = require('./src/modules/kits/routes/kit.routes');
 // Importar rutas de kits asignados
 const kitsAsignadosRoutes = require('./src/modules/kitsAsignados/routes/kitAsignado.routes');
 
+// Importar rutas de tipos y subtipos
+const tipoRoutes = require('./src/modules/tipos/routes/tipo.routes');
+const subTipoRoutes = require('./src/modules/subtipos/routes/subTipo.routes');
+
 // Importar rutas de ejercicios
 const ejercicioRoutes = require('./src/modules/ejercicios/routes/ejercicio.routes');
 
@@ -226,6 +230,8 @@ app.use('/api/doctor-paciente', doctorPacienteRoutes);
 app.use('/api/citas', citaRoutes);
 app.use('/api/kits', kitRoutes);
 app.use('/api/kits-asignados', kitsAsignadosRoutes);
+app.use('/api/tipos', tipoRoutes);
+app.use('/api/subtipos', subTipoRoutes);
 app.use('/api/ejercicios', ejercicioRoutes);
 app.use('/api/reactivos', reactivoRoutes);
 // app.use('/api/ejercicios-kits', ejerciciosKitsRoutes); // TODO: Crear estas rutas
