@@ -58,23 +58,18 @@ const { verifyToken } = require('../../auth/middleware/authMiddleware');
  * @swagger
  * /api/kits:
  *   post:
- *     summary: Crear un kit básico
+ *     summary: Crear kit básico
  *     tags: [Kits]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/Kit'
  *     responses:
  *       201:
- *         description: Kit creado exitosamente
- *       400:
- *         description: Datos inválidos
- *       401:
- *         description: No autorizado
+ *         description: Kit creado
  */
 router.post('/', verifyToken, kitController.crearKit);
 
@@ -82,32 +77,39 @@ router.post('/', verifyToken, kitController.crearKit);
  * @swagger
  * /api/kits/con-ejercicios:
  *   post:
- *     summary: Crear un kit con ejercicios
+ *     summary: Crear kit con ejercicios
  *     tags: [Kits]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/KitConEjercicios'
- *           example:
- *             name: "Kit de Lectura Completo"
- *             descripcion: "Kit integral para evaluación de lectura"
- *             creado_por: 1
- *             ejercicios:
- *               - ejercicio_id: 1
- *                 orden: 1
- *               - ejercicio_id: 2
- *                 orden: 2
  *     responses:
  *       201:
- *         description: Kit creado exitosamente con ejercicios
- *       400:
- *         description: Datos inválidos
- *       401:
- *         description: No autorizado
+ *         description: Kit creado con ejercicios
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Kit creado exitosamente con ejercicios"
+ *               kit:
+ *                 kit_id: 1
+ *                 name: "Kit de Lectura Completo"
+ *                 descripcion: "Kit integral para evaluación de lectura"
+ *                 creado_por: 1
+ *                 activo: true
+ *                 total_ejercicios: 3
+ *               ejercicios_agregados:
+ *                 - kit_id: 1
+ *                   ejercicio_id: 1
+ *                   orden_en_kit: 1
+ *                   activo: true
+ *                 - kit_id: 1
+ *                   ejercicio_id: 2
+ *                   orden_en_kit: 2
+ *                   activo: true
+ *               total_ejercicios: 3
  */
 router.post('/con-ejercicios', verifyToken, kitController.crearKitConEjercicios);
 
@@ -115,31 +117,39 @@ router.post('/con-ejercicios', verifyToken, kitController.crearKitConEjercicios)
  * @swagger
  * /api/kits:
  *   get:
- *     summary: Obtener todos los kits
+ *     summary: Obtener kits
  *     tags: [Kits]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: page
+ *       - name: page
+ *         in: query
  *         schema:
  *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
+ *           example: 1
+ *       - name: limit
+ *         in: query
  *         schema:
  *           type: integer
- *           default: 10
- *       - in: query
- *         name: activo
- *         schema:
- *           type: boolean
- *           default: true
+ *           example: 10
  *     responses:
  *       200:
- *         description: Kits obtenidos exitosamente
- *       401:
- *         description: No autorizado
+ *         description: Lista de kits
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Kits obtenidos exitosamente"
+ *               kits:
+ *                 - kit_id: 1
+ *                   name: "Kit de Lectura Básica"
+ *                   descripcion: "Kit para evaluar habilidades básicas"
+ *                   creado_por: 1
+ *                   activo: true
+ *                   total_ejercicios: 3
+ *               pagination:
+ *                 current_page: 1
+ *                 total_pages: 1
+ *                 total_items: 1
  */
 router.get('/', verifyToken, kitController.obtenerKits);
 
@@ -147,23 +157,20 @@ router.get('/', verifyToken, kitController.obtenerKits);
  * @swagger
  * /api/kits/{id}:
  *   get:
- *     summary: Obtener un kit específico
+ *     summary: Obtener kit por ID
  *     tags: [Kits]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
+ *           example: 1
  *     responses:
  *       200:
- *         description: Kit obtenido exitosamente
- *       404:
- *         description: Kit no encontrado
- *       401:
- *         description: No autorizado
+ *         description: Kit encontrado
  */
 router.get('/:id', verifyToken, kitController.obtenerKitPorId);
 
@@ -171,29 +178,25 @@ router.get('/:id', verifyToken, kitController.obtenerKitPorId);
  * @swagger
  * /api/kits/{id}:
  *   put:
- *     summary: Actualizar un kit
+ *     summary: Actualizar kit
  *     tags: [Kits]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
+ *           example: 1
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/Kit'
  *     responses:
  *       200:
- *         description: Kit actualizado exitosamente
- *       404:
- *         description: Kit no encontrado
- *       401:
- *         description: No autorizado
+ *         description: Kit actualizado
  */
 router.put('/:id', verifyToken, kitController.actualizarKit);
 
@@ -201,23 +204,20 @@ router.put('/:id', verifyToken, kitController.actualizarKit);
  * @swagger
  * /api/kits/{id}:
  *   delete:
- *     summary: Eliminar un kit (soft delete)
+ *     summary: Eliminar kit
  *     tags: [Kits]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
+ *           example: 1
  *     responses:
  *       200:
- *         description: Kit eliminado exitosamente
- *       404:
- *         description: Kit no encontrado
- *       401:
- *         description: No autorizado
+ *         description: Kit eliminado
  */
 router.delete('/:id', verifyToken, kitController.eliminarKit);
 
@@ -230,33 +230,26 @@ router.delete('/:id', verifyToken, kitController.eliminarKit);
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *       - in: query
- *         name: activo
- *         schema:
- *           type: boolean
- *           default: true
+ *           example: 1
  *     responses:
  *       200:
- *         description: Ejercicios del kit obtenidos exitosamente
- *       404:
- *         description: Kit no encontrado
- *       401:
- *         description: No autorizado
+ *         description: Ejercicios del kit
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Ejercicios del kit obtenidos exitosamente"
+ *               ejercicios:
+ *                 - ejercicio_id: 1
+ *                   titulo: "Ejercicio de Pseudopalabras"
+ *                   descripcion: "Ejercicio para evaluar lectura"
+ *                   orden_en_kit: 1
+ *                   activo_en_kit: true
+ *               total: 1
  */
 router.get('/:id/ejercicios', verifyToken, kitController.obtenerEjerciciosDeKit);
 
@@ -264,35 +257,37 @@ router.get('/:id/ejercicios', verifyToken, kitController.obtenerEjerciciosDeKit)
  * @swagger
  * /api/kits/{id}/ejercicios:
  *   post:
- *     summary: Agregar ejercicios a un kit
+ *     summary: Agregar ejercicios a kit
  *     tags: [Kits]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
+ *           example: 1
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/AgregarEjercicios'
- *           example:
- *             ejercicios:
- *               - ejercicio_id: 4
- *                 orden: 1
- *               - ejercicio_id: 5
- *                 orden: 2
  *     responses:
  *       201:
- *         description: Ejercicios agregados exitosamente
- *       404:
- *         description: Kit no encontrado
- *       401:
- *         description: No autorizado
+ *         description: Ejercicios agregados
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Ejercicios agregados al kit exitosamente"
+ *               resultado:
+ *                 kit_id: 1
+ *                 ejercicios_agregados:
+ *                   - kit_id: 1
+ *                     ejercicio_id: 4
+ *                     orden_en_kit: 1
+ *                     activo: true
+ *                 total_ejercicios: 1
  */
 router.post('/:id/ejercicios', verifyToken, kitController.agregarEjerciciosAKit);
 
@@ -300,36 +295,25 @@ router.post('/:id/ejercicios', verifyToken, kitController.agregarEjerciciosAKit)
  * @swagger
  * /api/kits/{id}/ejercicios:
  *   delete:
- *     summary: Remover ejercicios de un kit
+ *     summary: Remover ejercicios de kit
  *     tags: [Kits]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
+ *           example: 1
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               ejercicios_ids:
- *                 type: array
- *                 items:
- *                   type: integer
  *           example:
  *             ejercicios_ids: [1, 2, 3]
  *     responses:
  *       200:
- *         description: Ejercicios removidos exitosamente
- *       404:
- *         description: Kit no encontrado
- *       401:
- *         description: No autorizado
+ *         description: Ejercicios removidos
  */
 router.delete('/:id/ejercicios', verifyToken, kitController.removerEjerciciosDeKit);
 
