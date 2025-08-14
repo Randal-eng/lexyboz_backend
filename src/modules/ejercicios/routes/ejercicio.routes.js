@@ -13,117 +13,83 @@ const { verifyToken } = require('../../auth/middleware/authMiddleware');
  *   schemas:
  *     Ejercicio:
  *       type: object
- *       required:
- *         - titulo
- *         - creado_por
  *       properties:
- *         ejercicio_id:
- *           type: integer
- *           description: ID único del ejercicio
- *           example: 1
  *         titulo:
  *           type: string
- *           description: Título del ejercicio
- *           example: "Ejercicio de lectura de pseudopalabras"
+ *           example: "Ejercicio de Pseudopalabras Básico"
  *         descripcion:
  *           type: string
- *           description: Descripción detallada del ejercicio
- *           example: "Ejercicio para evaluar la capacidad de lectura de palabras inventadas"
+ *           example: "Ejercicio para evaluar lectura de pseudopalabras"
+ *         tipo_ejercicio:
+ *           type: integer
+ *           example: 1
  *         creado_por:
  *           type: integer
- *           description: ID del usuario que creó el ejercicio
  *           example: 1
- *         activo:
- *           type: boolean
- *           description: Estado del ejercicio
- *           example: true
- *         id_reactivo:
- *           type: integer
- *           description: ID del reactivo asociado
- *           example: 1
- *         tipo_ejercicio:
- *           type: integer
- *           description: ID del tipo de ejercicio
- *           example: 1
- *         fecha_creacion:
- *           type: string
- *           format: date-time
- *           description: Fecha de creación del ejercicio
- *         fecha_actualizacion:
- *           type: string
- *           format: date-time
- *           description: Fecha de última actualización
- *     EjercicioInput:
- *       type: object
- *       required:
- *         - titulo
- *       properties:
- *         titulo:
- *           type: string
- *           description: Título del ejercicio
- *           example: "Ejercicio de lectura de pseudopalabras"
- *         descripcion:
- *           type: string
- *           description: Descripción del ejercicio
- *           example: "Ejercicio para evaluar la capacidad de lectura"
- *         id_reactivo:
- *           type: integer
- *           description: ID del reactivo asociado
- *           example: 1
- *         tipo_ejercicio:
- *           type: integer
- *           description: ID del tipo de ejercicio
- *           example: 1
- *     EjercicioUpdate:
+ *     
+ *     EjercicioConReactivos:
  *       type: object
  *       properties:
  *         titulo:
  *           type: string
- *           description: Nuevo título del ejercicio
+ *           example: "Ejercicio Avanzado de Pseudopalabras"
  *         descripcion:
  *           type: string
- *           description: Nueva descripción del ejercicio
- *         activo:
- *           type: boolean
- *           description: Nuevo estado del ejercicio
- *         id_reactivo:
- *           type: integer
- *           description: Nuevo ID del reactivo
+ *           example: "Ejercicio complejo con múltiples reactivos"
  *         tipo_ejercicio:
  *           type: integer
- *           description: Nuevo ID del tipo de ejercicio
- *     EjercicioDuplicar:
+ *           example: 1
+ *         creado_por:
+ *           type: integer
+ *           example: 1
+ *         reactivos:
+ *           type: array
+ *           example:
+ *             - id_reactivo: 1
+ *               orden: 1
+ *             - id_reactivo: 2
+ *               orden: 2
+ *     
+ *     AgregarReactivos:
  *       type: object
- *       required:
- *         - nuevo_titulo
  *       properties:
- *         nuevo_titulo:
- *           type: string
- *           description: Título para el ejercicio duplicado
- *           example: "Copia de Ejercicio de lectura"
+ *         reactivos:
+ *           type: array
+ *           example:
+ *             - id_reactivo: 4
+ *               orden: 1
+ *             - id_reactivo: 5
+ *               orden: 2
  */
 
 /**
  * @swagger
  * /api/ejercicios:
  *   post:
- *     summary: Crear un nuevo ejercicio
+ *     summary: Crear ejercicio básico
  *     tags: [Ejercicios]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/EjercicioInput'
+ *             $ref: '#/components/schemas/Ejercicio'
  *     responses:
  *       201:
- *         description: Ejercicio creado exitosamente
+ *         description: Ejercicio creado
  *         content:
  *           application/json:
- *             schema:
- *               type: object
+ *             example:
+ *               message: "Ejercicio creado exitosamente"
+ *               ejercicio:
+ *                 ejercicio_id: 1
+ *                 titulo: "Ejercicio de Pseudopalabras Básico"
+ *                 descripcion: "Ejercicio para evaluar lectura de pseudopalabras"
+ *                 tipo_ejercicio: 1
+ *                 creado_por: 1
+ *                 activo: true
+ *                 fecha_creacion: "2025-08-13T10:30:00Z"
  *               properties:
  *                 message:
  *                   type: string
@@ -143,20 +109,44 @@ router.post('/', verifyToken, ejercicioController.crearEjercicio);
  * @swagger
  * /api/ejercicios:
  *   get:
- *     summary: Obtener lista de ejercicios con paginación y filtros
+ *     summary: Obtener ejercicios
  *     tags: [Ejercicios]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: query
- *         name: page
+ *       - name: page
+ *         in: query
  *         schema:
  *           type: integer
- *           default: 1
- *         description: Número de página
- *       - in: query
- *         name: limit
+ *           example: 1
+ *       - name: limit
+ *         in: query
  *         schema:
+ *           type: integer
+ *           example: 10
+ *       - name: buscar
+ *         in: query
+ *         schema:
+ *           type: string
+ *           example: "pseudopalabras"
+ *     responses:
+ *       200:
+ *         description: Lista de ejercicios
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Ejercicios obtenidos exitosamente"
+ *               ejercicios:
+ *                 - ejercicio_id: 1
+ *                   titulo: "Ejercicio de Pseudopalabras"
+ *                   descripcion: "Ejercicio para evaluar lectura"
+ *                   tipo_ejercicio: 1
+ *                   creado_por: 1
+ *                   activo: true
+ *                   fecha_creacion: "2025-08-13T10:30:00Z"
+ *               total: 1
+ *               page: 1
+ *               totalPages: 1
  *           type: integer
  *           default: 20
  *         description: Ejercicios por página
@@ -619,104 +609,75 @@ router.post('/:id/duplicar', verifyToken, ejercicioController.duplicarEjercicio)
  * /api/ejercicios/con-reactivos:
  *   post:
  *     summary: Crear ejercicio con reactivos
- *     description: Crea un nuevo ejercicio y opcionalmente le agrega reactivos en una sola operación
  *     tags: [Ejercicios]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - titulo
- *             properties:
- *               titulo:
- *                 type: string
- *                 description: Título del ejercicio
- *                 example: "Ejercicio de pseudopalabras"
- *               descripcion:
- *                 type: string
- *                 description: Descripción del ejercicio
- *                 example: "Ejercicio para evaluar lectura de pseudopalabras"
- *               tipo_ejercicio:
- *                 type: string
- *                 description: Tipo de ejercicio
- *                 example: "pseudopalabras"
- *               reactivos:
- *                 type: array
- *                 description: Lista de reactivos a agregar
- *                 items:
- *                   type: object
- *                   properties:
- *                     id_reactivo:
- *                       type: integer
- *                       example: 1
- *                     orden:
- *                       type: integer
- *                       example: 1
+ *             $ref: '#/components/schemas/EjercicioConReactivos'
  *     responses:
  *       201:
- *         description: Ejercicio creado exitosamente
- *       400:
- *         description: Datos inválidos
- *       401:
- *         description: No autorizado
- *       500:
- *         description: Error interno del servidor
- */
+ *         description: Ejercicio creado con reactivos
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Ejercicio creado exitosamente con reactivos"
+ *               ejercicio:
+ *                 ejercicio_id: 1
+ *                 titulo: "Ejercicio Avanzado de Pseudopalabras"
+ *                 descripcion: "Ejercicio complejo con múltiples reactivos"
+ *                 tipo_ejercicio: 1
+ *                 creado_por: 1
+ *                 activo: true
+ *               reactivos_agregados:
+ *                 - ejercicio_id: 1
+ *                   id_reactivo: 1
+ *                   orden_en_ejercicio: 1
+ *                   activo: true
+ *                 - ejercicio_id: 1
+ *                   id_reactivo: 2
+ *                   orden_en_ejercicio: 2
+ *                   activo: true
+ *               total_reactivos: 2
 router.post('/con-reactivos', verifyToken, ejercicioController.crearEjercicioConReactivos);
 
 /**
  * @swagger
  * /api/ejercicios/{ejercicioId}/reactivos:
  *   post:
- *     summary: Agregar reactivos a un ejercicio
- *     description: Agrega una lista de reactivos a un ejercicio existente
+ *     summary: Agregar reactivos a ejercicio
  *     tags: [Ejercicios]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: ejercicioId
+ *       - name: ejercicioId
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID del ejercicio
+ *           example: 1
  *     requestBody:
- *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required:
- *               - reactivos
- *             properties:
- *               reactivos:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     id_reactivo:
- *                       type: integer
- *                       example: 1
- *                     orden:
- *                       type: integer
- *                       example: 1
+ *             $ref: '#/components/schemas/AgregarReactivos'
  *     responses:
  *       200:
- *         description: Reactivos agregados exitosamente
- *       400:
- *         description: Datos inválidos
- *       401:
- *         description: No autorizado
- *       403:
- *         description: Sin permisos para modificar este ejercicio
- *       404:
- *         description: Ejercicio no encontrado
- *       500:
- *         description: Error interno del servidor
+ *         description: Reactivos agregados
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Reactivos agregados al ejercicio exitosamente"
+ *               resultado:
+ *                 ejercicio_id: 1
+ *                 reactivos_agregados:
+ *                   - ejercicio_id: 1
+ *                     id_reactivo: 4
+ *                     orden_en_ejercicio: 1
+ *                     activo: true
+ *                 total_reactivos: 1
  */
 router.post('/:ejercicioId/reactivos', verifyToken, ejercicioController.agregarReactivosAEjercicio);
 
@@ -897,61 +858,44 @@ router.get('/:ejercicioId/reactivos/compatibilidad', verifyToken, ejercicioContr
  * @swagger
  * /api/ejercicios/{id}/kits:
  *   get:
- *     summary: Obtener kits que contienen un ejercicio específico
+ *     summary: Obtener kits que contienen un ejercicio
  *     tags: [Ejercicios]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
+ *       - name: id
+ *         in: path
  *         required: true
- *         description: ID del ejercicio
- *       - in: query
- *         name: page
  *         schema:
  *           type: integer
- *           default: 1
- *         description: Número de página
- *       - in: query
- *         name: limit
+ *           example: 1
+ *       - name: page
+ *         in: query
  *         schema:
  *           type: integer
- *           default: 20
- *         description: Límite de resultados por página
- *       - in: query
- *         name: activo
+ *           example: 1
+ *       - name: limit
+ *         in: query
  *         schema:
- *           type: boolean
- *           default: true
- *         description: Filtrar por estado activo
+ *           type: integer
+ *           example: 20
  *     responses:
  *       200:
- *         description: Kits del ejercicio obtenidos exitosamente
+ *         description: Kits que contienen el ejercicio
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 kits:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       kit_id:
- *                         type: integer
- *                       kit_name:
- *                         type: string
- *                       kit_descripcion:
- *                         type: string
- *                       orden_en_kit:
- *                         type: integer
- *                       activo_en_kit:
- *                         type: boolean
- *                       fecha_agregado:
+ *             example:
+ *               message: "Kits del ejercicio obtenidos exitosamente"
+ *               kits:
+ *                 - kit_id: 1
+ *                   kit_name: "Kit de Lectura Básica"
+ *                   kit_descripcion: "Kit para evaluar habilidades básicas"
+ *                   orden_en_kit: 1
+ *                   activo_en_kit: true
+ *                   fecha_agregado: "2025-08-13T10:30:00Z"
+ *               total: 1
+ *               page: 1
+ *               totalPages: 1
  *                         type: string
  *                         format: date-time
  *                 total:
