@@ -455,4 +455,147 @@ router.delete('/:id/ejercicios/:ejercicio_id', verifyToken, kitController.remove
  */
 router.put('/:id/reordenar', verifyToken, kitController.reordenarEjerciciosEnKit);
 
+/**
+ * @swagger
+ * /api/kits/{id}/ejercicios:
+ *   post:
+ *     summary: Agregar múltiples ejercicios a un kit
+ *     tags: [Kits]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID del kit
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ejercicios
+ *             properties:
+ *               ejercicios:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     ejercicio_id:
+ *                       type: integer
+ *                       description: ID del ejercicio
+ *                     orden:
+ *                       type: integer
+ *                       description: Orden del ejercicio en el kit
+ *     responses:
+ *       201:
+ *         description: Ejercicios agregados al kit exitosamente
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Sin permisos
+ *       404:
+ *         description: Kit no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post('/:id/ejercicios', verifyToken, kitController.agregarEjerciciosAKit);
+
+/**
+ * @swagger
+ * /api/kits/{id}/ejercicios:
+ *   get:
+ *     summary: Obtener ejercicios de un kit
+ *     tags: [Kits]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID del kit
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Número de página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Límite de resultados por página
+ *       - in: query
+ *         name: activo
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Filtrar por estado activo
+ *     responses:
+ *       200:
+ *         description: Ejercicios del kit obtenidos exitosamente
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Sin permisos
+ *       404:
+ *         description: Kit no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get('/:id/ejercicios', verifyToken, kitController.obtenerEjerciciosDeKit);
+
+/**
+ * @swagger
+ * /api/kits/{id}/ejercicios:
+ *   delete:
+ *     summary: Remover múltiples ejercicios de un kit
+ *     tags: [Kits]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID del kit
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - ejercicios_ids
+ *             properties:
+ *               ejercicios_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Array de IDs de ejercicios a remover
+ *     responses:
+ *       200:
+ *         description: Ejercicios removidos del kit exitosamente
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Sin permisos
+ *       404:
+ *         description: Kit no encontrado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.delete('/:id/ejercicios', verifyToken, kitController.removerEjerciciosDeKit);
+
 module.exports = router;

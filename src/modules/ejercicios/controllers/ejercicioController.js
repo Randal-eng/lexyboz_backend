@@ -699,6 +699,74 @@ const verificarCompatibilidadReactivos = async (req, res) => {
     }
 };
 
+/**
+ * Obtener kits que contienen un ejercicio específico
+ */
+const obtenerKitsDeEjercicio = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            page = 1,
+            limit = 20,
+            activo = true
+        } = req.query;
+
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+
+        const query = `
+            SELECT 
+                ek.kit_id,
+                ek.orden_en_kit,
+                ek.activo as activo_en_kit,
+                ek.fecha_creacion as fecha_agregado,
+                k.name as kit_name,
+                k.descripcion as kit_descripcion,
+                k.creado_por,
+                k.fecha_creacion as kit_fecha_creacion,
+                k.activo as kit_activo,
+                u.nombre as creador_nombre,
+                u.correo as creador_correo
+            FROM ejercicios_kits ek
+            INNER JOIN kits k ON ek.kit_id = k.kit_id
+            INNER JOIN Usuario u ON k.creado_por = u.usuario_id
+            WHERE ek.ejercicio_id = $1 ${activo === 'true' ? 'AND ek.activo = true AND k.activo = true' : ''}
+            ORDER BY ek.orden_en_kit ASC, ek.fecha_creacion ASC
+            LIMIT $2 OFFSET $3
+        `;
+
+        const countQuery = `
+            SELECT COUNT(*) as total
+            FROM ejercicios_kits ek
+            INNER JOIN kits k ON ek.kit_id = k.kit_id
+            WHERE ek.ejercicio_id = $1 ${activo === 'true' ? 'AND ek.activo = true AND k.activo = true' : ''}
+        `;
+
+        const [kitsResult, countResult] = await Promise.all([
+            ejercicioModel.executeQuery(query, [parseInt(id), parseInt(limit), offset]),
+            ejercicioModel.executeQuery(countQuery, [parseInt(id)])
+        ]);
+
+        const total = parseInt(countResult.rows[0].total);
+
+        res.json({
+            message: 'Kits del ejercicio obtenidos exitosamente',
+            kits: kitsResult.rows,
+            total,
+            limit: parseInt(limit),
+            offset,
+            page: parseInt(page),
+            totalPages: Math.ceil(total / parseInt(limit))
+        });
+
+    } catch (error) {
+        console.error('Error al obtener kits del ejercicio:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
 module.exports = {
     crearEjercicio,
     obtenerEjercicios,
@@ -716,5 +784,7 @@ module.exports = {
     removerReactivoDeEjercicio,
     reordenarReactivosEnEjercicio,
     crearEjercicioConReactivos,
-    verificarCompatibilidadReactivos
+    verificarCompatibilidadReactivos,
+    // Nueva función para gestión de kits
+    obtenerKitsDeEjercicio
 };

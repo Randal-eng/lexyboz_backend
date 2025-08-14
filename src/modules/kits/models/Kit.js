@@ -18,6 +18,15 @@ const kitUpdateSchema = Joi.object({
     activo: Joi.boolean().optional()
 });
 
+const ejerciciosKitSchema = Joi.object({
+    ejercicios: Joi.array().items(
+        Joi.object({
+            ejercicio_id: Joi.number().integer().required(),
+            orden: Joi.number().integer().min(1).default(1)
+        })
+    ).min(1).required()
+});
+
 const validateKit = (data) => {
     const { error } = kitSchema.validate(data);
     if (error) {
@@ -312,6 +321,171 @@ const reordenarEjerciciosEnKit = async (kitId, nuevosOrdenes) => {
     }
 };
 
+/**
+ * Agregar múltiples ejercicios a un kit
+ */
+const agregarEjerciciosAKit = async (kitId, ejerciciosData) => {
+    const { error, value } = ejerciciosKitSchema.validate({ ejercicios: ejerciciosData });
+    if (error) {
+        throw new Error(`Datos inválidos: ${error.details[0].message}`);
+    }
+
+    const client = await pool.connect();
+    
+    try {
+        await client.query('BEGIN');
+
+        // Verificar que el kit existe
+        const kitResult = await client.query(
+            'SELECT kit_id FROM kits WHERE kit_id = $1',
+            [kitId]
+        );
+
+        if (kitResult.rows.length === 0) {
+            throw new Error('Kit no encontrado');
+        }
+
+        // Verificar que todos los ejercicios existen
+        const ejercicioIds = value.ejercicios.map(e => e.ejercicio_id);
+        const ejerciciosResult = await client.query(`
+            SELECT 
+                ejercicio_id,
+                titulo
+            FROM ejercicios 
+            WHERE ejercicio_id = ANY($1) AND activo = true
+        `, [ejercicioIds]);
+
+        if (ejerciciosResult.rows.length !== ejercicioIds.length) {
+            throw new Error('Algunos ejercicios no existen o están inactivos');
+        }
+
+        // Insertar ejercicios en el kit
+        const insertPromises = value.ejercicios.map(ejercicio => {
+            return client.query(`
+                INSERT INTO ejercicios_kits (kit_id, ejercicio_id, orden_en_kit)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (kit_id, ejercicio_id) 
+                DO UPDATE SET orden_en_kit = $3, activo = true, fecha_actualizacion = NOW()
+                RETURNING *
+            `, [kitId, ejercicio.ejercicio_id, ejercicio.orden]);
+        });
+
+        const insertResults = await Promise.all(insertPromises);
+        
+        await client.query('COMMIT');
+
+        return {
+            kit_id: kitId,
+            ejercicios_agregados: insertResults.map(result => result.rows[0]),
+            total_ejercicios: insertResults.length
+        };
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(`Error al agregar ejercicios al kit: ${error.message}`);
+    } finally {
+        client.release();
+    }
+};
+
+/**
+ * Obtener ejercicios de un kit
+ */
+const obtenerEjerciciosDeKit = async (kitId, filtros = {}) => {
+    const { limit = 20, offset = 0, activo = true } = filtros;
+
+    try {
+        const query = `
+            SELECT 
+                ek.kit_id,
+                ek.ejercicio_id,
+                ek.orden_en_kit,
+                ek.activo as activo_en_kit,
+                ek.fecha_creacion as fecha_agregado,
+                e.titulo,
+                e.descripcion,
+                e.tipo_ejercicio,
+                e.creado_por,
+                e.created_at,
+                u.nombre as creador_nombre,
+                u.correo as creador_correo
+            FROM ejercicios_kits ek
+            INNER JOIN ejercicios e ON ek.ejercicio_id = e.ejercicio_id
+            INNER JOIN Usuario u ON e.creado_por = u.usuario_id
+            WHERE ek.kit_id = $1 ${activo ? 'AND ek.activo = true' : ''}
+            ORDER BY ek.orden_en_kit ASC, ek.fecha_creacion ASC
+            LIMIT $2 OFFSET $3
+        `;
+
+        const countQuery = `
+            SELECT COUNT(*) as total
+            FROM ejercicios_kits ek
+            WHERE ek.kit_id = $1 ${activo ? 'AND ek.activo = true' : ''}
+        `;
+
+        const [ejerciciosResult, countResult] = await Promise.all([
+            pool.query(query, [kitId, limit, offset]),
+            pool.query(countQuery, [kitId])
+        ]);
+
+        return {
+            ejercicios: ejerciciosResult.rows,
+            total: parseInt(countResult.rows[0].total),
+            limit,
+            offset
+        };
+    } catch (error) {
+        throw new Error(`Error al obtener ejercicios del kit: ${error.message}`);
+    }
+};
+
+/**
+ * Remover múltiples ejercicios de un kit
+ */
+const removerEjerciciosDeKit = async (kitId, ejercicioIds) => {
+    if (!Array.isArray(ejercicioIds) || ejercicioIds.length === 0) {
+        throw new Error('Debe proporcionar al menos un ejercicio_id');
+    }
+
+    const client = await pool.connect();
+    
+    try {
+        await client.query('BEGIN');
+
+        // Verificar que el kit existe
+        const kitResult = await client.query(
+            'SELECT kit_id FROM kits WHERE kit_id = $1',
+            [kitId]
+        );
+
+        if (kitResult.rows.length === 0) {
+            throw new Error('Kit no encontrado');
+        }
+
+        // Marcar ejercicios como inactivos en lugar de eliminarlos
+        const result = await client.query(`
+            UPDATE ejercicios_kits 
+            SET activo = false, fecha_actualizacion = NOW()
+            WHERE kit_id = $1 AND ejercicio_id = ANY($2)
+            RETURNING *
+        `, [kitId, ejercicioIds]);
+
+        await client.query('COMMIT');
+
+        return {
+            kit_id: kitId,
+            ejercicios_removidos: result.rows,
+            total_removidos: result.rows.length
+        };
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw new Error(`Error al remover ejercicios del kit: ${error.message}`);
+    } finally {
+        client.release();
+    }
+};
+
 module.exports = {
     crearKit,
     obtenerKits,
@@ -320,5 +494,8 @@ module.exports = {
     eliminarKit,
     agregarEjercicioAKit,
     removerEjercicioDeKit,
-    reordenarEjerciciosEnKit
+    reordenarEjerciciosEnKit,
+    agregarEjerciciosAKit,
+    obtenerEjerciciosDeKit,
+    removerEjerciciosDeKit
 };

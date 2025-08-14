@@ -893,4 +893,76 @@ router.put('/:ejercicioId/reactivos/reordenar', verifyToken, ejercicioController
  */
 router.get('/:ejercicioId/reactivos/compatibilidad', verifyToken, ejercicioController.verificarCompatibilidadReactivos);
 
+/**
+ * @swagger
+ * /api/ejercicios/{id}/kits:
+ *   get:
+ *     summary: Obtener kits que contienen un ejercicio específico
+ *     tags: [Ejercicios]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: ID del ejercicio
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Número de página
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Límite de resultados por página
+ *       - in: query
+ *         name: activo
+ *         schema:
+ *           type: boolean
+ *           default: true
+ *         description: Filtrar por estado activo
+ *     responses:
+ *       200:
+ *         description: Kits del ejercicio obtenidos exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 kits:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       kit_id:
+ *                         type: integer
+ *                       kit_name:
+ *                         type: string
+ *                       kit_descripcion:
+ *                         type: string
+ *                       orden_en_kit:
+ *                         type: integer
+ *                       activo_en_kit:
+ *                         type: boolean
+ *                       fecha_agregado:
+ *                         type: string
+ *                         format: date-time
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get('/:id/kits', verifyToken, ejercicioController.obtenerKitsDeEjercicio);
+
 module.exports = router;

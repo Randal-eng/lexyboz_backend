@@ -394,6 +394,18 @@ const duplicarEjercicio = async (ejercicioId, nuevoTitulo, creadoPor) => {
     }
 };
 
+/**
+ * Función helper para ejecutar queries
+ */
+const executeQuery = async (query, params = []) => {
+    try {
+        const result = await pool.query(query, params);
+        return result;
+    } catch (error) {
+        throw new Error(`Error al ejecutar query: ${error.message}`);
+    }
+};
+
 module.exports = {
     crearEjercicio,
     obtenerEjercicios,
@@ -403,5 +415,6 @@ module.exports = {
     obtenerEjerciciosPorTipo,
     obtenerEjerciciosDisponibles,
     obtenerEstadisticasEjercicios,
-    duplicarEjercicio
+    duplicarEjercicio,
+    executeQuery
 };

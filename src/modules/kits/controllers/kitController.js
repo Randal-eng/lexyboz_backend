@@ -374,6 +374,104 @@ const reordenarEjerciciosEnKit = async (req, res) => {
     }
 };
 
+/**
+ * Agregar múltiples ejercicios a un kit
+ */
+const agregarEjerciciosAKit = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { ejercicios } = req.body;
+
+        if (!ejercicios || !Array.isArray(ejercicios) || ejercicios.length === 0) {
+            return res.status(400).json({ 
+                message: 'Debe proporcionar un array de ejercicios con ejercicio_id y orden.' 
+            });
+        }
+
+        const resultado = await kitModel.agregarEjerciciosAKit(parseInt(id), ejercicios);
+
+        res.status(201).json({
+            message: 'Ejercicios agregados al kit exitosamente',
+            resultado
+        });
+
+    } catch (error) {
+        console.error('Error al agregar ejercicios al kit:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Obtener ejercicios de un kit
+ */
+const obtenerEjerciciosDeKit = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            page = 1,
+            limit = 20,
+            activo = true
+        } = req.query;
+
+        const offset = (parseInt(page) - 1) * parseInt(limit);
+        
+        const filtros = {
+            limit: parseInt(limit),
+            offset,
+            activo: activo === 'true' || activo === true
+        };
+
+        const resultado = await kitModel.obtenerEjerciciosDeKit(parseInt(id), filtros);
+
+        res.json({
+            message: 'Ejercicios del kit obtenidos exitosamente',
+            ...resultado,
+            page: parseInt(page),
+            totalPages: Math.ceil(resultado.total / parseInt(limit))
+        });
+
+    } catch (error) {
+        console.error('Error al obtener ejercicios del kit:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Remover múltiples ejercicios de un kit
+ */
+const removerEjerciciosDeKit = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { ejercicios_ids } = req.body;
+
+        if (!ejercicios_ids || !Array.isArray(ejercicios_ids) || ejercicios_ids.length === 0) {
+            return res.status(400).json({ 
+                message: 'Debe proporcionar un array de ejercicios_ids.' 
+            });
+        }
+
+        const resultado = await kitModel.removerEjerciciosDeKit(parseInt(id), ejercicios_ids);
+
+        res.json({
+            message: 'Ejercicios removidos del kit exitosamente',
+            resultado
+        });
+
+    } catch (error) {
+        console.error('Error al remover ejercicios del kit:', error);
+        res.status(500).json({ 
+            message: 'Error interno del servidor',
+            error: error.message 
+        });
+    }
+};
+
 module.exports = {
     crearKit,
     obtenerKits,
@@ -382,5 +480,8 @@ module.exports = {
     eliminarKit,
     agregarEjercicioAKit,
     removerEjercicioDeKit,
-    reordenarEjerciciosEnKit
+    reordenarEjerciciosEnKit,
+    agregarEjerciciosAKit,
+    obtenerEjerciciosDeKit,
+    removerEjerciciosDeKit
 };
