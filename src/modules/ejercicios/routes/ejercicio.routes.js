@@ -109,97 +109,43 @@ router.post('/', verifyToken, ejercicioController.crearEjercicio);
  * @swagger
  * /api/ejercicios:
  *   get:
- *     summary: Obtener ejercicios
  *     tags: [Ejercicios]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - name: page
- *         in: query
- *         schema:
- *           type: integer
- *           example: 1
- *       - name: limit
- *         in: query
- *         schema:
- *           type: integer
- *           example: 10
- *       - name: buscar
- *         in: query
- *         schema:
- *           type: string
- *           example: "pseudopalabras"
- *     responses:
- *       200:
- *         description: Lista de ejercicios
- *         content:
- *           application/json:
- *             example:
- *               message: "Ejercicios obtenidos exitosamente"
- *               ejercicios:
- *                 - ejercicio_id: 1
- *                   titulo: "Ejercicio de Pseudopalabras"
- *                   descripcion: "Ejercicio para evaluar lectura"
- *                   tipo_ejercicio: 1
- *                   creado_por: 1
- *                   activo: true
- *                   fecha_creacion: "2025-08-13T10:30:00Z"
- *               total: 1
- *               page: 1
- *               totalPages: 1
- *           type: integer
- *           default: 20
- *         description: Ejercicios por página
  *       - in: query
- *         name: activo
- *         schema:
- *           type: boolean
- *         description: Filtrar por estado activo
- *       - in: query
- *         name: creado_por
+ *         name: page
  *         schema:
  *           type: integer
- *         description: Filtrar por creador
  *       - in: query
- *         name: tipo_ejercicio
+ *         name: limit
  *         schema:
  *           type: integer
- *         description: Filtrar por tipo de ejercicio
  *       - in: query
  *         name: buscar
  *         schema:
  *           type: string
- *         description: Buscar en título y descripción
  *     responses:
  *       200:
- *         description: Lista de ejercicios obtenida exitosamente
  *         content:
  *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Ejercicios obtenidos exitosamente"
- *                 data:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Ejercicio'
- *                 pagination:
- *                   type: object
- *                   properties:
- *                     current_page:
- *                       type: integer
- *                     total_pages:
- *                       type: integer
- *                     total_items:
- *                       type: integer
- *                     items_per_page:
- *                       type: integer
- *       401:
- *         description: No autorizado
- *       500:
- *         description: Error interno del servidor
+ *             example:
+ *               message: "Ejercicios obtenidos exitosamente"
+ *               ejercicios: [
+ *                 {
+ *                   "ejercicio_id": 1,
+ *                   "titulo": "Ejercicio de Pseudopalabras",
+ *                   "descripcion": "Ejercicio para evaluar lectura",
+ *                   "tipo_ejercicio": 1,
+ *                   "creado_por": 1,
+ *                   "activo": true
+ *                 }
+ *               ]
+ *               pagination: {
+ *                 "totalItems": 50,
+ *                 "totalPages": 5,
+ *                 "currentPage": 1
+ *               }
  */
 router.get('/', verifyToken, ejercicioController.obtenerEjercicios);
 
@@ -641,6 +587,7 @@ router.post('/:id/duplicar', verifyToken, ejercicioController.duplicarEjercicio)
  *                   orden_en_ejercicio: 2
  *                   activo: true
  *               total_reactivos: 2
+ */
 router.post('/con-reactivos', verifyToken, ejercicioController.crearEjercicioConReactivos);
 
 /**
@@ -858,54 +805,44 @@ router.get('/:ejercicioId/reactivos/compatibilidad', verifyToken, ejercicioContr
  * @swagger
  * /api/ejercicios/{id}/kits:
  *   get:
- *     summary: Obtener kits que contienen un ejercicio
  *     tags: [Ejercicios]
  *     security:
  *       - bearerAuth: []
  *     parameters:
- *       - name: id
- *         in: path
+ *       - in: path
+ *         name: id
  *         required: true
  *         schema:
  *           type: integer
- *           example: 1
- *       - name: page
- *         in: query
+ *       - in: query
+ *         name: page
  *         schema:
  *           type: integer
- *           example: 1
- *       - name: limit
- *         in: query
+ *       - in: query
+ *         name: limit
  *         schema:
  *           type: integer
- *           example: 20
  *     responses:
  *       200:
- *         description: Kits que contienen el ejercicio
  *         content:
  *           application/json:
  *             example:
  *               message: "Kits del ejercicio obtenidos exitosamente"
- *               kits:
- *                 - kit_id: 1
- *                   kit_name: "Kit de Lectura Básica"
- *                   kit_descripcion: "Kit para evaluar habilidades básicas"
- *                   orden_en_kit: 1
- *                   activo_en_kit: true
- *                   fecha_agregado: "2025-08-13T10:30:00Z"
- *               total: 1
- *               page: 1
- *               totalPages: 1
- *                         type: string
- *                         format: date-time
- *                 total:
- *                   type: integer
- *                 page:
- *                   type: integer
- *                 totalPages:
- *                   type: integer
- *       500:
- *         description: Error interno del servidor
+ *               kits: [
+ *                 {
+ *                   "kit_id": 1,
+ *                   "kit_name": "Kit de Lectura Básica",
+ *                   "kit_descripcion": "Kit para evaluar habilidades básicas",
+ *                   "orden_en_kit": 1,
+ *                   "activo_en_kit": true,
+ *                   "fecha_agregado": "2025-08-13T10:30:00Z"
+ *                 }
+ *               ]
+ *               pagination: {
+ *                 "total": 1,
+ *                 "page": 1,
+ *                 "totalPages": 1
+ *               }
  */
 router.get('/:id/kits', verifyToken, ejercicioController.obtenerKitsDeEjercicio);
 
