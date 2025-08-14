@@ -4,25 +4,25 @@
 -- =====================================================
 
 -- 1. Crear tabla TIPOS
-CREATE TABLE Tipos (
+CREATE TABLE IF NOT EXISTS tipos (
     id_tipo SERIAL PRIMARY KEY,
-    tipo_nombre VARCHAR(100) NOT NULL UNIQUE,
+    tipo_nombre CHARACTER VARYING(100) NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 2. Crear tabla SUB_TIPO
-CREATE TABLE Sub_tipo (
+CREATE TABLE IF NOT EXISTS sub_tipo (
     id_sub_tipo SERIAL PRIMARY KEY,
     tipo INTEGER NOT NULL,
-    sub_tipo_nombre VARCHAR(100) NOT NULL,
+    sub_tipo_nombre CHARACTER VARYING(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Foreign Key constraint
     CONSTRAINT fk_sub_tipo_tipos 
         FOREIGN KEY (tipo) 
-        REFERENCES Tipos(id_tipo) 
+        REFERENCES tipos(id_tipo) 
         ON DELETE CASCADE 
         ON UPDATE CASCADE,
     
@@ -31,32 +31,32 @@ CREATE TABLE Sub_tipo (
         UNIQUE (tipo, sub_tipo_nombre)
 );
 
--- 3. Modificar el tipo de dato de Tipo_Ejercicio y agregar constraint
--- (La columna Tipo_Ejercicio existe pero es VARCHAR, necesita ser INTEGER)
+-- 3. Modificar el tipo de dato de tipo_ejercicio y agregar constraint
+-- (La columna tipo_ejercicio existe pero es VARCHAR, necesita ser INTEGER)
 
 -- Primero, eliminar constraint existente si existe
-ALTER TABLE Ejercicios DROP CONSTRAINT IF EXISTS fk_ejercicios_tipos;
+ALTER TABLE ejercicios DROP CONSTRAINT IF EXISTS fk_ejercicios_tipos;
 
 -- OPCIÓN 1: Cambio directo (perderás datos existentes)
--- ALTER TABLE Ejercicios 
--- ALTER COLUMN Tipo_Ejercicio TYPE INTEGER USING NULL;
+-- ALTER TABLE ejercicios 
+-- ALTER COLUMN tipo_ejercicio TYPE INTEGER USING NULL;
 
 -- OPCIÓN 2: Cambio más seguro - primero hacer backup de datos si existen
 -- Verificar datos existentes:
--- SELECT DISTINCT Tipo_Ejercicio FROM Ejercicios WHERE Tipo_Ejercicio IS NOT NULL;
+-- SELECT DISTINCT tipo_ejercicio FROM ejercicios WHERE tipo_ejercicio IS NOT NULL;
 
 -- Limpiar la columna si tiene datos que no se pueden convertir
-UPDATE Ejercicios SET Tipo_Ejercicio = NULL WHERE Tipo_Ejercicio IS NOT NULL;
+UPDATE ejercicios SET tipo_ejercicio = NULL WHERE tipo_ejercicio IS NOT NULL;
 
 -- Cambiar el tipo de dato
-ALTER TABLE Ejercicios 
-ALTER COLUMN Tipo_Ejercicio TYPE INTEGER USING Tipo_Ejercicio::INTEGER;
+ALTER TABLE ejercicios 
+ALTER COLUMN tipo_ejercicio TYPE INTEGER USING tipo_ejercicio::INTEGER;
 
 -- Ahora agregar el constraint de foreign key
-ALTER TABLE Ejercicios 
+ALTER TABLE ejercicios 
 ADD CONSTRAINT fk_ejercicios_tipos 
-    FOREIGN KEY (Tipo_Ejercicio) 
-    REFERENCES Tipos(id_tipo) 
+    FOREIGN KEY (tipo_ejercicio) 
+    REFERENCES tipos(id_tipo) 
     ON DELETE SET NULL 
     ON UPDATE CASCADE;
 
@@ -65,14 +65,14 @@ ADD CONSTRAINT fk_ejercicios_tipos
 -- =====================================================
 
 -- Insertar algunos tipos de ejemplo
-INSERT INTO Tipos (tipo_nombre) VALUES 
+INSERT INTO tipos (tipo_nombre) VALUES 
     ('Lectura'),
     ('Escritura'),
     ('Visual');
 
 
 -- Insertar algunos sub-tipos de ejemplo
-INSERT INTO Sub_tipo (tipo, sub_tipo_nombre) VALUES 
+INSERT INTO sub_tipo (tipo, sub_tipo_nombre) VALUES 
     (1, 'Densas'),        
     (1, 'Pseudopalabras'),     
     (1, 'Comprension'),        
@@ -91,8 +91,8 @@ SELECT
     t.tipo_nombre,
     st.id_sub_tipo,
     st.sub_tipo_nombre
-FROM Tipos t
-LEFT JOIN Sub_tipo st ON t.id_tipo = st.tipo
+FROM tipos t
+LEFT JOIN sub_tipo st ON t.id_tipo = st.tipo
 ORDER BY t.id_tipo, st.id_sub_tipo;
 
 -- Ver ejercicios con su tipo
@@ -101,8 +101,8 @@ SELECT
     e.titulo,
     e.descripcion,
     t.tipo_nombre
-FROM Ejercicios e
-LEFT JOIN Tipos t ON e.Tipo_Ejercicio = t.id_tipo
+FROM ejercicios e
+LEFT JOIN tipos t ON e.tipo_ejercicio = t.id_tipo
 ORDER BY e.ejercicio_id;
 
 -- =====================================================
@@ -113,8 +113,8 @@ ORDER BY e.ejercicio_id;
 SELECT 
     t.tipo_nombre,
     COUNT(st.id_sub_tipo) as cantidad_subtipos
-FROM Tipos t
-LEFT JOIN Sub_tipo st ON t.id_tipo = st.tipo
+FROM tipos t
+LEFT JOIN sub_tipo st ON t.id_tipo = st.tipo
 GROUP BY t.id_tipo, t.tipo_nombre
 ORDER BY t.tipo_nombre;
 
@@ -122,6 +122,6 @@ ORDER BY t.tipo_nombre;
 SELECT 
     st.id_sub_tipo,
     st.sub_tipo_nombre
-FROM Sub_tipo st
-JOIN Tipos t ON st.tipo = t.id_tipo
+FROM sub_tipo st
+JOIN tipos t ON st.tipo = t.id_tipo
 WHERE t.tipo_nombre = 'Lectura';
