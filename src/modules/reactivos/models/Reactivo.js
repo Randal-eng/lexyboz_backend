@@ -82,7 +82,7 @@ const obtenerReactivos = async (filtros = {}) => {
         // Filtro por tipo_id (a través de sub_tipo)
         if (tipo_id) {
             paramCount++;
-            whereConditions.push(`st.tipo_id = $${paramCount}`);
+            whereConditions.push(`st.id_tipo = $${paramCount}`);
             queryParams.push(tipo_id);
         }
 
@@ -108,12 +108,12 @@ const obtenerReactivos = async (filtros = {}) => {
                 r.updated_at,
                 st.nombre as sub_tipo_nombre,
                 st.descripcion as sub_tipo_descripcion,
-                st.tipo_id,
-                t.nombre as tipo_nombre,
+                st.id_tipo,
+                t.tipo_nombre as tipo_nombre,
                 t.descripcion as tipo_descripcion
             FROM reactivo_lectura_pseudopalabras r
-            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.sub_tipo_id
-            LEFT JOIN tipos t ON st.tipo_id = t.tipo_id
+            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
+            LEFT JOIN tipos t ON st.id_tipo = t.id_tipo
             ${whereClause}
             ORDER BY r.created_at DESC
             LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
@@ -125,8 +125,8 @@ const obtenerReactivos = async (filtros = {}) => {
         const countQuery = `
             SELECT COUNT(*) as total
             FROM reactivo_lectura_pseudopalabras r
-            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.sub_tipo_id
-            LEFT JOIN tipos t ON st.tipo_id = t.tipo_id
+            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
+            LEFT JOIN tipos t ON st.id_tipo = t.id_tipo
             ${whereClause}
         `;
 
@@ -159,12 +159,12 @@ const obtenerReactivoPorId = async (idReactivo) => {
                 r.updated_at,
                 st.nombre as sub_tipo_nombre,
                 st.descripcion as sub_tipo_descripcion,
-                st.tipo_id,
-                t.nombre as tipo_nombre,
+                st.id_tipo,
+                t.tipo_nombre as tipo_nombre,
                 t.descripcion as tipo_descripcion
             FROM reactivo_lectura_pseudopalabras r
-            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.sub_tipo_id
-            LEFT JOIN tipos t ON st.tipo_id = t.tipo_id
+            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
+            LEFT JOIN tipos t ON st.id_tipo = t.id_tipo
             WHERE r.id_reactivo = $1
         `, [idReactivo]);
 
@@ -248,7 +248,7 @@ const obtenerReactivosPorSubTipo = async (idSubTipo, filtros = {}) => {
                 st.nombre as sub_tipo_nombre,
                 st.descripcion as sub_tipo_descripcion
             FROM reactivo_lectura_pseudopalabras r
-            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.sub_tipo_id
+            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
             WHERE r.id_sub_tipo = $1
             ORDER BY r.created_at ASC
             LIMIT $2 OFFSET $3
@@ -291,13 +291,13 @@ const obtenerReactivosPorTipo = async (tipoId, filtros = {}) => {
                 r.created_at,
                 st.nombre as sub_tipo_nombre,
                 st.descripcion as sub_tipo_descripcion,
-                st.tipo_id,
-                t.nombre as tipo_nombre,
+                st.id_tipo,
+                t.tipo_nombre as tipo_nombre,
                 t.descripcion as tipo_descripcion
             FROM reactivo_lectura_pseudopalabras r
-            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.sub_tipo_id
-            LEFT JOIN tipos t ON st.tipo_id = t.tipo_id
-            WHERE st.tipo_id = $1
+            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
+            LEFT JOIN tipos t ON st.id_tipo = t.id_tipo
+            WHERE st.id_tipo = $1
             ORDER BY r.created_at ASC
             LIMIT $2 OFFSET $3
         `;
@@ -306,8 +306,8 @@ const obtenerReactivosPorTipo = async (tipoId, filtros = {}) => {
         const countQuery = `
             SELECT COUNT(*) as total
             FROM reactivo_lectura_pseudopalabras r
-            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.sub_tipo_id
-            WHERE st.tipo_id = $1
+            LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
+            WHERE st.id_tipo = $1
         `;
 
         const [reactivosResult, countResult] = await Promise.all([
@@ -327,33 +327,27 @@ const obtenerReactivosPorTipo = async (tipoId, filtros = {}) => {
 /**
  * Verificar si un ejercicio puede tener reactivos de un tipo específico
  */
-const verificarCompatibilidadTipo = async (ejercicioId, tipoId) => {
+const verificarCompatibilidadTipo = async (ejercicioId, tipoId = null) => {
     try {
         // Verificar si el ejercicio ya tiene reactivos
         const reactivosExistentes = await pool.query(`
-            SELECT DISTINCT t.tipo_id, t.nombre as tipo_nombre
+            SELECT COUNT(*) as total_reactivos
             FROM ejercicio_reactivos er
-            JOIN reactivo_lectura_pseudopalabras r ON er.reactivo_id = r.id_reactivo
-            JOIN sub_tipo st ON r.id_sub_tipo = st.sub_tipo_id
-            JOIN tipos t ON st.tipo_id = t.tipo_id
             WHERE er.ejercicio_id = $1 AND er.activo = true
         `, [ejercicioId]);
 
-        if (reactivosExistentes.rows.length === 0) {
+        const totalReactivos = parseInt(reactivosExistentes.rows[0].total_reactivos);
+        
+        if (totalReactivos === 0) {
             // No hay reactivos, se puede agregar cualquier tipo
             return { compatible: true, mensaje: 'El ejercicio no tiene reactivos, se puede agregar cualquier tipo' };
         }
 
-        const tipoExistente = reactivosExistentes.rows[0];
-        if (tipoExistente.tipo_id === tipoId) {
-            return { compatible: true, mensaje: `Compatible con el tipo existente: ${tipoExistente.tipo_nombre}` };
-        } else {
-            return { 
-                compatible: false, 
-                mensaje: `El ejercicio ya tiene reactivos del tipo: ${tipoExistente.tipo_nombre}. No se pueden mezclar tipos.`,
-                tipoExistente: tipoExistente
-            };
-        }
+        // Si ya hay reactivos, permitir agregar más (sin verificar tipo por ahora)
+        return { 
+            compatible: true, 
+            mensaje: `El ejercicio ya tiene ${totalReactivos} reactivos. Se pueden agregar más.`
+        };
     } catch (error) {
         throw new Error(`Error al verificar compatibilidad: ${error.message}`);
     }
@@ -383,17 +377,13 @@ const agregarReactivosAEjercicio = async (ejercicioId, reactivosData) => {
             throw new Error('Ejercicio no encontrado');
         }
 
-        // Verificar que todos los reactivos existen y son del mismo tipo
+        // Verificar que todos los reactivos existen
         const reactivoIds = value.reactivos.map(r => r.id_reactivo);
         const reactivosResult = await client.query(`
             SELECT 
                 r.id_reactivo,
-                r.pseudopalabra,
-                st.tipo_id,
-                t.nombre as tipo_nombre
+                r.pseudopalabra
             FROM reactivo_lectura_pseudopalabras r
-            JOIN sub_tipo st ON r.id_sub_tipo = st.sub_tipo_id
-            JOIN tipos t ON st.tipo_id = t.tipo_id
             WHERE r.id_reactivo = ANY($1)
         `, [reactivoIds]);
 
@@ -401,16 +391,8 @@ const agregarReactivosAEjercicio = async (ejercicioId, reactivosData) => {
             throw new Error('Algunos reactivos no existen');
         }
 
-        // Verificar que todos los reactivos son del mismo tipo
-        const tipos = [...new Set(reactivosResult.rows.map(r => r.tipo_id))];
-        if (tipos.length > 1) {
-            throw new Error('Todos los reactivos deben ser del mismo tipo');
-        }
-
-        const tipoId = tipos[0];
-
         // Verificar compatibilidad con reactivos existentes en el ejercicio
-        const compatibilidad = await verificarCompatibilidadTipo(ejercicioId, tipoId);
+        const compatibilidad = await verificarCompatibilidadTipo(ejercicioId);
         if (!compatibilidad.compatible) {
             throw new Error(compatibilidad.mensaje);
         }
@@ -433,7 +415,7 @@ const agregarReactivosAEjercicio = async (ejercicioId, reactivosData) => {
         return {
             ejercicio_id: ejercicioId,
             reactivos_agregados: insertResults.map(result => result.rows[0]),
-            tipo: reactivosResult.rows[0]
+            total_reactivos: insertResults.length
         };
 
     } catch (error) {

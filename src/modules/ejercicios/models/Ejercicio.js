@@ -108,18 +108,18 @@ const obtenerEjercicios = async ({
             e.activo,
             u.nombre as creador_nombre,
             u.correo as creador_correo,
-            t.nombre as tipo_nombre,
+            t.tipo_nombre as tipo_nombre,
             t.descripcion as tipo_descripcion,
             COUNT(er.reactivo_id) as total_reactivos,
             COUNT(ek.kit_id) as total_kits,
             COUNT(*) OVER() as total_count
         FROM ejercicios e
         INNER JOIN Usuario u ON e.creado_por = u.usuario_id
-        LEFT JOIN tipos t ON e.tipo_ejercicio = t.tipo_id
+        LEFT JOIN tipos t ON e.tipo_ejercicio = t.id_tipo
         LEFT JOIN ejercicio_reactivos er ON e.ejercicio_id = er.ejercicio_id AND er.activo = true
         LEFT JOIN ejercicios_kits ek ON e.ejercicio_id = ek.ejercicio_id
         ${whereClause}
-        GROUP BY e.ejercicio_id, u.nombre, u.correo, t.nombre, t.descripcion
+        GROUP BY e.ejercicio_id, u.nombre, u.correo, t.tipo_nombre, t.descripcion
         ORDER BY e.created_at DESC
         LIMIT $${valueIndex} OFFSET $${valueIndex + 1};
     `;
@@ -152,11 +152,11 @@ const obtenerEjercicioPorId = async (ejercicioId) => {
             e.activo,
             u.nombre as creador_nombre,
             u.correo as creador_correo,
-            t.nombre as tipo_nombre,
+            t.tipo_nombre as tipo_nombre,
             t.descripcion as tipo_descripcion
         FROM ejercicios e
         INNER JOIN Usuario u ON e.creado_por = u.usuario_id
-        LEFT JOIN tipos t ON e.tipo_ejercicio = t.tipo_id
+        LEFT JOIN tipos t ON e.tipo_ejercicio = t.id_tipo
         WHERE e.ejercicio_id = $1;
     `;
     const result = await pool.query(query, [ejercicioId]);
