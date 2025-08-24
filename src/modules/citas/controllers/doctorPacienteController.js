@@ -1,6 +1,6 @@
 const doctorPacienteModel = require('../models/DoctorPaciente');
 
-// Controlador para vincular doctor y paciente
+// Controlador para vincular doctor y paciente (función original - mantener compatibilidad)
 const vincularDoctorPaciente = async (req, res) => {
     try {
         const { doctor_id, paciente_id } = req.body;
@@ -11,6 +11,64 @@ const vincularDoctorPaciente = async (req, res) => {
         return res.status(201).json({ message: 'Vinculación exitosa.', vinculo });
     } catch (error) {
         return res.status(500).json({ message: 'Error al vincular doctor y paciente.', error: error.message });
+    }
+};
+
+// Nuevo controlador: Vincular doctor con usuario (creando paciente) o paciente existente
+const vincularDoctorConUsuario = async (req, res) => {
+    try {
+        const { doctor_id, usuario_id, paciente_id, tipo } = req.body;
+        
+        // Validar que se proporcione doctor_id
+        if (!doctor_id) {
+            return res.status(400).json({ message: 'doctor_id es requerido.' });
+        }
+
+        let id_vinculacion, tipo_vinculacion;
+
+        // Determinar el tipo de vinculación
+        if (usuario_id && !paciente_id) {
+            // Caso 1: Vincular con usuario (crear paciente si es necesario)
+            id_vinculacion = usuario_id;
+            tipo_vinculacion = 'usuario';
+        } else if (paciente_id && !usuario_id) {
+            // Caso 2: Vincular con paciente existente
+            id_vinculacion = paciente_id;
+            tipo_vinculacion = 'paciente';
+        } else if (tipo === 'usuario' && usuario_id) {
+            // Caso 3: Especificar explícitamente que es usuario
+            id_vinculacion = usuario_id;
+            tipo_vinculacion = 'usuario';
+        } else if (tipo === 'paciente' && paciente_id) {
+            // Caso 4: Especificar explícitamente que es paciente
+            id_vinculacion = paciente_id;
+            tipo_vinculacion = 'paciente';
+        } else {
+            return res.status(400).json({ 
+                message: 'Debe proporcionar (usuario_id) para crear paciente, o (paciente_id) para vincular paciente existente.',
+                ejemplos: {
+                    crear_paciente: { doctor_id: 1, usuario_id: 5 },
+                    vincular_paciente_existente: { doctor_id: 1, paciente_id: 3 }
+                }
+            });
+        }
+
+        const resultado = await doctorPacienteModel.vincularDoctorConUsuarioOPaciente(
+            doctor_id, 
+            id_vinculacion, 
+            tipo_vinculacion
+        );
+
+        return res.status(201).json({ 
+            message: resultado.fue_creado_paciente 
+                ? 'Usuario convertido en paciente y vinculado exitosamente al doctor.' 
+                : 'Paciente vinculado exitosamente al doctor.',
+            vinculo: resultado.vinculacion,
+            paciente_id: resultado.paciente_id,
+            fue_creado_paciente: resultado.fue_creado_paciente
+        });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al vincular doctor con usuario/paciente.', error: error.message });
     }
 };
 
@@ -79,7 +137,8 @@ const obtenerTodasLasVinculaciones = async (req, res) => {
 };
 
 module.exports = {
-    vincularDoctorPaciente,
+    vincularDoctorPaciente, // Función original para compatibilidad
+    vincularDoctorConUsuario, // Nueva función principal
     obtenerPacientesDeDoctor,
     obtenerDoctoresDePaciente,
     desvincularDoctorPaciente,
