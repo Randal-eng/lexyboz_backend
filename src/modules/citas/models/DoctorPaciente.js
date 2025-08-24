@@ -76,8 +76,7 @@ const obtenerPacientesDeDoctor = async (doctor_id) => {
             p.escolaridad,
             p.domicilio,
             p.codigo_postal,
-            u.imagen_url,
-            dp.created_at as fecha_vinculacion
+            u.imagen_url
         FROM doctor_paciente dp
         INNER JOIN paciente p ON dp.paciente_id = p.paciente_id
         INNER JOIN usuario u ON p.usuario_id = u.usuario_id
@@ -102,8 +101,7 @@ const obtenerDoctoresDePaciente = async (paciente_id) => {
             d.especialidad,
             d.domicilio,
             d.codigo_postal,
-            u.imagen_url,
-            dp.created_at as fecha_vinculacion
+            u.imagen_url
         FROM doctor_paciente dp
         INNER JOIN doctor d ON dp.doctor_id = d.doctor_id
         INNER JOIN usuario u ON d.usuario_id = u.usuario_id
@@ -137,7 +135,6 @@ const obtenerTodasLasVinculaciones = async () => {
         SELECT 
             dp.doctor_id,
             dp.paciente_id,
-            dp.created_at as fecha_vinculacion,
             du.nombre as doctor_nombre,
             d.especialidad,
             pu.nombre as paciente_nombre,
@@ -147,7 +144,7 @@ const obtenerTodasLasVinculaciones = async () => {
         INNER JOIN usuario du ON d.usuario_id = du.usuario_id
         INNER JOIN paciente p ON dp.paciente_id = p.paciente_id
         INNER JOIN usuario pu ON p.usuario_id = pu.usuario_id
-        ORDER BY dp.created_at DESC
+        ORDER BY du.nombre ASC
     `;
     const result = await pool.query(query);
     return result.rows;
