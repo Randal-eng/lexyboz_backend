@@ -56,6 +56,116 @@ router.post('/vincular', doctorPacienteController.vincularDoctorPaciente);
 
 /**
  * @swagger
+ * /api/doctor-paciente/vincular-usuario:
+ *   post:
+ *     summary: Vincula un doctor con un usuario (creando paciente) o paciente existente
+ *     description: |
+ *       Esta función permite dos tipos de vinculación:
+ *       1. **Crear paciente desde usuario**: Proporciona `doctor_id` y `usuario_id`. Si el usuario no es paciente, se convierte automáticamente en paciente.
+ *       2. **Vincular paciente existente**: Proporciona `doctor_id` y `paciente_id` para vincular un paciente ya existente con otro doctor.
+ *     tags: [Doctor-Paciente]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             oneOf:
+ *               - type: object
+ *                 required:
+ *                   - doctor_id
+ *                   - usuario_id
+ *                 properties:
+ *                   doctor_id:
+ *                     type: integer
+ *                     description: ID del doctor que va a tener el paciente
+ *                     example: 7
+ *                   usuario_id:
+ *                     type: integer
+ *                     description: ID del usuario que será convertido en paciente
+ *                     example: 15
+ *               - type: object
+ *                 required:
+ *                   - doctor_id
+ *                   - paciente_id
+ *                 properties:
+ *                   doctor_id:
+ *                     type: integer
+ *                     description: ID del doctor
+ *                     example: 7
+ *                   paciente_id:
+ *                     type: integer
+ *                     description: ID del paciente existente a vincular
+ *                     example: 12
+ *           examples:
+ *             crear_paciente:
+ *               summary: Convertir usuario en paciente
+ *               value:
+ *                 doctor_id: 7
+ *                 usuario_id: 15
+ *             vincular_paciente:
+ *               summary: Vincular paciente existente
+ *               value:
+ *                 doctor_id: 7
+ *                 paciente_id: 12
+ *     responses:
+ *       201:
+ *         description: Vinculación exitosa
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Usuario convertido en paciente y vinculado exitosamente al doctor."
+ *                 vinculo:
+ *                   type: object
+ *                   properties:
+ *                     doctor_id:
+ *                       type: integer
+ *                     paciente_id:
+ *                       type: integer
+ *                 paciente_id:
+ *                   type: integer
+ *                   description: ID del paciente resultante
+ *                 fue_creado_paciente:
+ *                   type: boolean
+ *                   description: Indica si se creó un nuevo registro de paciente
+ *       400:
+ *         description: Error en la solicitud
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Debe proporcionar (usuario_id) para crear paciente, o (paciente_id) para vincular paciente existente."
+ *                 ejemplos:
+ *                   type: object
+ *                   properties:
+ *                     crear_paciente:
+ *                       type: object
+ *                       example: { doctor_id: 1, usuario_id: 5 }
+ *                     vincular_paciente_existente:
+ *                       type: object
+ *                       example: { doctor_id: 1, paciente_id: 3 }
+ *       500:
+ *         description: Error del servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 error:
+ *                   type: string
+ */
+router.post('/vincular-usuario', doctorPacienteController.vincularDoctorConUsuario);
+
+/**
+ * @swagger
  * /api/doctor-paciente/doctor/{doctor_id}/pacientes:
  *   get:
  *     summary: Obtiene todos los pacientes de un doctor
