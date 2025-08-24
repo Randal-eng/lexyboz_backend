@@ -19,7 +19,6 @@ const gmailTransporter = !isProduction ? nodemailer.createTransport({
     }
 }) : null;
 
-
 // SendGrid para producción (Railway)
 if (isProduction && process.env.SENDGRID_API_KEY) {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
