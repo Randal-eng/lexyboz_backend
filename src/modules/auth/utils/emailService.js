@@ -1,4 +1,10 @@
 const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
+
+// Configurar SendGrid para producción
+if (process.env.NODE_ENV === 'production' && process.env.SENDGRID_API_KEY) {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 // Configuración del transportador de correo
 const getTransporter = () => {
@@ -63,6 +69,9 @@ const sendResetEmail = async (email, resetToken) => {
     }
 
     const resetUrl = `${process.env.FRONTEND_ORIGIN}/reset-password/${resetToken}`;
+    
+    // Determinar si estamos en producción
+    const isProduction = process.env.NODE_ENV === 'production';
     
     try {
         if (isProduction) {
