@@ -14,22 +14,31 @@ const getTransporter = () => {
     const config = {
         service: 'gmail',
         host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
+        port: 465,  // Puerto SSL para Railway
+        secure: true,  // SSL para Railway
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
         },
         tls: {
-            rejectUnauthorized: true, // Más seguro en producción
-            minVersion: 'TLSv1.2'     // Forzar TLS 1.2 o superior
-        }
+            rejectUnauthorized: true,
+            minVersion: 'TLSv1.2'
+        },
+        // Configuraciones específicas para Railway
+        connectionTimeout: 60000,  // 60 segundos
+        greetingTimeout: 30000,    // 30 segundos
+        socketTimeout: 60000,      // 60 segundos
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100
     };
 
     // Ajustes específicos para desarrollo
     if (process.env.NODE_ENV === 'development') {
-        config.tls.rejectUnauthorized = false; // Más permisivo en desarrollo
-        config.debug = true;                   // Habilitar logs
+        config.port = 587;
+        config.secure = false;
+        config.tls.rejectUnauthorized = false;
+        config.debug = true;
     }
 
     return nodemailer.createTransport(config);
