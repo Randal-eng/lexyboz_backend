@@ -82,7 +82,7 @@ const obtenerReactivos = async (filtros = {}) => {
         // Filtro por tipo_id (a través de sub_tipo)
         if (tipo_id) {
             paramCount++;
-            whereConditions.push(`st.id_tipo = $${paramCount}`);
+            whereConditions.push(`st.tipo = $${paramCount}`);
             queryParams.push(tipo_id);
         }
 
@@ -106,14 +106,12 @@ const obtenerReactivos = async (filtros = {}) => {
                 r.tiempo_duracion,
                 r.created_at,
                 r.updated_at,
-                st.nombre as sub_tipo_nombre,
-                st.descripcion as sub_tipo_descripcion,
-                st.id_tipo,
-                t.tipo_nombre as tipo_nombre,
-                t.descripcion as tipo_descripcion
+                st.sub_tipo_nombre as sub_tipo_nombre,
+                st.tipo,
+                t.tipo_nombre as tipo_nombre
             FROM reactivo_lectura_pseudopalabras r
             LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
-            LEFT JOIN tipos t ON st.id_tipo = t.id_tipo
+            LEFT JOIN tipos t ON st.tipo = t.id_tipo
             ${whereClause}
             ORDER BY r.created_at DESC
             LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
@@ -126,7 +124,7 @@ const obtenerReactivos = async (filtros = {}) => {
             SELECT COUNT(*) as total
             FROM reactivo_lectura_pseudopalabras r
             LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
-            LEFT JOIN tipos t ON st.id_tipo = t.id_tipo
+            LEFT JOIN tipos t ON st.tipo = t.id_tipo
             ${whereClause}
         `;
 
@@ -157,14 +155,12 @@ const obtenerReactivoPorId = async (idReactivo) => {
                 r.tiempo_duracion,
                 r.created_at,
                 r.updated_at,
-                st.nombre as sub_tipo_nombre,
-                st.descripcion as sub_tipo_descripcion,
-                st.id_tipo,
-                t.tipo_nombre as tipo_nombre,
-                t.descripcion as tipo_descripcion
+                st.sub_tipo_nombre as sub_tipo_nombre,
+                st.tipo,
+                t.tipo_nombre as tipo_nombre
             FROM reactivo_lectura_pseudopalabras r
             LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
-            LEFT JOIN tipos t ON st.id_tipo = t.id_tipo
+            LEFT JOIN tipos t ON st.tipo = t.id_tipo
             WHERE r.id_reactivo = $1
         `, [idReactivo]);
 
@@ -245,7 +241,7 @@ const obtenerReactivosPorSubTipo = async (idSubTipo, filtros = {}) => {
                 r.id_sub_tipo,
                 r.tiempo_duracion,
                 r.created_at,
-                st.nombre as sub_tipo_nombre,
+                st.sub_tipo_nombre as sub_tipo_nombre,
                 st.descripcion as sub_tipo_descripcion
             FROM reactivo_lectura_pseudopalabras r
             LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
@@ -289,15 +285,15 @@ const obtenerReactivosPorTipo = async (tipoId, filtros = {}) => {
                 r.id_sub_tipo,
                 r.tiempo_duracion,
                 r.created_at,
-                st.nombre as sub_tipo_nombre,
+                st.sub_tipo_nombre as sub_tipo_nombre,
                 st.descripcion as sub_tipo_descripcion,
-                st.id_tipo,
+                st.tipo,
                 t.tipo_nombre as tipo_nombre,
                 t.descripcion as tipo_descripcion
             FROM reactivo_lectura_pseudopalabras r
             LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
-            LEFT JOIN tipos t ON st.id_tipo = t.id_tipo
-            WHERE st.id_tipo = $1
+            LEFT JOIN tipos t ON st.tipo = t.id_tipo
+            WHERE st.tipo = $1
             ORDER BY r.created_at ASC
             LIMIT $2 OFFSET $3
         `;
@@ -307,7 +303,7 @@ const obtenerReactivosPorTipo = async (tipoId, filtros = {}) => {
             SELECT COUNT(*) as total
             FROM reactivo_lectura_pseudopalabras r
             LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
-            WHERE st.id_tipo = $1
+            WHERE st.tipo = $1
         `;
 
         const [reactivosResult, countResult] = await Promise.all([
@@ -441,7 +437,7 @@ const obtenerReactivosDeEjercicio = async (ejercicioId) => {
                 r.pseudopalabra,
                 r.tiempo_duracion,
                 st.sub_tipo_id,
-                st.nombre as sub_tipo_nombre,
+                st.sub_tipo_nombre as sub_tipo_nombre,
                 st.descripcion as sub_tipo_descripcion,
                 st.tipo_id,
                 t.nombre as tipo_nombre,
