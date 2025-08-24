@@ -11,22 +11,24 @@ const existeVinculacion = async (doctor_id, paciente_id) => {
 };
 
 // Verificar que el usuario sea doctor
-const verificarEsDoctor = async (usuario_id) => {
+const verificarEsDoctor = async (doctor_id) => {
     const query = `
-        SELECT tipo FROM usuario
-        WHERE usuario_id = $1 AND tipo = 'Doctor'
+        SELECT d.doctor_id FROM doctor d
+        INNER JOIN usuario u ON d.usuario_id = u.usuario_id
+        WHERE d.doctor_id = $1 AND u.tipo = 'Doctor'
     `;
-    const result = await pool.query(query, [usuario_id]);
+    const result = await pool.query(query, [doctor_id]);
     return result.rows.length > 0;
 };
 
 // Verificar que el usuario sea paciente
-const verificarEsPaciente = async (usuario_id) => {
+const verificarEsPaciente = async (paciente_id) => {
     const query = `
-        SELECT tipo FROM usuario
-        WHERE usuario_id = $1 AND tipo = 'Paciente'
+        SELECT p.paciente_id FROM paciente p
+        INNER JOIN usuario u ON p.usuario_id = u.usuario_id
+        WHERE p.paciente_id = $1 AND u.tipo = 'Paciente'
     `;
-    const result = await pool.query(query, [usuario_id]);
+    const result = await pool.query(query, [paciente_id]);
     return result.rows.length > 0;
 };
 
@@ -64,19 +66,21 @@ const vincularPacienteConDoctor = async (doctor_id, paciente_id) => {
 const obtenerPacientesDeDoctor = async (doctor_id) => {
     const query = `
         SELECT 
+            p.paciente_id,
             u.usuario_id,
             u.nombre,
             u.correo,
             u.fecha_de_nacimiento,
             u.numero_telefono,
             u.sexo,
-            u.escolaridad,
-            u.domicilio,
-            u.codigo_postal,
+            p.escolaridad,
+            p.domicilio,
+            p.codigo_postal,
             u.imagen_url,
             dp.created_at as fecha_vinculacion
         FROM doctor_paciente dp
-        INNER JOIN usuario u ON dp.paciente_id = u.usuario_id
+        INNER JOIN paciente p ON dp.paciente_id = p.paciente_id
+        INNER JOIN usuario u ON p.usuario_id = u.usuario_id
         WHERE dp.doctor_id = $1
         ORDER BY u.nombre ASC
     `;
@@ -88,19 +92,21 @@ const obtenerPacientesDeDoctor = async (doctor_id) => {
 const obtenerDoctoresDePaciente = async (paciente_id) => {
     const query = `
         SELECT 
+            d.doctor_id,
             u.usuario_id,
             u.nombre,
             u.correo,
             u.fecha_de_nacimiento,
             u.numero_telefono,
             u.sexo,
-            u.especialidad,
-            u.domicilio,
-            u.codigo_postal,
+            d.especialidad,
+            d.domicilio,
+            d.codigo_postal,
             u.imagen_url,
             dp.created_at as fecha_vinculacion
         FROM doctor_paciente dp
-        INNER JOIN usuario u ON dp.doctor_id = u.usuario_id
+        INNER JOIN doctor d ON dp.doctor_id = d.doctor_id
+        INNER JOIN usuario u ON d.usuario_id = u.usuario_id
         WHERE dp.paciente_id = $1
         ORDER BY u.nombre ASC
     `;
@@ -132,13 +138,15 @@ const obtenerTodasLasVinculaciones = async () => {
             dp.doctor_id,
             dp.paciente_id,
             dp.created_at as fecha_vinculacion,
-            d.nombre as doctor_nombre,
+            du.nombre as doctor_nombre,
             d.especialidad,
-            p.nombre as paciente_nombre,
+            pu.nombre as paciente_nombre,
             p.escolaridad
         FROM doctor_paciente dp
-        INNER JOIN usuario d ON dp.doctor_id = d.usuario_id
-        INNER JOIN usuario p ON dp.paciente_id = p.usuario_id
+        INNER JOIN doctor d ON dp.doctor_id = d.doctor_id
+        INNER JOIN usuario du ON d.usuario_id = du.usuario_id
+        INNER JOIN paciente p ON dp.paciente_id = p.paciente_id
+        INNER JOIN usuario pu ON p.usuario_id = pu.usuario_id
         ORDER BY dp.created_at DESC
     `;
     const result = await pool.query(query);
