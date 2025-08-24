@@ -1,13 +1,28 @@
 const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 
-// Configuración del transportador de correo
-const getTransporter = () => {
-    // Verificar variables de entorno requeridas
+// Configurar SendGrid (si está disponible) o usar Gmail como fallback
+const initializeEmailService = () => {
+    if (process.env.SENDGRID_API_KEY) {
+        console.log('Inicializando SendGrid...');
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+        return 'sendgrid';
+    } else {
+        console.log('Usando Gmail SMTP como fallback...');
+        return 'gmail';
+    }
+};
+
+const emailProvider = initializeEmailService();
+
+// Configuración del transportador de Gmail (fallback)
+const getGmailTransporter = () => {
+    // Verificar variables de entorno requeridas para Gmail
     const requiredEnvVars = ['EMAIL_USER', 'EMAIL_PASS', 'FRONTEND_ORIGIN'];
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
     
     if (missingVars.length > 0) {
-        throw new Error(`Variables de entorno faltantes: ${missingVars.join(', ')}`);
+        throw new Error(`Variables de entorno faltantes para Gmail: ${missingVars.join(', ')}`);
     }
 
     // Configuración base para desarrollo y producción
@@ -44,8 +59,11 @@ const getTransporter = () => {
     return nodemailer.createTransport(config);
 };
 
-// Crear el transportador
-const transporter = getTransporter();
+// Crear el transportador de Gmail (solo si no usamos SendGrid)
+let gmailTransporter = null;
+if (emailProvider === 'gmail') {
+    gmailTransporter = getGmailTransporter();
+}
 
 const sendResetEmail = async (email, resetToken) => {
     // Validar el email
@@ -123,50 +141,77 @@ const sendResetEmail = async (email, resetToken) => {
     };
 
     try {
-        console.log('Configuración del correo:', {
-            from: mailOptions.from,
-            to: mailOptions.to,
-            subject: mailOptions.subject,
-            emailUser: process.env.EMAIL_USER,
-            hasPassword: !!process.env.EMAIL_PASS,
-            frontendUrl: process.env.FRONTEND_ORIGIN
-        });
+        console.log(`Enviando email usando: ${emailProvider}`);
+        
+        if (emailProvider === 'sendgrid') {
+            // Usar SendGrid
+            const msg = {
+                to: email,
+                from: {
+                    email: 'lexyvoz.inc@gmail.com',  // Cambiar por un email que controles
+                    name: 'Lexyboz Support'
+                },
+                subject: mailOptions.subject,
+                html: mailOptions.html
+            };
 
-        console.log('Intentando enviar correo a:', email);
+            console.log('Enviando con SendGrid:', {
+                to: msg.to,
+                from: msg.from,
+                subject: msg.subject
+            });
+
+            const response = await sgMail.send(msg);
+            console.log('Email enviado exitosamente con SendGrid:', {
+                messageId: response[0].headers['x-message-id'],
+                statusCode: response[0].statusCode,
+                recipient: email
+            });
+            
+            return { messageId: response[0].headers['x-message-id'], provider: 'sendgrid' };
+            
+        } else {
+            // Usar Gmail como fallback
+            console.log('Configuración del correo Gmail:', {
+                from: mailOptions.from,
+                to: mailOptions.to,
+                subject: mailOptions.subject,
+                emailUser: process.env.EMAIL_USER,
+                hasPassword: !!process.env.EMAIL_PASS,
+                frontendUrl: process.env.FRONTEND_ORIGIN
+            });
+
+            console.log('Intentando enviar correo Gmail a:', email);
+            
+            // Verificar que el transportador está bien configurado
+            const verify = await gmailTransporter.verify();
+            console.log('Verificación del transportador Gmail:', verify);
+            
+            const info = await gmailTransporter.sendMail(mailOptions);
+            console.log('Correo enviado exitosamente con Gmail:', {
+                messageId: info.messageId,
+                response: info.response,
+                recipient: email,
+                accepted: info.accepted,
+                rejected: info.rejected,
+                envelope: info.envelope
+            });
+            return { ...info, provider: 'gmail' };
+        }
         
-        // Verificar que el transportador está bien configurado
-        const verify = await transporter.verify();
-        console.log('Verificación del transportador:', verify);
-        
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Correo enviado exitosamente:', {
-            messageId: info.messageId,
-            response: info.response,
-            recipient: email,
-            accepted: info.accepted,
-            rejected: info.rejected,
-            envelope: info.envelope
-        });
-        return info;
     } catch (error) {
-        console.error('Error detallado al enviar correo:', {
+        console.error(`Error detallado al enviar correo con ${emailProvider}:`, {
             error: error.message,
             errorName: error.name,
             stack: error.stack,
             recipient: email,
-            transporterSettings: {
-                service: transporter.options.service,
-                host: transporter.options.host,
-                port: transporter.options.port,
-                secure: transporter.options.secure,
-                authUser: process.env.EMAIL_USER?.substring(0, 5) + '...',
-                hasAuth: !!transporter.options.auth
-            }
+            provider: emailProvider
         });
-        throw new Error('Error al enviar el correo de restablecimiento: ' + error.message);
+        throw new Error(`Error al enviar el correo de restablecimiento con ${emailProvider}: ` + error.message);
     }
 };
 
 module.exports = {
-    sendResetEmail
+    sendResetEmail,
+    emailProvider // Exportar para debugging
 };
