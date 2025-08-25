@@ -21,6 +21,7 @@ const adminRoutes = require('./src/modules/auth/routes/admin.routes');
 // Importar rutas de citas
 const citaRoutes = require('./src/modules/citas/routes/cita.routes');
 const doctorPacienteRoutes = require('./src/modules/citas/routes/doctorPaciente.routes');
+const solicitudVinculacionRoutes = require('./src/modules/citas/routes/solicitudVinculacion.routes');
 
 // Importar rutas de kits
 const kitRoutes = require('./src/modules/kits/routes/kit.routes');
@@ -227,6 +228,7 @@ app.use((err, req, res, next) => {
 app.use('/api', adminRoutes);
 app.use('/api', authRoutes);
 app.use('/api/doctor-paciente', doctorPacienteRoutes);
+app.use('/api/solicitudes', solicitudVinculacionRoutes);
 app.use('/api/citas', citaRoutes);
 app.use('/api/kits', kitRoutes);
 app.use('/api/kits-asignados', kitsAsignadosRoutes);
