@@ -4,7 +4,7 @@ const solicitudVinculacionModel = require('../models/SolicitudVinculacion');
 const enviarSolicitud = async (req, res) => {
     try {
         const { doctor_id, mensaje } = req.body;
-        const usuario_id = req.user?.usuario_id; // Asumiendo que tienes middleware de auth
+        const usuario_id = req.user?.id; // El JWT tiene 'id', no 'usuario_id'
 
         if (!doctor_id) {
             return res.status(400).json({ 
@@ -67,7 +67,7 @@ const obtenerSolicitudesPendientes = async (req, res) => {
 // Usuario obtiene sus solicitudes enviadas
 const obtenerMisSolicitudes = async (req, res) => {
     try {
-        const usuario_id = req.user?.usuario_id; // Asumiendo middleware de auth
+        const usuario_id = req.user?.id; // El JWT tiene 'id', no 'usuario_id'
 
         if (!usuario_id) {
             return res.status(401).json({ 
@@ -96,8 +96,8 @@ const responderSolicitud = async (req, res) => {
     try {
         const { solicitud_id } = req.params;
         const { respuesta } = req.body; // 'aceptada' o 'rechazada'
-        const doctor_id = req.user?.doctor_id; // Asumiendo middleware que identifica al doctor
-        const respondido_por = req.user?.usuario_id;
+        const usuario_id = req.user?.id; // ID del usuario autenticado
+        const respondido_por = req.user?.id; // El JWT tiene 'id', no 'usuario_id'
 
         if (!solicitud_id || !respuesta) {
             return res.status(400).json({ 
@@ -111,11 +111,26 @@ const responderSolicitud = async (req, res) => {
             });
         }
 
-        if (!doctor_id) {
+        if (!usuario_id) {
             return res.status(401).json({ 
-                message: 'Doctor no autenticado.' 
+                message: 'Usuario no autenticado.' 
             });
         }
+
+        // Obtener el doctor_id desde la tabla doctor usando el usuario_id
+        const pool = require('../../../db/connection');
+        const doctorQuery = await pool.query(
+            'SELECT doctor_id FROM doctor WHERE usuario_id = $1',
+            [usuario_id]
+        );
+
+        if (doctorQuery.rows.length === 0) {
+            return res.status(403).json({ 
+                message: 'Solo los doctores pueden responder solicitudes.' 
+            });
+        }
+
+        const doctor_id = doctorQuery.rows[0].doctor_id;
 
         const resultado = await solicitudVinculacionModel.responderSolicitud(
             solicitud_id, 
