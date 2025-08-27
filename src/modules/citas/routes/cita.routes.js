@@ -119,5 +119,35 @@ router.put('/editar-cita/:id', verifyToken, citaController.editarCita);
  *         description: Cita no encontrada
  */
 router.delete('/eliminar-cita/:id', verifyToken, citaController.eliminarCita);
+/**
+ * @swagger
+ * /api/citas/agendar:
+ *   post:
+ *     summary: Agenda una cita
+ *     tags: [Citas]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               pacienteId:
+ *                 type: string
+ *                 description: ID del paciente
+ *               doctorId:
+ *                 type: string
+ *                 description: ID del doctor
+ *               fecha:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Fecha y hora de la cita
+ *     responses:
+ *       201:
+ *         description: Cita agendada exitosamente
+ *       400:
+ *         description: Error en la solicitud
+ */
+router.post('/agendar', verifyToken, citaController.agendarCita);
 
 module.exports = router;
