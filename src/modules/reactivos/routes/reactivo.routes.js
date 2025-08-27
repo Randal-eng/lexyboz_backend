@@ -611,4 +611,9 @@ router.put('/ejercicio/:ejercicio_id/reordenar', verifyToken, reactivoController
  */
 router.delete('/ejercicio/:ejercicio_id/:reactivo_id', verifyToken, reactivoController.removerReactivoDeEjercicio);
 
+
+// Endpoint para guardar resultado de lectura de pseudopalabras (audio y datos)
+const { upload, guardarResultadoLecturaPseudopalabras } = require('../controllers/reactivoController');
+router.post('/resultados-lectura-pseudopalabras', upload.single('audio'), guardarResultadoLecturaPseudopalabras);
+
 module.exports = router;

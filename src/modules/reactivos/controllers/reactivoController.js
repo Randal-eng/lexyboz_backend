@@ -466,6 +466,51 @@ const reordenarReactivosEnEjercicio = async (req, res) => {
     }
 };
 
+
+const ResultadoLecturaPseudopalabras = require('../models/ResultadoLecturaPseudopalabras');
+const cloudinary = require('../../config/cloudinary/cloudinaryConfig');
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Controlador para guardar resultado de lectura de pseudopalabras
+const guardarResultadoLecturaPseudopalabras = async (req, res) => {
+    try {
+        // Si se usa multer en la ruta, el archivo estará en req.file
+        const { usuario_id, id_reactivo, tiempo_respuesta, es_correcto, fecha_realizacion } = req.body;
+        let voz_usuario_url = null;
+        if (req.file) {
+            // Subir audio a Cloudinary
+            const result = await cloudinary.uploader.upload_stream(
+                { resource_type: 'video', folder: 'resultados_voz_usuarios' },
+                (error, uploadResult) => {
+                    if (error) throw error;
+                    voz_usuario_url = uploadResult.secure_url;
+                }
+            );
+        }
+        // Insertar en la base de datos
+        const resultado = await ResultadoLecturaPseudopalabras.create({
+            usuario_id,
+            id_reactivo,
+            voz_usuario_url,
+            tiempo_respuesta,
+            es_correcto,
+            fecha_realizacion
+        });
+        res.status(201).json({
+            message: 'Resultado guardado exitosamente',
+            resultado
+        });
+    } catch (error) {
+        console.error('Error al guardar resultado:', error);
+        res.status(500).json({
+            message: 'Error interno del servidor',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     crearReactivo,
     obtenerReactivos,
@@ -478,5 +523,7 @@ module.exports = {
     agregarReactivosAEjercicio,
     obtenerReactivosDeEjercicio,
     removerReactivoDeEjercicio,
-    reordenarReactivosEnEjercicio
+    reordenarReactivosEnEjercicio,
+    guardarResultadoLecturaPseudopalabras,
+    upload
 };
