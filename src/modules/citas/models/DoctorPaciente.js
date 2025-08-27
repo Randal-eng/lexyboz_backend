@@ -41,11 +41,11 @@ const obtenerOCrearPaciente = async (usuario_id) => {
         SELECT paciente_id FROM Paciente WHERE usuario_ID = $1
     `;
     const resultExistente = await pool.query(queryExistente, [usuario_id]);
-    
+
     if (resultExistente.rows.length > 0) {
         return resultExistente.rows[0].paciente_id;
     }
-    
+
     // Si no existe, crear nuevo paciente
     const queryCrear = `
         INSERT INTO Paciente (usuario_ID, escolaridad, domicilio, codigo_postal)
@@ -53,7 +53,7 @@ const obtenerOCrearPaciente = async (usuario_id) => {
         RETURNING paciente_id
     `;
     const resultCrear = await pool.query(queryCrear, [usuario_id]);
-    
+
     // Actualizar el tipo de usuario a 'Paciente'
     const queryActualizarUsuario = `
         UPDATE usuario 
@@ -61,7 +61,7 @@ const obtenerOCrearPaciente = async (usuario_id) => {
         WHERE usuario_id = $1
     `;
     await pool.query(queryActualizarUsuario, [usuario_id]);
-    
+
     return resultCrear.rows[0].paciente_id;
 };
 
@@ -74,22 +74,22 @@ const vincularDoctorConUsuarioOPaciente = async (doctor_id, id_vinculacion, tipo
     }
 
     let paciente_id;
-    
+
     if (tipo_vinculacion === 'usuario') {
         // Caso 1: Vincular con usuario_id (crear paciente si es necesario)
         const usuarioInfo = await verificarUsuarioValido(id_vinculacion);
-        
+
         if (!usuarioInfo.existe) {
             throw new Error('El usuario especificado no existe');
         }
-        
+
         if (usuarioInfo.tipo === 'Doctor') {
             throw new Error('No se puede vincular un doctor como paciente');
         }
-        
+
         // Obtener o crear el paciente
         paciente_id = await obtenerOCrearPaciente(id_vinculacion);
-        
+
     } else if (tipo_vinculacion === 'paciente') {
         // Caso 2: Vincular con paciente_id existente
         const esPaciente = await verificarEsPaciente(id_vinculacion);
@@ -114,7 +114,7 @@ const vincularDoctorConUsuarioOPaciente = async (doctor_id, id_vinculacion, tipo
     `;
     const values = [doctor_id, paciente_id];
     const result = await pool.query(query, values);
-    
+
     return {
         vinculacion: result.rows[0],
         paciente_id: paciente_id,
@@ -197,12 +197,25 @@ const desvincularDoctorPaciente = async (doctor_id, paciente_id) => {
         throw new Error('No existe vinculación entre el doctor y paciente especificados');
     }
 
+    // Eliminar la vinculación
     const query = `
         DELETE FROM doctor_paciente 
         WHERE doctor_id = $1 AND paciente_id = $2
         RETURNING *;
     `;
     const result = await pool.query(query, [doctor_id, paciente_id]);
+
+    // Actualizar Paciente: is_active = FALSE
+    await pool.query('UPDATE "paciente" SET is_active = FALSE WHERE paciente_id = $1', [paciente_id]);
+
+    // Obtener usuario_id relacionado al paciente
+    const usuarioRes = await pool.query('SELECT usuario_ID FROM "paciente" WHERE paciente_id = $1', [paciente_id]);
+    if (usuarioRes.rows.length > 0) {
+        const usuario_id = usuarioRes.rows[0].usuario_id;
+        // Cambiar tipo en usuario a 'Usuario'
+        await pool.query('UPDATE usuario SET tipo = $1 WHERE usuario_id = $2', ['Usuario', usuario_id]);
+    }
+
     return result.rows[0];
 };
 
