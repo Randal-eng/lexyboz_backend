@@ -1,14 +1,65 @@
 const citaModel = require('../models/Cita');
+// Agendar cita con validaciones de vinculación y fecha
+const agendarCita = async (req, res) => {
+    try {
+        const { doctor_id, paciente_id, fecha_cita } = req.body;
 
-// Crear cita
+        if (!doctor_id || !paciente_id || !fecha_cita) {
+            return res.status(400).json({ message: 'doctor_id, paciente_id y fecha_cita son requeridos.' });
+        }
+
+        if (new Date(fecha_cita) <= new Date()) {
+            return res.status(400).json({ message: 'La fecha de la cita debe ser futura.' });
+        }
+
+        // Validar vinculación doctor-paciente
+        const pool = require('../../../db/connection');
+        const vinculado = await pool.query(
+            'SELECT 1 FROM doctor_paciente WHERE doctor_id = $1 AND paciente_id = $2',
+            [doctor_id, paciente_id]
+        );
+        if (vinculado.rows.length === 0) {
+            return res.status(400).json({ message: 'El paciente no está vinculado con el doctor.' });
+        }
+
+        // Crear la cita con estado Programada
+        const cita = await citaModel.crearCita({ doctor_id, paciente_id, fecha_cita, estado: 'Programada' });
+        return res.status(201).json({ message: 'Cita agendada exitosamente.', cita });
+    } catch (error) {
+        return res.status(500).json({ message: 'Error al agendar cita.', error: error.message });
+    }
+};
+
+// Crear/agendar cita con validaciones inteligentes
 const crearCita = async (req, res) => {
     try {
         const { doctor_id, paciente_id, fecha_cita, estado } = req.body;
-        if (!doctor_id || !paciente_id || !fecha_cita || !estado) {
-            return res.status(400).json({ message: 'doctor_id, paciente_id, fecha_cita y estado son requeridos.' });
+        if (!doctor_id || !paciente_id || !fecha_cita) {
+            return res.status(400).json({ message: 'doctor_id, paciente_id y fecha_cita son requeridos.' });
         }
-        const nuevaCita = await citaModel.crearCita({ doctor_id, paciente_id, fecha_cita, estado });
-        return res.status(201).json(nuevaCita);
+
+        // Estado por defecto
+        const estadoFinal = estado || 'Programada';
+
+        // Si el estado es Programada, validar fecha futura y vinculación
+        if (estadoFinal === 'Programada') {
+            if (new Date(fecha_cita) <= new Date()) {
+                return res.status(400).json({ message: 'La fecha de la cita debe ser futura.' });
+            }
+            // Validar vinculación doctor-paciente
+            const pool = require('../../../db/connection');
+            const vinculado = await pool.query(
+                'SELECT 1 FROM doctor_paciente WHERE doctor_id = $1 AND paciente_id = $2',
+                [doctor_id, paciente_id]
+            );
+            if (vinculado.rows.length === 0) {
+                return res.status(400).json({ message: 'El paciente no está vinculado con el doctor.' });
+            }
+        }
+
+        // Crear la cita
+        const nuevaCita = await citaModel.crearCita({ doctor_id, paciente_id, fecha_cita, estado: estadoFinal });
+        return res.status(201).json({ message: 'Cita creada exitosamente.', cita: nuevaCita });
     } catch (error) {
         return res.status(500).json({ message: 'Error al crear la cita.', error: error.message });
     }
@@ -75,6 +126,7 @@ module.exports = {
     crearCita,
     obtenerCitas,
     obtenerCitaPorId,
+    agendarCita,
     editarCita,
     eliminarCita,
 };
