@@ -183,13 +183,14 @@ const obtenerKits = async ({
             k.activo,
             u.nombre as creador_nombre,
             u.correo as creador_correo,
+            u.es_doctor as creador_es_doctor,
             COUNT(ek.ejercicio_id) as total_ejercicios,
             COUNT(*) OVER() as total_count
         FROM kits k
         INNER JOIN Usuario u ON k.creado_por = u.usuario_id
         LEFT JOIN ejercicios_kits ek ON k.kit_id = ek.kit_id
         ${whereClause}
-        GROUP BY k.kit_id, u.nombre, u.correo
+        GROUP BY k.kit_id, u.nombre, u.correo, u.es_doctor
         ORDER BY k.fecha_creacion DESC
         LIMIT $${valueIndex} OFFSET $${valueIndex + 1};
     `;
