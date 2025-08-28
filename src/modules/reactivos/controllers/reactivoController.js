@@ -519,6 +519,27 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
             if (kitDoneResult.rows[0].done) {
                 return res.status(403).json({ message: 'No se permite guardar más resultados, el kit ya está marcado como completado.' });
             }
+        // Enviar el audio a la IA antes de guardar el resultado
+        let iaResponse = null;
+        if (req.file) {
+            const FormData = require('form-data');
+            const axios = require('axios');
+            const form = new FormData();
+            form.append('file', req.file.buffer, {
+                filename: req.file.originalname || 'audio.wav',
+                contentType: req.file.mimetype || 'audio/wav'
+            });
+            try {
+                const iaRes = await axios.post('https://lexyvoz-ai.onrender.com/inferir/', form, {
+                    headers: form.getHeaders(),
+                    maxBodyLength: Infinity
+                });
+                iaResponse = iaRes.data;
+            } catch (err) {
+                console.error('Error al enviar audio a la IA:', err);
+                iaResponse = { error: 'Error al procesar el audio con la IA' };
+            }
+        }
             let voz_usuario_url = null;
             if (req.file) {
                 voz_usuario_url = await new Promise((resolve, reject) => {
@@ -543,10 +564,11 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
             });
             // Marcar el kit como done después del primer intento
             await pool.query('UPDATE kits SET done = true WHERE kit_id = $1', [kit_id]);
-            res.status(201).json({
-                message: 'Resultado guardado exitosamente',
-                resultado
-            });
+        res.status(201).json({
+            message: 'Resultado guardado exitosamente',
+            resultado,
+            ia: iaResponse
+        });
     } catch (error) {
         console.error('Error al guardar resultado:', error);
         res.status(500).json({
