@@ -1,3 +1,35 @@
+// Asigna reactivos de diferentes subtipos a un ejercicio
+const agregarReactivosAEjercicioConSubTipoMultiple = async (ejercicioId, reactivosData) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ejercicioResult = await client.query(
+      'SELECT ejercicio_id FROM ejercicios WHERE ejercicio_id = $1',
+      [ejercicioId]
+    );
+    if (ejercicioResult.rows.length === 0) {
+      throw new Error('Ejercicio no encontrado');
+    }
+    // Insertar relaciones
+    const insertPromises = reactivosData.map(reactivo => {
+      return client.query(
+        'INSERT INTO ejercicio_reactivos (ejercicio_id, reactivo_id, orden) VALUES ($1, $2, $3) ON CONFLICT (ejercicio_id, reactivo_id) DO UPDATE SET orden = $3, activo = true, fecha_actualizacion = NOW() RETURNING *',
+        [ejercicioId, reactivo.id_reactivo, reactivo.orden]
+      );
+    });
+    const insertResults = await Promise.all(insertPromises);
+    await client.query('COMMIT');
+    return {
+      ejercicio_id: ejercicioId,
+      reactivos_agregados: insertResults.map(result => result.rows[0])
+    };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw new Error('Error al asignar reactivos al ejercicio: ' + error.message);
+  } finally {
+    client.release();
+  }
+};
 // FUNCIONES ADAPTADAS DEL MODELO DE PSEUDOPALABRAS
 
 const obtenerReactivosPorSubTipo = async (idSubTipo, filtros = {}) => {
@@ -382,5 +414,8 @@ module.exports = {
   agregarReactivosAEjercicio,
   obtenerReactivosDeEjercicio,
   removerReactivoDeEjercicio,
-  reordenarReactivosEnEjercicio
-};
+  reordenarReactivosEnEjercicio,
+  validarReactivosSubTipo,
+  agregarReactivosAEjercicioConSubTipo,
+  agregarReactivosAEjercicioConSubTipoMultiple
+  };

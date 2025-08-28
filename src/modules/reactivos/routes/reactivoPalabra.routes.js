@@ -52,89 +52,90 @@
  *         voz_usuario_url:
  *           type: string
  *           example: "https://res.cloudinary.com/lexyboz/audio123.mp3"
- *         tiempo_respuesta:
- *           type: integer
- *           example: 3200
- *         es_correcto:
- *           type: boolean
- *           example: true
- *         fecha_realizacion:
- *           type: string
- *           format: date-time
- *           example: "2025-08-27T10:30:00Z"
- *         ia:
- *           type: object
- *           description: Resultado del procesamiento IA
- *           example: { "score": 0.95, "feedback": "Correcto" }
- */
-
-const express = require('express');
-const router = express.Router();
-const controller = require('./controllers/reactivoPalabraController');
-
 /**
  * @swagger
- * /reactivos-palabra/crear:
+ * /reactivos-palabra/agregar-a-ejercicio/{ejercicio_id}:
  *   post:
- *     summary: Crear un nuevo reactivo de palabra normal
+ *     summary: Asignar reactivos de palabras normales a un ejercicio, cada uno con su subtipo
  *     tags: [ReactivosPalabra]
+ *     parameters:
+ *       - in: path
+ *         name: ejercicio_id
+ *         required: true
+ *         schema:
+ *           type: integer
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/ReactivoPalabra'
+ *             type: object
+ *             required:
+ *               - reactivos
+ *             properties:
+ *               reactivos:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - id_reactivo
+ *                     - orden
+ *                     - sub_tipo_id
+ *                   properties:
+ *                     id_reactivo:
+ *                       type: integer
+ *                       example: 1
+ *                     orden:
+ *                       type: integer
+ *                       example: 1
+ *                     sub_tipo_id:
+ *                       type: integer
+ *                       example: 3
  *     responses:
  *       201:
- *         description: Reactivo creado exitosamente
+ *         description: Reactivos asignados exitosamente
  *         content:
  *           application/json:
  *             example:
- *               message: "Reactivo creado exitosamente"
- *               reactivo:
- *                 $ref: '#/components/schemas/ReactivoPalabraRespuesta'
+ *               message: "Reactivos asignados al ejercicio exitosamente"
+ *               ejercicio_id: 1
+ *               reactivos_agregados: [ { "id_reactivo": 1, "orden": 1, "sub_tipo_id": 3 } ]
  *       400:
  *         description: Datos inválidos
+ *       404:
+ *         description: Ejercicio o reactivo no encontrado
  *       500:
  *         description: Error interno del servidor
  */
-router.post('/crear', controller.crearReactivoPalabra);
-
-/**
- * @swagger
- * /reactivos-palabra/listado:
- *   get:
- *     summary: Listar todos los reactivos de palabras normales
- *     tags: [ReactivosPalabra]
- *     parameters:
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *       - in: query
- *         name: offset
- *         schema:
- *           type: integer
- *       - in: query
- *         name: id_sub_tipo
- *         schema:
- *           type: integer
- *       - in: query
- *         name: buscar
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Reactivos de palabras normales obtenidos exitosamente
- *         content:
- *           application/json:
- *             example:
- *               message: "Reactivos de palabras normales obtenidos exitosamente"
- *               data: [ { "id": 1, "palabra": "Ermita", "id_sub_tipo": 3 } ]
- *               pagination: { "total_items": 1, "items_per_page": 10, "offset": 0 }
- *       500:
- *         description: Error interno del servidor
- */
+const modelo = require('./models/ReactivoLecturaPalabras');
+router.post('/agregar-a-ejercicio/:ejercicio_id', async (req, res) => {
+  try {
+    const { ejercicio_id } = req.params;
+    const { reactivos } = req.body;
+    if (!Array.isArray(reactivos) || reactivos.length === 0) {
+      return res.status(400).json({ message: 'reactivos es requerido y debe ser un array.' });
+    }
+    // Validar que cada reactivo pertenezca al sub_tipo_id indicado
+    for (const r of reactivos) {
+      if (!r.id_reactivo || !r.orden || !r.sub_tipo_id) {
+        return res.status(400).json({ message: 'Cada reactivo debe tener id_reactivo, orden y sub_tipo_id.' });
+      }
+      const valido = await modelo.validarReactivosSubTipo([r.id_reactivo], r.sub_tipo_id);
+      if (!valido) {
+        return res.status(400).json({ message: `El reactivo ${r.id_reactivo} no pertenece al sub_tipo ${r.sub_tipo_id}` });
+      }
+    }
+    const resultado = await modelo.agregarReactivosAEjercicioConSubTipoMultiple(parseInt(ejercicio_id), reactivos);
+    res.status(201).json({
+      message: 'Reactivos asignados al ejercicio exitosamente',
+      ejercicio_id: parseInt(ejercicio_id),
+      reactivos_agregados: resultado.reactivos_agregados
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error interno del servidor', error: error.message });
+  }
+});
+// ...existing code...
 router.get('/listado', async (req, res) => {
   try {
     const filtros = {
