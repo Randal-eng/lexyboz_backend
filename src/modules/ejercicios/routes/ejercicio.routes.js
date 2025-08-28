@@ -32,24 +32,31 @@ const { verifyToken } = require('../../auth/middleware/authMiddleware');
  *       properties:
  *         titulo:
  *           type: string
- *           example: "Ejercicio Avanzado de Pseudopalabras"
+ *           example: "Ejercicio de lectura de palabras"
  *         descripcion:
  *           type: string
- *           example: "Ejercicio complejo con múltiples reactivos"
+ *           example: "Ejercicio para evaluar la lectura de palabras normales"
  *         tipo_ejercicio:
  *           type: integer
- *           example: 1
+ *           example: 2
  *         creado_por:
  *           type: integer
  *           example: 1
  *         reactivos:
  *           type: array
- *           example:
- *             - id_reactivo: 1
- *               orden: 1
- *             - id_reactivo: 2
- *               orden: 2
- *     
+ *           items:
+ *             type: object
+ *             properties:
+ *               id_reactivo:
+ *                 type: integer
+ *                 example: 101
+ *               orden:
+ *                 type: integer
+ *                 example: 1
+ *               sub_tipo_id:
+ *                 type: integer
+ *                 example: 3
+ *
  *     AgregarReactivos:
  *       type: object
  *       properties:
@@ -554,11 +561,12 @@ router.post('/:id/duplicar', verifyToken, ejercicioController.duplicarEjercicio)
  * @swagger
  * /api/ejercicios/con-reactivos:
  *   post:
- *     summary: Crear ejercicio con reactivos
+ *     summary: Crear ejercicio con reactivos de diferentes subtipos
  *     tags: [Ejercicios]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
+ *       required: true
  *       content:
  *         application/json:
  *           schema:
@@ -569,24 +577,37 @@ router.post('/:id/duplicar', verifyToken, ejercicioController.duplicarEjercicio)
  *         content:
  *           application/json:
  *             example:
- *               message: "Ejercicio creado exitosamente con reactivos"
+ *               message: "Ejercicio creado exitosamente"
  *               ejercicio:
- *                 ejercicio_id: 1
- *                 titulo: "Ejercicio Avanzado de Pseudopalabras"
- *                 descripcion: "Ejercicio complejo con múltiples reactivos"
- *                 tipo_ejercicio: 1
+ *                 ejercicio_id: 12
+ *                 titulo: "Ejercicio de palabras y pseudopalabras"
+ *                 descripcion: "Ejercicio para evaluar la lectura de palabras"
  *                 creado_por: 1
+ *                 tipo_ejercicio: 2
  *                 activo: true
+ *                 created_at: "2025-08-28T05:48:30.543Z"
+ *                 updated_at: "2025-08-28T05:48:30.543Z"
  *               reactivos_agregados:
- *                 - ejercicio_id: 1
- *                   id_reactivo: 1
- *                   orden_en_ejercicio: 1
+ *                 - ejercicio_reactivo_id: 4
+ *                   ejercicio_id: 12
+ *                   reactivo_id: 1
+ *                   orden: 1
  *                   activo: true
- *                 - ejercicio_id: 1
- *                   id_reactivo: 2
- *                   orden_en_ejercicio: 2
+ *                   fecha_creacion: "2025-08-28T05:48:30.566Z"
+ *                   fecha_actualizacion: "2025-08-28T05:48:30.566Z"
+ *                   sub_tipo_id: 3
+ *                 - ejercicio_reactivo_id: 5
+ *                   ejercicio_id: 12
+ *                   reactivo_id: 3
+ *                   orden: 2
  *                   activo: true
- *               total_reactivos: 2
+ *                   fecha_creacion: "2025-08-28T05:48:30.566Z"
+ *                   fecha_actualizacion: "2025-08-28T05:48:30.566Z"
+ *                   sub_tipo_id: 4
+ *       400:
+ *         description: Datos inválidos
+ *       500:
+ *         description: Error interno del servidor
  */
 router.post('/con-reactivos', verifyToken, ejercicioController.crearEjercicioConReactivos);
 
