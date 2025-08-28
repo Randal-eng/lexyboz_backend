@@ -34,6 +34,21 @@ class KitAsignadoController {
 
     } catch (error) {
       console.error('Error en asignarKit:', error);
+      // Error de llave foránea kit
+      if (error.code === '23503' && error.constraint === 'fk_kits_asignados_kit') {
+        return res.status(400).json({
+          message: 'El kit que intentas asignar no existe. Verifica el kit_id.',
+          error: error.detail
+        });
+      }
+      // Error de llave foránea paciente
+      if (error.code === '23503' && error.constraint && error.constraint.includes('paciente')) {
+        return res.status(400).json({
+          message: 'El paciente que intentas asignar no existe. Verifica el paciente_id.',
+          error: error.detail
+        });
+      }
+      // Otros errores
       res.status(500).json({
         message: 'Error interno del servidor',
         error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno'
