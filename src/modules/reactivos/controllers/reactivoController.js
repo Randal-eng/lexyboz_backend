@@ -516,30 +516,34 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
             if (kitDoneResult.rows.length === 0) {
                 return res.status(400).json({ message: 'Kit no encontrado' });
             }
-            if (kitDoneResult.rows[0].done) {
-                return res.status(403).json({ message: 'No se permite guardar más resultados, el kit ya está marcado como completado.' });
-            }
-        // Enviar el audio a la IA antes de guardar el resultado
-        let iaResponse = null;
-        if (req.file) {
-            const FormData = require('form-data');
-            const axios = require('axios');
-            const form = new FormData();
-            form.append('file', req.file.buffer, {
-                filename: req.file.originalname || 'audio.wav',
-                contentType: req.file.mimetype || 'audio/wav'
-            });
-            try {
-                const iaRes = await axios.post('https://lexyvoz-ai.onrender.com/inferir/', form, {
-                    headers: form.getHeaders(),
-                    maxBodyLength: Infinity
+            let iaResponse = null;
+            if (req.file) {
+                const FormData = require('form-data');
+                const axios = require('axios');
+                const form = new FormData();
+                form.append('file', req.file.buffer, {
+                    filename: req.file.originalname || 'audio.wav',
+                    contentType: req.file.mimetype || 'audio/wav'
                 });
-                iaResponse = iaRes.data;
-            } catch (err) {
-                console.error('Error al enviar audio a la IA:', err);
-                iaResponse = { error: 'Error al procesar el audio con la IA' };
+                try {
+                    const iaRes = await axios.post('https://lexyvoz-ai.onrender.com/inferir/', form, {
+                        headers: form.getHeaders(),
+                        maxBodyLength: Infinity,
+                        timeout: 30000 // 30 segundos
+                    });
+                    iaResponse = iaRes.data;
+                } catch (err) {
+                    console.error('Error al enviar audio a la IA:', err);
+                    iaResponse = { error: 'Error al procesar el audio con la IA' };
+                }
             }
-        }
+            if (kitDoneResult.rows[0].done) {
+                // Si el kit está marcado como done, solo devuelve la respuesta de la IA, no guarda resultado
+                return res.status(200).json({
+                    message: 'El kit ya está completado, solo se devuelve la respuesta de la IA.',
+                    ia: iaResponse
+                });
+            }
             let voz_usuario_url = null;
             if (req.file) {
                 voz_usuario_url = await new Promise((resolve, reject) => {
