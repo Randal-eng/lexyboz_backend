@@ -97,11 +97,20 @@ const loginUser = async (req, res) => {
       { expiresIn: '24h' }
     );
 
+    // Agregar doctor_id o paciente_id si existen
+    let tipoId = null;
+    if (user.doctor_id) tipoId = user.doctor_id;
+    if (user.paciente_id) tipoId = user.paciente_id;
+
     res.status(200).json({ 
       success: true,
       message: 'Inicio de sesión exitoso.',
       token,
-      user: userWithoutPassword 
+      user: {
+        ...userWithoutPassword,
+        usuario_id: user.usuario_id,
+        tipo_id: tipoId
+      }
     });
   } catch (error) {
     console.error('Error en login:', error);

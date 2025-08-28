@@ -304,11 +304,11 @@ const loginUserMethod = async (correo) => {
 
     if (!usuario) return null;
 
-    // Si es doctor o paciente, obtenemos sus datos adicionales
+    // Si es doctor o paciente, obtenemos sus datos adicionales e ID
     if (usuario.tipo === 'Doctor') {
         const doctorQuery = `
-            SELECT especialidad, domicilio, codigo_postal
-            FROM Doctor
+            SELECT doctor_id, especialidad, domicilio, codigo_postal
+            FROM doctor
             WHERE usuario_id = $1;
         `;
         const doctorResult = await pool.query(doctorQuery, [usuario.usuario_id]);
@@ -319,8 +319,8 @@ const loginUserMethod = async (correo) => {
 
     if (usuario.tipo === 'Paciente') {
         const pacienteQuery = `
-            SELECT escolaridad, domicilio, codigo_postal
-            FROM Paciente
+            SELECT paciente_id, escolaridad, domicilio, codigo_postal
+            FROM paciente
             WHERE usuario_id = $1;
         `;
         const pacienteResult = await pool.query(pacienteQuery, [usuario.usuario_id]);
