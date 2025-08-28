@@ -478,47 +478,57 @@ const reordenarReactivosEnEjercicio = async (req, res) => {
 
 const guardarResultadoLecturaPseudopalabras = async (req, res) => {
     try {
-        console.log('Datos recibidos en endpoint guardarResultadoLecturaPseudopalabras:', req.body);
-        // Limpiar nombres y valores de campos
-        const cleanBody = {};
-        Object.keys(req.body).forEach(key => {
-            cleanBody[key.trim()] = typeof req.body[key] === 'string' ? req.body[key].trim() : req.body[key];
-        });
-        let { usuario_id, id_reactivo, tiempo_respuesta, es_correcto, fecha_realizacion } = cleanBody;
-        // Convertir a tipos correctos
-        usuario_id = usuario_id ? Number(usuario_id) : null;
-        id_reactivo = id_reactivo ? Number(id_reactivo) : null;
-        tiempo_respuesta = tiempo_respuesta ? Number(tiempo_respuesta) : null;
-        // Aceptar 'true'/'false' como string o boolean
-        if (typeof es_correcto === 'string') {
-            es_correcto = es_correcto === 'true';
-        }
-        let voz_usuario_url = null;
-        if (req.file) {
-            voz_usuario_url = await new Promise((resolve, reject) => {
-                const stream = cloudinary.uploader.upload_stream(
-                    { resource_type: 'video', folder: 'resultados_voz_usuarios' },
-                    (error, result) => {
-                        if (error) return reject(error);
-                        resolve(result.secure_url);
-                    }
-                );
-                stream.end(req.file.buffer);
+            console.log('Datos recibidos en endpoint guardarResultadoLecturaPseudopalabras:', req.body);
+            // Limpiar nombres y valores de campos
+            const cleanBody = {};
+            Object.keys(req.body).forEach(key => {
+                cleanBody[key.trim()] = typeof req.body[key] === 'string' ? req.body[key].trim() : req.body[key];
             });
-        }
-        // Insertar en la base de datos
-        const resultado = await ResultadoLecturaPseudopalabras.create({
-            usuario_id,
-            id_reactivo,
-            voz_usuario_url,
-            tiempo_respuesta,
-            es_correcto,
-            fecha_realizacion
-        });
-        res.status(201).json({
-            message: 'Resultado guardado exitosamente',
-            resultado
-        });
+            let { usuario_id, id_reactivo, tiempo_respuesta, es_correcto, fecha_realizacion, kit_id } = cleanBody;
+            usuario_id = usuario_id ? Number(usuario_id) : null;
+            id_reactivo = id_reactivo ? Number(id_reactivo) : null;
+            tiempo_respuesta = tiempo_respuesta ? Number(tiempo_respuesta) : null;
+            kit_id = kit_id ? Number(kit_id) : null;
+            if (typeof es_correcto === 'string') {
+                es_correcto = es_correcto === 'true';
+            }
+            // Verificar si el kit está marcado como 'done'
+            const pool = require('../../kits/models/Kit').pool || require('../../../db/connection');
+            const kitDoneResult = await pool.query('SELECT done FROM kits WHERE kit_id = $1', [kit_id]);
+            if (kitDoneResult.rows.length === 0) {
+                return res.status(400).json({ message: 'Kit no encontrado' });
+            }
+            if (kitDoneResult.rows[0].done) {
+                return res.status(403).json({ message: 'No se permite guardar más resultados, el kit ya está marcado como completado.' });
+            }
+            let voz_usuario_url = null;
+            if (req.file) {
+                voz_usuario_url = await new Promise((resolve, reject) => {
+                    const stream = cloudinary.uploader.upload_stream(
+                        { resource_type: 'video', folder: 'resultados_voz_usuarios' },
+                        (error, result) => {
+                            if (error) return reject(error);
+                            resolve(result.secure_url);
+                        }
+                    );
+                    stream.end(req.file.buffer);
+                });
+            }
+            // Insertar resultado solo si el kit no está marcado como done
+            const resultado = await ResultadoLecturaPseudopalabras.create({
+                usuario_id,
+                id_reactivo,
+                voz_usuario_url,
+                tiempo_respuesta,
+                es_correcto,
+                fecha_realizacion
+            });
+            // Marcar el kit como done después del primer intento
+            await pool.query('UPDATE kits SET done = true WHERE kit_id = $1', [kit_id]);
+            res.status(201).json({
+                message: 'Resultado guardado exitosamente',
+                resultado
+            });
     } catch (error) {
         console.error('Error al guardar resultado:', error);
         res.status(500).json({

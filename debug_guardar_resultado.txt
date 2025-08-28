@@ -1,9 +1,0 @@
-usuario_id:
-
-id_reactivo:
-
-tiempo_respuesta:
-
-es_correcto:
-
-fecha_realizacion:
