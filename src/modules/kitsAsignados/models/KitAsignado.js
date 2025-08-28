@@ -31,8 +31,7 @@ class KitAsignado {
         ka.fecha_asignacion,
         ka.estado,
         k.name as kit_nombre,
-        k.descripcion as kit_descripcion,
-        k.imagen_portada as kit_imagen
+        k.descripcion as kit_descripcion
       FROM kits_asignados ka
       INNER JOIN kits k ON ka.kit_id = k.kit_id
       WHERE ka.paciente_id = $1
