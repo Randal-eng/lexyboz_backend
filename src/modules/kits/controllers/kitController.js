@@ -9,8 +9,8 @@ const kitModel = require('../models/Kit');
  */
 const crearKit = async (req, res) => {
     try {
-        const { name, descripcion } = req.body;
-        const creado_por = req.user.usuario_id; // Obtener del middleware de autenticación
+    const { name, descripcion, creado_por: creadoPorBody } = req.body;
+    const creado_por = creadoPorBody || (req.user && req.user.usuario_id);
 
         if (!name) {
             return res.status(400).json({ 
