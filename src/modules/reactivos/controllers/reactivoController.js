@@ -477,6 +477,24 @@ const reordenarReactivosEnEjercicio = async (req, res) => {
 // Controlador para guardar resultado de lectura de pseudopalabras
 
 const guardarResultadoLecturaPseudopalabras = async (req, res) => {
+/**
+ * Endpoint: POST /api/resultados/guardar-lectura-pseudopalabras
+ * Descripción: Guarda el resultado de lectura de pseudopalabras (audio y datos) para un usuario y reactivo.
+ * Cambios recientes:
+ *   - Se verifica si el kit está marcado como 'done' antes de guardar el resultado.
+ *   - Si el kit no está marcado como 'done', se guarda el resultado y se actualiza el kit a 'done'.
+ *   - Si el kit ya está marcado como 'done', se bloquea el guardado de más resultados para ese kit.
+ * Campos requeridos en el body:
+ *   - usuario_id: ID del usuario
+ *   - id_reactivo: ID del reactivo
+ *   - kit_id: ID del kit
+ *   - tiempo_respuesta, es_correcto, fecha_realizacion, voz_usuario_url (opcional, se sube a Cloudinary)
+ * Respuestas:
+ *   - 201: Resultado guardado exitosamente y kit marcado como completado
+ *   - 403: El kit ya está completado, no se permite guardar más resultados
+ *   - 400: Kit no encontrado
+ *   - 500: Error interno del servidor
+ */
     try {
             console.log('Datos recibidos en endpoint guardarResultadoLecturaPseudopalabras:', req.body);
             // Limpiar nombres y valores de campos
