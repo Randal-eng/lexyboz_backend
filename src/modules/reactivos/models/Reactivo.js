@@ -286,10 +286,8 @@ const obtenerReactivosPorTipo = async (tipoId, filtros = {}) => {
                 r.tiempo_duracion,
                 r.created_at,
                 st.sub_tipo_nombre as sub_tipo_nombre,
-                st.descripcion as sub_tipo_descripcion,
                 st.tipo,
-                t.tipo_nombre as tipo_nombre,
-                t.descripcion as tipo_descripcion
+                t.tipo_nombre as tipo_nombre
             FROM reactivo_lectura_pseudopalabras r
             LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
             LEFT JOIN tipos t ON st.tipo = t.id_tipo
