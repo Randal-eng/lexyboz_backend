@@ -650,7 +650,6 @@ const crearEjercicioConReactivos = async (req, res) => {
                         reactivos
                     );
                     resultado.reactivos_agregados = reactivosResult.reactivos_agregados;
-                    resultado.tipo_reactivos = 'palabras_normales';
                 } else {
                     // Si no, usar el modelo de pseudopalabras
                     const reactivosResult = await reactivoModel.agregarReactivosAEjercicio(

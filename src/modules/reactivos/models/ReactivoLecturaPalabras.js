@@ -10,18 +10,19 @@ const agregarReactivosAEjercicioConSubTipoMultiple = async (ejercicioId, reactiv
     if (ejercicioResult.rows.length === 0) {
       throw new Error('Ejercicio no encontrado');
     }
-    // Insertar relaciones
+    // Insertar relaciones con sub_tipo_id
     const insertPromises = reactivosData.map(reactivo => {
       return client.query(
-        'INSERT INTO ejercicio_reactivos (ejercicio_id, reactivo_id, orden) VALUES ($1, $2, $3) ON CONFLICT (ejercicio_id, reactivo_id) DO UPDATE SET orden = $3, activo = true, fecha_actualizacion = NOW() RETURNING *',
-        [ejercicioId, reactivo.id_reactivo, reactivo.orden]
+        'INSERT INTO ejercicio_reactivos (ejercicio_id, reactivo_id, orden, sub_tipo_id) VALUES ($1, $2, $3, $4) ON CONFLICT (ejercicio_id, reactivo_id) DO UPDATE SET orden = $3, sub_tipo_id = $4, activo = true, fecha_actualizacion = NOW() RETURNING *',
+        [ejercicioId, reactivo.id_reactivo, reactivo.orden, reactivo.sub_tipo_id]
       );
     });
     const insertResults = await Promise.all(insertPromises);
     await client.query('COMMIT');
     return {
       ejercicio_id: ejercicioId,
-      reactivos_agregados: insertResults.map(result => result.rows[0])
+      reactivos_agregados: insertResults.map(result => result.rows[0]),
+      tipo: reactivosData[0]?.sub_tipo_id || null
     };
   } catch (error) {
     await client.query('ROLLBACK');
