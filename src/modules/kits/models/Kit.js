@@ -183,14 +183,13 @@ const obtenerKits = async ({
             k.activo,
             u.nombre as creador_nombre,
             u.correo as creador_correo,
-            u.es_doctor as creador_es_doctor,
             COUNT(ek.ejercicio_id) as total_ejercicios,
             COUNT(*) OVER() as total_count
         FROM kits k
-        INNER JOIN Usuario u ON k.creado_por = u.usuario_id
+        INNER JOIN usuario u ON k.creado_por = u.usuario_id
         LEFT JOIN ejercicios_kits ek ON k.kit_id = ek.kit_id
         ${whereClause}
-        GROUP BY k.kit_id, u.nombre, u.correo, u.es_doctor
+    GROUP BY k.kit_id, u.nombre, u.correo
         ORDER BY k.fecha_creacion DESC
         LIMIT $${valueIndex} OFFSET $${valueIndex + 1};
     `;
@@ -224,7 +223,7 @@ const obtenerKitPorId = async (kitId) => {
             u.nombre as creador_nombre,
             u.correo as creador_correo
         FROM kits k
-        INNER JOIN Usuario u ON k.creado_por = u.usuario_id
+        INNER JOIN usuario u ON k.creado_por = u.usuario_id
         WHERE k.kit_id = $1;
     `;
     const kitResult = await pool.query(kitQuery, [kitId]);
@@ -248,7 +247,7 @@ const obtenerKitPorId = async (kitId) => {
             u.nombre as creador_ejercicio_nombre
         FROM ejercicios_kits ek
         INNER JOIN ejercicios e ON ek.ejercicio_id = e.ejercicio_id
-        INNER JOIN Usuario u ON e.creado_por = u.usuario_id
+        INNER JOIN usuario u ON e.creado_por = u.usuario_id
         WHERE ek.kit_id = $1
         ORDER BY ek.orden_en_kit ASC;
     `;
@@ -488,7 +487,7 @@ const obtenerEjerciciosDeKit = async (kitId, filtros = {}) => {
                 u.correo as creador_correo
             FROM ejercicios_kits ek
             INNER JOIN ejercicios e ON ek.ejercicio_id = e.ejercicio_id
-            INNER JOIN Usuario u ON e.creado_por = u.usuario_id
+            INNER JOIN usuario u ON e.creado_por = u.usuario_id
             WHERE ek.kit_id = $1 ${activo ? 'AND ek.activo = true' : ''}
             ORDER BY ek.orden_en_kit ASC, ek.fecha_creacion ASC
             LIMIT $2 OFFSET $3
