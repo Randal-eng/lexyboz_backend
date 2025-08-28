@@ -9,6 +9,8 @@ const reactivoRoutes = require('./routes/reactivo.routes');
 // =====================================================
 
 // Rutas de reactivos
+const reactivoPalabraRoutes = require('./routes/reactivoPalabra.routes');
 router.use('/reactivos', reactivoRoutes);
+router.use('/reactivos-palabra', reactivoPalabraRoutes);
 
 module.exports = router;
