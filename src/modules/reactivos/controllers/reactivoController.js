@@ -1,4 +1,9 @@
 const reactivoModel = require('../models/Reactivo');
+const ResultadoLecturaPseudopalabras = require('../models/ResultadoLecturaPseudopalabras');
+const cloudinary = require('../../../config/cloudinary/cloudinaryConfig');
+const multer = require('multer');
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 
 // =====================================================
 // CONTROLADORES DE REACTIVOS
@@ -6,14 +11,15 @@ const reactivoModel = require('../models/Reactivo');
 
 /**
  * Crear un nuevo reactivo
- */
+*/
 const crearReactivo = async (req, res) => {
+    console.log('Datos recibidos:', req.body);
     try {
         const { contenido, orden, sub_tipo_id, tiempo_limite, configuracion } = req.body;
 
         if (!contenido || !sub_tipo_id) {
-            return res.status(400).json({ 
-                message: 'El contenido y sub_tipo_id son requeridos.' 
+            return res.status(400).json({
+                message: 'El contenido y sub_tipo_id son requeridos.'
             });
         }
 
@@ -32,9 +38,9 @@ const crearReactivo = async (req, res) => {
 
     } catch (error) {
         console.error('Error al crear reactivo:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -54,7 +60,7 @@ const obtenerReactivos = async (req, res) => {
         } = req.query;
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
-        
+
         const filtros = {
             limit: parseInt(limit),
             offset,
@@ -79,9 +85,9 @@ const obtenerReactivos = async (req, res) => {
 
     } catch (error) {
         console.error('Error al obtener reactivos:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -94,16 +100,16 @@ const obtenerReactivoPorId = async (req, res) => {
         const { id } = req.params;
 
         if (!id || isNaN(id)) {
-            return res.status(400).json({ 
-                message: 'ID de reactivo inválido' 
+            return res.status(400).json({
+                message: 'ID de reactivo inválido'
             });
         }
 
         const reactivo = await reactivoModel.obtenerReactivoPorId(parseInt(id));
 
         if (!reactivo) {
-            return res.status(404).json({ 
-                message: 'Reactivo no encontrado' 
+            return res.status(404).json({
+                message: 'Reactivo no encontrado'
             });
         }
 
@@ -114,9 +120,9 @@ const obtenerReactivoPorId = async (req, res) => {
 
     } catch (error) {
         console.error('Error al obtener reactivo:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -130,16 +136,16 @@ const actualizarReactivo = async (req, res) => {
         const datosActualizacion = req.body;
 
         if (!id || isNaN(id)) {
-            return res.status(400).json({ 
-                message: 'ID de reactivo inválido' 
+            return res.status(400).json({
+                message: 'ID de reactivo inválido'
             });
         }
 
         // Verificar que el reactivo existe
         const reactivoExistente = await reactivoModel.obtenerReactivoPorId(parseInt(id));
         if (!reactivoExistente) {
-            return res.status(404).json({ 
-                message: 'Reactivo no encontrado' 
+            return res.status(404).json({
+                message: 'Reactivo no encontrado'
             });
         }
 
@@ -152,9 +158,9 @@ const actualizarReactivo = async (req, res) => {
 
     } catch (error) {
         console.error('Error al actualizar reactivo:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -167,16 +173,16 @@ const eliminarReactivo = async (req, res) => {
         const { id } = req.params;
 
         if (!id || isNaN(id)) {
-            return res.status(400).json({ 
-                message: 'ID de reactivo inválido' 
+            return res.status(400).json({
+                message: 'ID de reactivo inválido'
             });
         }
 
         // Verificar que el reactivo existe
         const reactivoExistente = await reactivoModel.obtenerReactivoPorId(parseInt(id));
         if (!reactivoExistente) {
-            return res.status(404).json({ 
-                message: 'Reactivo no encontrado' 
+            return res.status(404).json({
+                message: 'Reactivo no encontrado'
             });
         }
 
@@ -189,9 +195,9 @@ const eliminarReactivo = async (req, res) => {
 
     } catch (error) {
         console.error('Error al eliminar reactivo:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -209,13 +215,13 @@ const obtenerReactivosPorSubTipo = async (req, res) => {
         } = req.query;
 
         if (!sub_tipo_id || isNaN(sub_tipo_id)) {
-            return res.status(400).json({ 
-                message: 'ID de sub tipo inválido' 
+            return res.status(400).json({
+                message: 'ID de sub tipo inválido'
             });
         }
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
-        
+
         const filtros = {
             limit: parseInt(limit),
             offset,
@@ -237,9 +243,9 @@ const obtenerReactivosPorSubTipo = async (req, res) => {
 
     } catch (error) {
         console.error('Error al obtener reactivos por sub tipo:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -257,13 +263,13 @@ const obtenerReactivosPorTipo = async (req, res) => {
         } = req.query;
 
         if (!tipo_id || isNaN(tipo_id)) {
-            return res.status(400).json({ 
-                message: 'ID de tipo inválido' 
+            return res.status(400).json({
+                message: 'ID de tipo inválido'
             });
         }
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
-        
+
         const filtros = {
             limit: parseInt(limit),
             offset,
@@ -285,9 +291,9 @@ const obtenerReactivosPorTipo = async (req, res) => {
 
     } catch (error) {
         console.error('Error al obtener reactivos por tipo:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -300,13 +306,13 @@ const verificarCompatibilidadTipo = async (req, res) => {
         const { ejercicio_id, tipo_id } = req.params;
 
         if (!ejercicio_id || isNaN(ejercicio_id) || !tipo_id || isNaN(tipo_id)) {
-            return res.status(400).json({ 
-                message: 'IDs de ejercicio y tipo inválidos' 
+            return res.status(400).json({
+                message: 'IDs de ejercicio y tipo inválidos'
             });
         }
 
         const compatibilidad = await reactivoModel.verificarCompatibilidadTipo(
-            parseInt(ejercicio_id), 
+            parseInt(ejercicio_id),
             parseInt(tipo_id)
         );
 
@@ -317,9 +323,9 @@ const verificarCompatibilidadTipo = async (req, res) => {
 
     } catch (error) {
         console.error('Error al verificar compatibilidad:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -333,19 +339,19 @@ const agregarReactivosAEjercicio = async (req, res) => {
         const { reactivos } = req.body;
 
         if (!ejercicio_id || isNaN(ejercicio_id)) {
-            return res.status(400).json({ 
-                message: 'ID de ejercicio inválido' 
+            return res.status(400).json({
+                message: 'ID de ejercicio inválido'
             });
         }
 
         if (!reactivos || !Array.isArray(reactivos) || reactivos.length === 0) {
-            return res.status(400).json({ 
-                message: 'Se requiere un array de reactivos' 
+            return res.status(400).json({
+                message: 'Se requiere un array de reactivos'
             });
         }
 
         const resultado = await reactivoModel.agregarReactivosAEjercicio(
-            parseInt(ejercicio_id), 
+            parseInt(ejercicio_id),
             reactivos
         );
 
@@ -356,9 +362,9 @@ const agregarReactivosAEjercicio = async (req, res) => {
 
     } catch (error) {
         console.error('Error al agregar reactivos al ejercicio:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -371,8 +377,8 @@ const obtenerReactivosDeEjercicio = async (req, res) => {
         const { ejercicio_id } = req.params;
 
         if (!ejercicio_id || isNaN(ejercicio_id)) {
-            return res.status(400).json({ 
-                message: 'ID de ejercicio inválido' 
+            return res.status(400).json({
+                message: 'ID de ejercicio inválido'
             });
         }
 
@@ -387,9 +393,9 @@ const obtenerReactivosDeEjercicio = async (req, res) => {
 
     } catch (error) {
         console.error('Error al obtener reactivos del ejercicio:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -402,13 +408,13 @@ const removerReactivoDeEjercicio = async (req, res) => {
         const { ejercicio_id, reactivo_id } = req.params;
 
         if (!ejercicio_id || isNaN(ejercicio_id) || !reactivo_id || isNaN(reactivo_id)) {
-            return res.status(400).json({ 
-                message: 'IDs de ejercicio y reactivo inválidos' 
+            return res.status(400).json({
+                message: 'IDs de ejercicio y reactivo inválidos'
             });
         }
 
         const resultado = await reactivoModel.removerReactivoDeEjercicio(
-            parseInt(ejercicio_id), 
+            parseInt(ejercicio_id),
             parseInt(reactivo_id)
         );
 
@@ -419,9 +425,9 @@ const removerReactivoDeEjercicio = async (req, res) => {
 
     } catch (error) {
         console.error('Error al remover reactivo del ejercicio:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
@@ -435,19 +441,19 @@ const reordenarReactivosEnEjercicio = async (req, res) => {
         const { nuevos_ordenes } = req.body;
 
         if (!ejercicio_id || isNaN(ejercicio_id)) {
-            return res.status(400).json({ 
-                message: 'ID de ejercicio inválido' 
+            return res.status(400).json({
+                message: 'ID de ejercicio inválido'
             });
         }
 
         if (!nuevos_ordenes || !Array.isArray(nuevos_ordenes)) {
-            return res.status(400).json({ 
-                message: 'Se requiere un array de nuevos órdenes' 
+            return res.status(400).json({
+                message: 'Se requiere un array de nuevos órdenes'
             });
         }
 
         const resultado = await reactivoModel.reordenarReactivosEnEjercicio(
-            parseInt(ejercicio_id), 
+            parseInt(ejercicio_id),
             nuevos_ordenes
         );
 
@@ -459,35 +465,46 @@ const reordenarReactivosEnEjercicio = async (req, res) => {
 
     } catch (error) {
         console.error('Error al reordenar reactivos:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: 'Error interno del servidor',
-            error: error.message 
+            error: error.message
         });
     }
 };
 
 
-const ResultadoLecturaPseudopalabras = require('../models/ResultadoLecturaPseudopalabras');
-const cloudinary = require('../../config/cloudinary/cloudinaryConfig');
-const multer = require('multer');
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
 
 // Controlador para guardar resultado de lectura de pseudopalabras
+
 const guardarResultadoLecturaPseudopalabras = async (req, res) => {
     try {
-        // Si se usa multer en la ruta, el archivo estará en req.file
-        const { usuario_id, id_reactivo, tiempo_respuesta, es_correcto, fecha_realizacion } = req.body;
+        console.log('Datos recibidos en endpoint guardarResultadoLecturaPseudopalabras:', req.body);
+        // Limpiar nombres y valores de campos
+        const cleanBody = {};
+        Object.keys(req.body).forEach(key => {
+            cleanBody[key.trim()] = typeof req.body[key] === 'string' ? req.body[key].trim() : req.body[key];
+        });
+        let { usuario_id, id_reactivo, tiempo_respuesta, es_correcto, fecha_realizacion } = cleanBody;
+        // Convertir a tipos correctos
+        usuario_id = usuario_id ? Number(usuario_id) : null;
+        id_reactivo = id_reactivo ? Number(id_reactivo) : null;
+        tiempo_respuesta = tiempo_respuesta ? Number(tiempo_respuesta) : null;
+        // Aceptar 'true'/'false' como string o boolean
+        if (typeof es_correcto === 'string') {
+            es_correcto = es_correcto === 'true';
+        }
         let voz_usuario_url = null;
         if (req.file) {
-            // Subir audio a Cloudinary
-            const result = await cloudinary.uploader.upload_stream(
-                { resource_type: 'video', folder: 'resultados_voz_usuarios' },
-                (error, uploadResult) => {
-                    if (error) throw error;
-                    voz_usuario_url = uploadResult.secure_url;
-                }
-            );
+            voz_usuario_url = await new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    { resource_type: 'video', folder: 'resultados_voz_usuarios' },
+                    (error, result) => {
+                        if (error) return reject(error);
+                        resolve(result.secure_url);
+                    }
+                );
+                stream.end(req.file.buffer);
+            });
         }
         // Insertar en la base de datos
         const resultado = await ResultadoLecturaPseudopalabras.create({
