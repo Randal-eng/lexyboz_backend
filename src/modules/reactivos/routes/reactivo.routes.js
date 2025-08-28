@@ -1,3 +1,60 @@
+/**
+ * @swagger
+ * /api/reactivos/resultados-lectura-pseudopalabras:
+ *   post:
+ *     summary: Guarda el resultado de lectura de pseudopalabras (incluye audio y datos)
+ *     tags: [ResultadosLecturaPseudopalabras]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usuario_id:
+ *                 type: integer
+ *                 example: 123
+ *               id_reactivo:
+ *                 type: integer
+ *                 example: 45
+ *               tiempo_respuesta:
+ *                 type: integer
+ *                 example: 3200
+ *               es_correcto:
+ *                 type: boolean
+ *                 example: true
+ *               fecha_realizacion:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2025-08-27T10:30:00Z"
+ *               audio:
+ *                 type: string
+ *                 format: binary
+ *                 description: Archivo de audio grabado por el usuario
+ *     responses:
+ *       201:
+ *         description: Resultado guardado exitosamente
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Resultado guardado exitosamente"
+ *               resultado:
+ *                 resultado_reactivo_usuario_id: 1
+ *                 usuario_id: 123
+ *                 id_reactivo: 45
+ *                 voz_usuario_url: "https://res.cloudinary.com/lexyboz/audio123.mp3"
+ *                 tiempo_respuesta: 3200
+ *                 es_correcto: true
+ *                 fecha_realizacion: "2025-08-27T10:30:00Z"
+ *                 created_at: "2025-08-27T10:30:01Z"
+ *                 updated_at: "2025-08-27T10:30:01Z"
+ *       400:
+ *         description: Datos inválidos
+ *       500:
+ *         description: Error interno del servidor
+ */
 const express = require('express');
 const router = express.Router();
 const reactivoController = require('../controllers/reactivoController');
@@ -610,5 +667,10 @@ router.put('/ejercicio/:ejercicio_id/reordenar', verifyToken, reactivoController
  *               }
  */
 router.delete('/ejercicio/:ejercicio_id/:reactivo_id', verifyToken, reactivoController.removerReactivoDeEjercicio);
+
+
+// Endpoint para guardar resultado de lectura de pseudopalabras (audio y datos)
+const { upload, guardarResultadoLecturaPseudopalabras } = require('../controllers/reactivoController');
+router.post('/resultados-lectura-pseudopalabras', upload.single('audio'), guardarResultadoLecturaPseudopalabras);
 
 module.exports = router;
