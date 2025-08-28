@@ -642,12 +642,24 @@ const crearEjercicioConReactivos = async (req, res) => {
         // Si se proporcionaron reactivos, agregarlos
         if (reactivos && Array.isArray(reactivos) && reactivos.length > 0) {
             try {
-                const reactivosResult = await reactivoModel.agregarReactivosAEjercicio(
-                    nuevoEjercicio.ejercicio_id, 
-                    reactivos
-                );
-                resultado.reactivos_agregados = reactivosResult.reactivos_agregados;
-                resultado.tipo_reactivos = reactivosResult.tipo;
+                // Si los reactivos tienen sub_tipo_id, usar el modelo de palabras normales
+                if (reactivos[0].sub_tipo_id !== undefined) {
+                    const reactivoPalabraModel = require('../../reactivos/models/ReactivoLecturaPalabras');
+                    const reactivosResult = await reactivoPalabraModel.agregarReactivosAEjercicioConSubTipoMultiple(
+                        nuevoEjercicio.ejercicio_id,
+                        reactivos
+                    );
+                    resultado.reactivos_agregados = reactivosResult.reactivos_agregados;
+                    resultado.tipo_reactivos = 'palabras_normales';
+                } else {
+                    // Si no, usar el modelo de pseudopalabras
+                    const reactivosResult = await reactivoModel.agregarReactivosAEjercicio(
+                        nuevoEjercicio.ejercicio_id,
+                        reactivos
+                    );
+                    resultado.reactivos_agregados = reactivosResult.reactivos_agregados;
+                    resultado.tipo_reactivos = reactivosResult.tipo || 'pseudopalabras';
+                }
             } catch (reactivosError) {
                 // Si hay error con reactivos, el ejercicio ya fue creado
                 console.warn('Error al agregar reactivos, pero ejercicio fue creado:', reactivosError.message);

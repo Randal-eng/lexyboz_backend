@@ -30,6 +30,43 @@ const agregarReactivosAEjercicioConSubTipoMultiple = async (ejercicioId, reactiv
     client.release();
   }
 };
+// Asigna reactivos de un solo subtipo a un ejercicio
+const agregarReactivosAEjercicioConSubTipo = async (ejercicioId, reactivosData, subTipoId) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const ejercicioResult = await client.query(
+      'SELECT ejercicio_id FROM ejercicios WHERE ejercicio_id = $1',
+      [ejercicioId]
+    );
+    if (ejercicioResult.rows.length === 0) {
+      throw new Error('Ejercicio no encontrado');
+    }
+    // Validar que todos los reactivos pertenezcan al subtipo
+    const validos = await validarReactivosSubTipo(reactivosData.map(r => r.id_reactivo), subTipoId);
+    if (!validos) {
+      throw new Error('Uno o más reactivos no pertenecen al subtipo indicado');
+    }
+    // Insertar relaciones
+    const insertPromises = reactivosData.map(reactivo => {
+      return client.query(
+        'INSERT INTO ejercicio_reactivos (ejercicio_id, reactivo_id, orden, sub_tipo_id) VALUES ($1, $2, $3, $4) ON CONFLICT (ejercicio_id, reactivo_id) DO UPDATE SET orden = $3, sub_tipo_id = $4, activo = true, fecha_actualizacion = NOW() RETURNING *',
+        [ejercicioId, reactivo.id_reactivo, reactivo.orden, subTipoId]
+      );
+    });
+    const insertResults = await Promise.all(insertPromises);
+    await client.query('COMMIT');
+    return {
+      ejercicio_id: ejercicioId,
+      reactivos_agregados: insertResults.map(result => result.rows[0])
+    };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw new Error('Error al asignar reactivos al ejercicio: ' + error.message);
+  } finally {
+    client.release();
+  }
+};
 // FUNCIONES ADAPTADAS DEL MODELO DE PSEUDOPALABRAS
 
 const obtenerReactivosPorSubTipo = async (idSubTipo, filtros = {}) => {
@@ -400,7 +437,19 @@ const crearReactivoPalabra = async (datosReactivo) => {
   }
 };
 
-// Puedes replicar las demás funciones del modelo Reactivo.js adaptando los nombres y la tabla...
+// Valida que todos los reactivos pertenezcan al subtipo indicado
+const validarReactivosSubTipo = async (reactivoIds, subTipoId) => {
+  try {
+    const result = await pool.query(
+      'SELECT COUNT(*) AS total FROM reactivo_lectura_palabras WHERE id_reactivo = ANY($1) AND id_sub_tipo = $2',
+      [reactivoIds, subTipoId]
+    );
+    // Devuelve true si todos los reactivos pertenecen al subtipo
+    return parseInt(result.rows[0].total) === reactivoIds.length;
+  } catch (error) {
+    throw new Error('Error al validar subtipos de reactivos: ' + error.message);
+  }
+};
 
 module.exports = {
   crearReactivoPalabra,
