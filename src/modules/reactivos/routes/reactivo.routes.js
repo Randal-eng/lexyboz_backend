@@ -24,7 +24,7 @@ router.post('/resultados-lectura-pseudopalabras', upload.single('audio'), guarda
  *           schema:
  *             type: object
  *             properties:
- *               usuario_id:
+ *               paciente_id:
  *                 type: integer
  *                 example: 123
  *               id_reactivo:
@@ -53,7 +53,7 @@ router.post('/resultados-lectura-pseudopalabras', upload.single('audio'), guarda
  *               message: "Resultado guardado exitosamente"
  *               resultado:
  *                 resultado_reactivo_usuario_id: 1
- *                 usuario_id: 123
+ *                 paciente_id: 123
  *                 id_reactivo: 45
  *                 voz_usuario_url: "https://res.cloudinary.com/lexyboz/audio123.mp3"
  *                 tiempo_respuesta: 3200
