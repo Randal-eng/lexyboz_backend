@@ -1,10 +1,11 @@
-
 const express = require('express');
 const router = express.Router();
-const { guardarResultadoLecturaPseudopalabras, upload } = require('../controllers/reactivoController');
+const { obtenerReportePorKitPaciente, guardarResultadoLecturaPseudopalabras, upload } = require('../controllers/reactivoController');
 const reactivoController = require('../controllers/reactivoController');
 const { verifyToken } = require('../../auth/middleware/authMiddleware');
 
+// Endpoint de reporte por kit y paciente
+router.get('/reportes/kit/:kit_id/paciente/:paciente_id', obtenerReportePorKitPaciente);
 
 // Endpoint original: recibe audio y datos, usa upload.single('audio')
 router.post('/resultados-lectura-pseudopalabras', upload.single('audio'), guardarResultadoLecturaPseudopalabras);

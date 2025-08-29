@@ -1,3 +1,68 @@
+// Reporte por kit y paciente: porcentaje de aciertos por ejercicio
+const obtenerReportePorKitPaciente = async (req, res) => {
+    try {
+        const { kit_id, paciente_id } = req.params;
+        const pool = require('../../../db/connection');
+        // Consulta: obtener resultados, ejercicio y aciertos
+        // 1. Buscar ejercicios del kit
+        // La tabla ejercicios no tiene kit_id, se debe obtener los ejercicios a través de la relación con ejercicios_kits
+        // Log de depuración: mostrar registros de ejercicios_kits para el kit
+        const relKitsEjercicios = await pool.query(
+            'SELECT * FROM ejercicios_kits WHERE kit_id = $1',
+            [kit_id]
+        );
+        console.log('[ReporteKitPaciente] registros en ejercicios_kits para kit', kit_id, ':', relKitsEjercicios.rows);
+
+        const ejerciciosRes = await pool.query(
+            `SELECT e.ejercicio_id FROM ejercicios e
+            INNER JOIN ejercicios_kits ek ON ek.ejercicio_id = e.ejercicio_id
+            WHERE ek.kit_id = $1`,
+            [kit_id]
+        );
+        console.log('[ReporteKitPaciente] ejercicios encontrados para kit', kit_id, ':', ejerciciosRes.rows);
+        const ejercicios = [];
+        for (const ejercicio of ejerciciosRes.rows) {
+                // 2. Buscar reactivos del ejercicio
+                const reactivosRes = await pool.query(
+                    'SELECT reactivo_id FROM ejercicio_reactivos WHERE ejercicio_id = $1',
+                    [ejercicio.ejercicio_id]
+                );
+            const reactivoIds = reactivosRes.rows.map(r => r.reactivo_id);
+            if (reactivoIds.length === 0) {
+                ejercicios.push({
+                    ejercicio_id: ejercicio.ejercicio_id,
+                    aciertos: 0,
+                    total: 0,
+                    porcentaje: 0
+                });
+                continue;
+            }
+            // 3. Buscar resultados del paciente para esos reactivos
+            const resultadosRes = await pool.query(
+                `SELECT es_correcto FROM resultados_lectura_pseudopalabras WHERE usuario_id = $1 AND id_reactivo = ANY($2::int[])`,
+                [paciente_id, reactivoIds]
+            );
+            const total = resultadosRes.rows.length;
+            const aciertos = resultadosRes.rows.filter(r => r.es_correcto).length;
+            ejercicios.push({
+                ejercicio_id: ejercicio.ejercicio_id,
+                aciertos,
+                total,
+                porcentaje: total > 0 ? Math.round((aciertos / total) * 100) : 0
+            });
+        }
+        return res.json({
+            kit_id: Number(kit_id),
+            paciente_id: Number(paciente_id),
+            ejercicios
+        });
+    } catch (error) {
+        return res.status(500).json({
+            message: 'Error al obtener el reporte',
+            error: error.message
+        });
+    }
+};
 // Nuevo controlador: flujo igual al original pero responde con el registro insertado
 /**
  * Endpoint: POST /api/resultados-lectura-pseudopalabras-directo
@@ -768,5 +833,6 @@ module.exports = {
     guardarResultadoLecturaPseudopalabras,
     guardarResultadoLecturaPseudopalabrasDirecto,
     guardarResultadoLecturaPseudopalabrasDirectoFull,
+    obtenerReportePorKitPaciente,
     upload
 };
