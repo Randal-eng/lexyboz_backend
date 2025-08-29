@@ -508,6 +508,40 @@ const reordenarReactivosEnEjercicio = async (ejercicioId, nuevosOrdenes) => {
     }
 };
 
+/**
+ * Guarda el resultado de la IA para pseudopalabras
+ */
+
+const guardarResultadoIA = async ({ usuario_id, id_reactivo, voz_usuario_url, tiempo_respuesta, ia }) => {
+    // Log de depuración ANTES de cualquier lógica
+    console.log('[guardarResultadoIA] INICIO - Recibido:', {
+        usuario_id,
+        id_reactivo,
+        voz_usuario_url,
+        tiempo_respuesta,
+        ia
+    });
+    const es_correcto = ia.probabilidad >= 80;
+    const query = `
+        INSERT INTO resultados_lectura_pseudopalabras (
+            usuario_id, id_reactivo, voz_usuario_url, tiempo_respuesta, es_correcto, fecha_realizacion
+        ) VALUES ($1, $2, $3, $4, $5, NOW())
+        RETURNING *;
+    `;
+    const values = [usuario_id, id_reactivo, voz_usuario_url, tiempo_respuesta, es_correcto];
+    // Log justo antes del query para asegurar que los valores son válidos
+    console.log('[guardarResultadoIA] Valores a guardar:', {
+        usuario_id,
+        id_reactivo,
+        voz_usuario_url,
+        tiempo_respuesta,
+        es_correcto,
+        ia
+    });
+    const result = await pool.query(query, values);
+    return result.rows[0];
+};
+
 module.exports = {
     crearReactivo,
     obtenerReactivos,
@@ -520,5 +554,6 @@ module.exports = {
     agregarReactivosAEjercicio,
     obtenerReactivosDeEjercicio,
     removerReactivoDeEjercicio,
-    reordenarReactivosEnEjercicio
+    reordenarReactivosEnEjercicio,
+    guardarResultadoIA
 };

@@ -1,3 +1,13 @@
+
+const express = require('express');
+const router = express.Router();
+const { guardarResultadoLecturaPseudopalabras, upload } = require('../controllers/reactivoController');
+const reactivoController = require('../controllers/reactivoController');
+const { verifyToken } = require('../../auth/middleware/authMiddleware');
+
+
+// Endpoint original: recibe audio y datos, usa upload.single('audio')
+router.post('/resultados-lectura-pseudopalabras', upload.single('audio'), guardarResultadoLecturaPseudopalabras);
 /**
  * @swagger
  * /api/reactivos/resultados-lectura-pseudopalabras:
@@ -55,10 +65,6 @@
  *       500:
  *         description: Error interno del servidor
  */
-const express = require('express');
-const router = express.Router();
-const reactivoController = require('../controllers/reactivoController');
-const { verifyToken } = require('../../auth/middleware/authMiddleware');
 
 // =====================================================
 // RUTAS DE REACTIVOS
@@ -670,7 +676,5 @@ router.delete('/ejercicio/:ejercicio_id/:reactivo_id', verifyToken, reactivoCont
 
 
 // Endpoint para guardar resultado de lectura de pseudopalabras (audio y datos)
-const { upload, guardarResultadoLecturaPseudopalabras } = require('../controllers/reactivoController');
-router.post('/resultados-lectura-pseudopalabras', upload.single('audio'), guardarResultadoLecturaPseudopalabras);
 
 module.exports = router;
