@@ -1,5 +1,6 @@
 const ejercicioModel = require('../models/Ejercicio');
 const reactivoModel = require('../../reactivos/models/Reactivo');
+const TipoModel = require('../../tipos/models/Tipo');
 
 // =====================================================
 // CONTROLADORES DE EJERCICIOS
@@ -243,8 +244,15 @@ const obtenerEjerciciosPorTipo = async (req, res) => {
             });
         }
 
+        // Validar existencia del tipo antes de consultar ejercicios
+        const tipoExiste = await TipoModel.existeTipoPorId(parseInt(tipo_id));
+        if (!tipoExiste) {
+            return res.status(404).json({
+                message: `El tipo con id ${tipo_id} no existe.`
+            });
+        }
+
         const offset = (parseInt(page) - 1) * parseInt(limit);
-        
         // Permitir activo=true, activo='true', activo=1, activo='1' como verdadero
         let activoParsed = null;
         if (activo !== undefined) {

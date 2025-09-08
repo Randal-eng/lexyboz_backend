@@ -213,6 +213,18 @@ class Tipo {
             throw error;
         }
     }
+
+    // Verificar si existe un tipo por id
+    static async existeTipoPorId(id) {
+        try {
+            const query = 'SELECT 1 FROM tipos WHERE id_tipo = $1 LIMIT 1';
+            const result = await pool.query(query, [id]);
+            return result.rows.length > 0;
+        } catch (error) {
+            console.error('Error al verificar existencia de tipo por id:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = Tipo;
