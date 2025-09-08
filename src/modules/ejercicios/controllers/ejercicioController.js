@@ -233,6 +233,10 @@ const obtenerEjerciciosPorTipo = async (req, res) => {
             activo = true
         } = req.query;
 
+        console.log('--- [LOG] Parámetros recibidos ---');
+        console.log('tipo_id:', tipo_id);
+        console.log('page:', page, 'limit:', limit, 'activo:', activo);
+
         if (!tipo_id || isNaN(tipo_id)) {
             return res.status(400).json({ 
                 message: 'ID de tipo inválido' 
@@ -247,7 +251,14 @@ const obtenerEjerciciosPorTipo = async (req, res) => {
             activo: activo !== undefined ? activo === 'true' : null
         };
 
+        console.log('--- [LOG] Filtros usados ---');
+        console.log(filtros);
+
         const resultado = await ejercicioModel.obtenerEjerciciosPorTipo(parseInt(tipo_id), filtros);
+
+        console.log('--- [LOG] Resultado de la consulta ---');
+        console.log('Total:', resultado.total);
+        console.log('Ejercicios:', resultado.ejercicios);
 
         res.json({
             message: 'Ejercicios por tipo obtenidos exitosamente',
