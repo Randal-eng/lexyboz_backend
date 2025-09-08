@@ -109,7 +109,6 @@ const obtenerEjercicios = async ({
             u.nombre as creador_nombre,
             u.correo as creador_correo,
             t.tipo_nombre as tipo_nombre,
-            t.descripcion as tipo_descripcion,
             COUNT(er.reactivo_id) as total_reactivos,
             COUNT(ek.kit_id) as total_kits,
             COUNT(*) OVER() as total_count
@@ -119,7 +118,7 @@ const obtenerEjercicios = async ({
         LEFT JOIN ejercicio_reactivos er ON e.ejercicio_id = er.ejercicio_id AND er.activo = true
         LEFT JOIN ejercicios_kits ek ON e.ejercicio_id = ek.ejercicio_id
         ${whereClause}
-        GROUP BY e.ejercicio_id, u.nombre, u.correo, t.tipo_nombre, t.descripcion
+    GROUP BY e.ejercicio_id, u.nombre, u.correo, t.tipo_nombre
         ORDER BY e.created_at DESC
         LIMIT $${valueIndex} OFFSET $${valueIndex + 1};
     `;
