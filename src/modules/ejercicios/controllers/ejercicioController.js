@@ -245,10 +245,19 @@ const obtenerEjerciciosPorTipo = async (req, res) => {
 
         const offset = (parseInt(page) - 1) * parseInt(limit);
         
+        // Permitir activo=true, activo='true', activo=1, activo='1' como verdadero
+        let activoParsed = null;
+        if (activo !== undefined) {
+            if (activo === true || activo === 'true' || activo === 1 || activo === '1') {
+                activoParsed = true;
+            } else if (activo === false || activo === 'false' || activo === 0 || activo === '0') {
+                activoParsed = false;
+            }
+        }
         const filtros = {
             limit: parseInt(limit),
             offset,
-            activo: activo !== undefined ? activo === 'true' : null
+            activo: activoParsed
         };
 
         console.log('--- [LOG] Filtros usados ---');
