@@ -163,7 +163,7 @@ const obtenerPacientesDeDoctor = async (doctor_id) => {
             p.codigo_postal,
             u.imagen_url
         FROM doctor_paciente dp
-        INNER JOIN Paciente p ON dp.paciente_id = p.paciente_id
+        INNER JOIN paciente p ON dp.paciente_id = p.paciente_id
         INNER JOIN usuario u ON p.usuario_ID = u.usuario_id
         WHERE dp.doctor_id = $1
         ORDER BY u.nombre ASC
