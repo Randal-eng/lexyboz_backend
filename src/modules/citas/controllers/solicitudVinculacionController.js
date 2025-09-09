@@ -3,33 +3,40 @@ const solicitudVinculacionModel = require('../models/SolicitudVinculacion');
 // Usuario envía solicitud a doctor
 const enviarSolicitud = async (req, res) => {
     try {
+        console.log('--- [enviarSolicitud] BODY:', req.body);
+        console.log('--- [enviarSolicitud] USER:', req.user);
         const { doctor_id, mensaje } = req.body;
         const usuario_id = req.user?.id; // El JWT tiene 'id', no 'usuario_id'
 
         if (!doctor_id) {
+            console.log('--- [enviarSolicitud] FALTA doctor_id');
             return res.status(400).json({ 
                 message: 'doctor_id es requerido.' 
             });
         }
 
         if (!usuario_id) {
+            console.log('--- [enviarSolicitud] FALTA usuario_id');
             return res.status(401).json({ 
                 message: 'Usuario no autenticado.' 
             });
         }
 
+        console.log('--- [enviarSolicitud] Enviando a modelo:', { usuario_id, doctor_id, mensaje });
         const resultado = await solicitudVinculacionModel.enviarSolicitud(
             usuario_id, 
             doctor_id, 
             mensaje
         );
 
+        console.log('--- [enviarSolicitud] Resultado:', resultado);
         return res.status(201).json({
             message: `Solicitud enviada exitosamente al Dr. ${resultado.doctor_nombre}`,
             solicitud: resultado.solicitud
         });
 
     } catch (error) {
+        console.error('--- [enviarSolicitud] ERROR:', error);
         return res.status(400).json({ 
             message: 'Error al enviar solicitud.', 
             error: error.message 
