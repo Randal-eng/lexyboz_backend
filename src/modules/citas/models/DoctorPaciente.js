@@ -149,6 +149,7 @@ const vincularPacienteConDoctor = async (doctor_id, paciente_id) => {
 
 // Obtener todos los pacientes de un doctor
 const obtenerPacientesDeDoctor = async (doctor_id) => {
+    console.log('--- [obtenerPacientesDeDoctor] doctor_id:', doctor_id);
     const query = `
         SELECT 
             p.paciente_id,
@@ -168,8 +169,14 @@ const obtenerPacientesDeDoctor = async (doctor_id) => {
         WHERE dp.doctor_id = $1
         ORDER BY u.nombre ASC
     `;
-    const result = await pool.query(query, [doctor_id]);
-    return result.rows;
+    try {
+        const result = await pool.query(query, [doctor_id]);
+        console.log('--- [obtenerPacientesDeDoctor] result:', result.rows);
+        return result.rows;
+    } catch (error) {
+        console.error('--- [obtenerPacientesDeDoctor] ERROR:', error);
+        throw error;
+    }
 };
 
 // Obtener todos los doctores de un paciente
