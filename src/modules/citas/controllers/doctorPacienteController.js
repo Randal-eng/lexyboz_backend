@@ -79,7 +79,12 @@ const obtenerPacientesDeDoctor = async (req, res) => {
         if (!doctor_id) {
             return res.status(400).json({ message: 'doctor_id es requerido.' });
         }
-        const pacientes = await doctorPacienteModel.obtenerPacientesDeDoctor(doctor_id);
+        let pacientes = await doctorPacienteModel.obtenerPacientesDeDoctor(doctor_id);
+        // Agregar paciente_id igual a usuario_id en cada objeto paciente
+        pacientes = pacientes.map(p => ({
+            ...p,
+            paciente_id: p.usuario_id
+        }));
         return res.status(200).json({ 
             message: 'Pacientes obtenidos exitosamente.', 
             pacientes,

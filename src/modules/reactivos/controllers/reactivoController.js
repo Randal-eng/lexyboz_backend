@@ -22,33 +22,52 @@ const obtenerReportePorKitPaciente = async (req, res) => {
         console.log('[ReporteKitPaciente] ejercicios encontrados para kit', kit_id, ':', ejerciciosRes.rows);
         const ejercicios = [];
         for (const ejercicio of ejerciciosRes.rows) {
-                // 2. Buscar reactivos del ejercicio
-                const reactivosRes = await pool.query(
-                    'SELECT reactivo_id FROM ejercicio_reactivos WHERE ejercicio_id = $1',
-                    [ejercicio.ejercicio_id]
-                );
+            // 2. Buscar reactivos del ejercicio
+            const reactivosRes = await pool.query(
+                'SELECT reactivo_id FROM ejercicio_reactivos WHERE ejercicio_id = $1',
+                [ejercicio.ejercicio_id]
+            );
             const reactivoIds = reactivosRes.rows.map(r => r.reactivo_id);
             if (reactivoIds.length === 0) {
                 ejercicios.push({
                     ejercicio_id: ejercicio.ejercicio_id,
                     aciertos: 0,
                     total: 0,
-                    porcentaje: 0
+                    porcentaje: 0,
+                    tiempo_promedio: 0,
+                    ia_ultima_respuesta: null
                 });
                 continue;
             }
             // 3. Buscar resultados del paciente para esos reactivos
             const resultadosRes = await pool.query(
-                `SELECT es_correcto FROM resultados_lectura_pseudopalabras WHERE usuario_id = $1 AND id_reactivo = ANY($2::int[])`,
+                `SELECT es_correcto, tiempo_respuesta, ia_respuesta FROM resultados_lectura_pseudopalabras WHERE usuario_id = $1 AND id_reactivo = ANY($2::int[]) ORDER BY fecha_realizacion ASC`,
                 [paciente_id, reactivoIds]
             );
             const total = resultadosRes.rows.length;
             const aciertos = resultadosRes.rows.filter(r => r.es_correcto).length;
+            // Calcular tiempo promedio
+            const tiempos = resultadosRes.rows.map(r => Number(r.tiempo_respuesta)).filter(t => !isNaN(t));
+            const tiempo_promedio = tiempos.length > 0 ? (tiempos.reduce((a, b) => a + b, 0) / tiempos.length) : 0;
+            // Obtener última respuesta de IA (si existe)
+            let ia_ultima_respuesta = null;
+            for (let i = resultadosRes.rows.length - 1; i >= 0; i--) {
+                if (resultadosRes.rows[i].ia_respuesta) {
+                    try {
+                        ia_ultima_respuesta = JSON.parse(resultadosRes.rows[i].ia_respuesta);
+                    } catch {
+                        ia_ultima_respuesta = resultadosRes.rows[i].ia_respuesta;
+                    }
+                    break;
+                }
+            }
             ejercicios.push({
                 ejercicio_id: ejercicio.ejercicio_id,
                 aciertos,
                 total,
-                porcentaje: total > 0 ? Math.round((aciertos / total) * 100) : 0
+                porcentaje: total > 0 ? Math.round((aciertos / total) * 100) : 0,
+                tiempo_promedio: Number(tiempo_promedio.toFixed(2)),
+                ia_ultima_respuesta
             });
         }
         return res.json({
