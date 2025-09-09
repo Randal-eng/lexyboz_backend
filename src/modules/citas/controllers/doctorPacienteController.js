@@ -85,18 +85,31 @@ const obtenerPacientesDeDoctor = async (req, res) => {
         pacientes = await Promise.all(pacientes.map(async p => {
             let domicilio = p.domicilio;
             let codigo_postal = p.codigo_postal;
-            if (domicilio === 'N/A' || !domicilio || codigo_postal === '00000' || !codigo_postal) {
-                const resUsuario = await pool.query('SELECT domicilio, codigo_postal FROM usuario WHERE usuario_id = $1', [p.usuario_id]);
+            let escolaridad = p.escolaridad;
+            if (
+                domicilio === 'N/A' || !domicilio ||
+                codigo_postal === '00000' || !codigo_postal ||
+                escolaridad === 'N/A' || !escolaridad
+            ) {
+                const resUsuario = await pool.query('SELECT domicilio, codigo_postal, escolaridad FROM usuario WHERE usuario_id = $1', [p.usuario_id]);
                 if (resUsuario.rows.length > 0) {
-                    domicilio = resUsuario.rows[0].domicilio || domicilio;
-                    codigo_postal = resUsuario.rows[0].codigo_postal || codigo_postal;
+                    if (domicilio === 'N/A' || !domicilio) {
+                        domicilio = resUsuario.rows[0].domicilio || domicilio;
+                    }
+                    if (codigo_postal === '00000' || !codigo_postal) {
+                        codigo_postal = resUsuario.rows[0].codigo_postal || codigo_postal;
+                    }
+                    if (escolaridad === 'N/A' || !escolaridad) {
+                        escolaridad = resUsuario.rows[0].escolaridad || escolaridad;
+                    }
                 }
             }
             return {
                 ...p,
                 paciente_id: p.usuario_id,
                 domicilio,
-                codigo_postal
+                codigo_postal,
+                escolaridad
             };
         }));
         return res.status(200).json({ 
