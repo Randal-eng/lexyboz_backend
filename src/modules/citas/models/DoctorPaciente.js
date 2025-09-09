@@ -46,13 +46,21 @@ const obtenerOCrearPaciente = async (usuario_id) => {
         return resultExistente.rows[0].paciente_id;
     }
 
-    // Si no existe, crear nuevo paciente
+    // Si no existe, obtener datos de usuario para domicilio y código_postal
+    const queryUsuario = `SELECT domicilio, codigo_postal FROM usuario WHERE usuario_id = $1`;
+    const resultUsuario = await pool.query(queryUsuario, [usuario_id]);
+    let domicilio = 'N/A';
+    let codigo_postal = '00000';
+    if (resultUsuario.rows.length > 0) {
+        domicilio = resultUsuario.rows[0].domicilio || 'N/A';
+        codigo_postal = resultUsuario.rows[0].codigo_postal || '00000';
+    }
     const queryCrear = `
         INSERT INTO Paciente (usuario_ID, escolaridad, domicilio, codigo_postal)
-        VALUES ($1, 'N/A', 'N/A', '00000')
+        VALUES ($1, 'N/A', $2, $3)
         RETURNING paciente_id
     `;
-    const resultCrear = await pool.query(queryCrear, [usuario_id]);
+    const resultCrear = await pool.query(queryCrear, [usuario_id, domicilio, codigo_postal]);
 
     // Actualizar el tipo de usuario a 'Paciente'
     const queryActualizarUsuario = `

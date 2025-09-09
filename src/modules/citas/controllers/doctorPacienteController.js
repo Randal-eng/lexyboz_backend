@@ -80,10 +80,24 @@ const obtenerPacientesDeDoctor = async (req, res) => {
             return res.status(400).json({ message: 'doctor_id es requerido.' });
         }
         let pacientes = await doctorPacienteModel.obtenerPacientesDeDoctor(doctor_id);
-        // Agregar paciente_id igual a usuario_id en cada objeto paciente
-        pacientes = pacientes.map(p => ({
-            ...p,
-            paciente_id: p.usuario_id
+        // Si domicilio o código_postal es inválido, tomarlo de usuario
+        const pool = require('../../../db/connection');
+        pacientes = await Promise.all(pacientes.map(async p => {
+            let domicilio = p.domicilio;
+            let codigo_postal = p.codigo_postal;
+            if (domicilio === 'N/A' || !domicilio || codigo_postal === '00000' || !codigo_postal) {
+                const resUsuario = await pool.query('SELECT domicilio, codigo_postal FROM usuario WHERE usuario_id = $1', [p.usuario_id]);
+                if (resUsuario.rows.length > 0) {
+                    domicilio = resUsuario.rows[0].domicilio || domicilio;
+                    codigo_postal = resUsuario.rows[0].codigo_postal || codigo_postal;
+                }
+            }
+            return {
+                ...p,
+                paciente_id: p.usuario_id,
+                domicilio,
+                codigo_postal
+            };
         }));
         return res.status(200).json({ 
             message: 'Pacientes obtenidos exitosamente.', 
