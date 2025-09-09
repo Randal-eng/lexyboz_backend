@@ -347,6 +347,7 @@ module.exports = {
         const query = `
             SELECT 
                 u.usuario_id,
+                d.doctor_id,
                 u.nombre,
                 u.correo,
                 u.fecha_de_nacimiento,

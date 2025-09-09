@@ -56,7 +56,7 @@ const obtenerOCrearPaciente = async (usuario_id) => {
         codigo_postal = resultUsuario.rows[0].codigo_postal || '00000';
     }
     const queryCrear = `
-        INSERT INTO Paciente (usuario_ID, escolaridad, domicilio, codigo_postal)
+        INSERT INTO paciente (usuario_ID, escolaridad, domicilio, codigo_postal)
         VALUES ($1, 'N/A', $2, $3)
         RETURNING paciente_id
     `;
@@ -158,7 +158,7 @@ const obtenerPacientesDeDoctor = async (doctor_id) => {
             u.fecha_de_nacimiento,
             u.numero_telefono,
             u.sexo,
-            p.escolaridad,
+            CASE WHEN p.escolaridad IS NULL OR p.escolaridad = '' THEN NULL ELSE p.escolaridad END AS escolaridad,
             p.domicilio,
             p.codigo_postal,
             u.imagen_url
@@ -240,7 +240,7 @@ const obtenerTodasLasVinculaciones = async () => {
         FROM doctor_paciente dp
         INNER JOIN doctor d ON dp.doctor_id = d.doctor_id
         INNER JOIN usuario du ON d.usuario_id = du.usuario_id
-        INNER JOIN Paciente p ON dp.paciente_id = p.paciente_id
+        INNER JOIN paciente p ON dp.paciente_id = p.paciente_id
         INNER JOIN usuario pu ON p.usuario_ID = pu.usuario_id
         ORDER BY du.nombre ASC
     `;
