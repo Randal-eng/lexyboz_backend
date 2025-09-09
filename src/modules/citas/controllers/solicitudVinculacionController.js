@@ -94,14 +94,14 @@ const obtenerMisSolicitudes = async (req, res) => {
 // Doctor responde a una solicitud
 const responderSolicitud = async (req, res) => {
     try {
-        const { id } = req.params;
+    const { solicitud_id } = req.params;
         const { respuesta } = req.body; // 'aceptada' o 'rechazada'
         const usuario_id = req.user?.id; // ID del usuario autenticado
         const respondido_por = req.user?.id; // El JWT tiene 'id', no 'usuario_id'
 
-        if (!id || !respuesta) {
+        if (!solicitud_id || !respuesta) {
             return res.status(400).json({ 
-                message: 'id y respuesta son requeridos.' 
+                message: 'solicitud_id y respuesta son requeridos.' 
             });
         }
 
@@ -133,7 +133,7 @@ const responderSolicitud = async (req, res) => {
         const doctor_id = doctorQuery.rows[0].doctor_id;
 
         const resultado = await solicitudVinculacionModel.responderSolicitud(
-            id, 
+            solicitud_id, 
             doctor_id, 
             respuesta, 
             respondido_por
