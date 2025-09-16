@@ -3,6 +3,7 @@ const router = express.Router();
 const { obtenerReportePorKitPaciente, guardarResultadoLecturaPseudopalabras, upload } = require('../controllers/reactivoController');
 const reactivoController = require('../controllers/reactivoController');
 const { verifyToken } = require('../../auth/middleware/authMiddleware');
+const { crearReactivoImagenCorrectaController } = require('../controllers/reactivoImagenCorrectaController');
 
 // Endpoint de reporte por kit y paciente
 router.get('/reportes/kit/:kit_id/paciente/:paciente_id', obtenerReportePorKitPaciente);
@@ -675,6 +676,8 @@ router.put('/ejercicio/:ejercicio_id/reordenar', verifyToken, reactivoController
  */
 router.delete('/ejercicio/:ejercicio_id/:reactivo_id', verifyToken, reactivoController.removerReactivoDeEjercicio);
 
+// Crear reactivo tipo Imagen Correcta
+router.post('/imagen-correcta', crearReactivoImagenCorrectaController);
 
 // Endpoint para guardar resultado de lectura de pseudopalabras (audio y datos)
 
