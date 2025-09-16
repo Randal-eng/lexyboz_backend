@@ -27,7 +27,9 @@ const guardarResultadoImagenCorrectaController = async (req, res) => {
         const resultado = await guardarResultadoImagenCorrecta(datos);
         res.status(201).json({
             message: 'Resultado guardado exitosamente',
-            resultado_id: resultado.resultado_reactivo_usuario_id
+            resultado_id: resultado.resultado_reactivo_usuario_id,
+            paciente_id: datos.paciente_id,
+            es_correcta: resultado.es_correcta
         });
     } catch (error) {
         res.status(400).json({
