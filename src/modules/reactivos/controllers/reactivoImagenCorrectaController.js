@@ -1,4 +1,5 @@
 const { crearReactivoImagenCorrecta } = require('../models/ReactivoImagenCorrecta');
+const { guardarResultadoImagenCorrecta } = require('../models/ResultadoImagenCorrecta');
 
 const crearReactivoImagenCorrectaController = async (req, res) => {
     try {
@@ -20,4 +21,20 @@ const crearReactivoImagenCorrectaController = async (req, res) => {
     }
 };
 
-module.exports = { crearReactivoImagenCorrectaController };
+const guardarResultadoImagenCorrectaController = async (req, res) => {
+    try {
+        const datos = req.body;
+        const resultado = await guardarResultadoImagenCorrecta(datos);
+        res.status(201).json({
+            message: 'Resultado guardado exitosamente',
+            resultado_id: resultado.resultado_reactivo_usuario_id
+        });
+    } catch (error) {
+        res.status(400).json({
+            message: 'Error al guardar resultado',
+            error: error.message
+        });
+    }
+};
+
+module.exports = { crearReactivoImagenCorrectaController, guardarResultadoImagenCorrectaController };

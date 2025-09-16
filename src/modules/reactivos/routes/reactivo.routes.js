@@ -3,7 +3,7 @@ const router = express.Router();
 const { obtenerReportePorKitPaciente, guardarResultadoLecturaPseudopalabras, upload } = require('../controllers/reactivoController');
 const reactivoController = require('../controllers/reactivoController');
 const { verifyToken } = require('../../auth/middleware/authMiddleware');
-const { crearReactivoImagenCorrectaController } = require('../controllers/reactivoImagenCorrectaController');
+const { crearReactivoImagenCorrectaController, guardarResultadoImagenCorrectaController } = require('../controllers/reactivoImagenCorrectaController');
 
 // Endpoint de reporte por kit y paciente
 router.get('/reportes/kit/:kit_id/paciente/:paciente_id', obtenerReportePorKitPaciente);
@@ -676,8 +676,98 @@ router.put('/ejercicio/:ejercicio_id/reordenar', verifyToken, reactivoController
  */
 router.delete('/ejercicio/:ejercicio_id/:reactivo_id', verifyToken, reactivoController.removerReactivoDeEjercicio);
 
-// Crear reactivo tipo Imagen Correcta
+/**
+ * @swagger
+ * /api/reactivos/imagen-correcta:
+ *   post:
+ *     summary: Crea un nuevo reactivo de tipo Imagen Correcta
+ *     tags: [Reactivos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id_sub_tipo:
+ *                 type: integer
+ *                 example: 7
+ *               tiempo_duracion:
+ *                 type: integer
+ *                 example: 30
+ *               oracion:
+ *                 type: string
+ *                 example: "El niño jugando con la pelota roja"
+ *               imagenes:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     imagen_url:
+ *                       type: string
+ *                       example: "https://ejemplo.com/img1.jpg"
+ *                     es_correcta:
+ *                       type: boolean
+ *                       example: false
+ *     responses:
+ *       201:
+ *         description: Reactivo creado exitosamente
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Reactivo Imagen Correcta creado exitosamente"
+ *               id_reactivo: 1
+ *       400:
+ *         description: Error en los datos enviados
+ */
 router.post('/imagen-correcta', crearReactivoImagenCorrectaController);
+
+/**
+ * @swagger
+ * /api/reactivos/imagen-correcta/resultado:
+ *   post:
+ *     summary: Guarda el resultado de un reactivo Imagen Correcta
+ *     tags: [Reactivos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usuario_id:
+ *                 type: integer
+ *                 example: 5
+ *               id_reactivo:
+ *                 type: integer
+ *                 example: 12
+ *               tiempo_inicio_reactivo:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2025-09-15T10:00:00Z"
+ *               tiempo_terminar_reactivo:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2025-09-15T10:00:10Z"
+ *               imagen_seleccionada_id:
+ *                 type: integer
+ *                 example: 33
+ *     responses:
+ *       201:
+ *         description: Resultado guardado exitosamente
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Resultado guardado exitosamente"
+ *               resultado_id: 1
+ *       400:
+ *         description: Error en los datos enviados
+ */
+router.post('/imagen-correcta/resultado', guardarResultadoImagenCorrectaController);
 
 // Endpoint para guardar resultado de lectura de pseudopalabras (audio y datos)
 
