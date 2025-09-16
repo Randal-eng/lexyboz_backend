@@ -4,12 +4,51 @@ const { obtenerReportePorKitPaciente, guardarResultadoLecturaPseudopalabras, upl
 const reactivoController = require('../controllers/reactivoController');
 const { verifyToken } = require('../../auth/middleware/authMiddleware');
 const { crearReactivoImagenCorrectaController, guardarResultadoImagenCorrectaController } = require('../controllers/reactivoImagenCorrectaController');
+const { crearReactivoImagenCorrectaArchivosController, uploadImagenes } = require('../controllers/reactivoImagenCorrectaArchivosController');
 
 // Endpoint de reporte por kit y paciente
+/**
+ * @swagger
+ * /api/reactivos/reportes/kit/{kit_id}/paciente/{paciente_id}:
+ *   get:
+ *     summary: Obtiene el reporte de aciertos por ejercicio para un kit y paciente
+ *     tags: [Reactivos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: kit_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: paciente_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Reporte generado exitosamente
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Reporte generado exitosamente"
+ *               ejercicios: [
+ *                 {
+ *                   ejercicio_id: 1,
+ *                   aciertos: 3,
+ *                   total: 5,
+ *                   porcentaje: 60,
+ *                   tiempo_promedio: 12.5
+ *                 }
+ *               ]
+ *       400:
+ *         description: Datos inválidos
+ *       500:
+ *         description: Error interno del servidor
+ */
 router.get('/reportes/kit/:kit_id/paciente/:paciente_id', obtenerReportePorKitPaciente);
 
-// Endpoint original: recibe audio y datos, usa upload.single('audio')
-router.post('/resultados-lectura-pseudopalabras', upload.single('audio'), guardarResultadoLecturaPseudopalabras);
 /**
  * @swagger
  * /api/reactivos/resultados-lectura-pseudopalabras:
@@ -312,6 +351,7 @@ router.get('/', verifyToken, reactivoController.obtenerReactivos);
  * @swagger
  * /api/reactivos/sub-tipo/{sub_tipo_id}:
  *   get:
+ *     summary: Obtiene los reactivos de un sub-tipo
  *     tags: [Reactivos]
  *     security:
  *       - bearerAuth: []
@@ -321,39 +361,16 @@ router.get('/', verifyToken, reactivoController.obtenerReactivos);
  *         required: true
  *         schema:
  *           type: integer
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *       - in: query
- *         name: activo
- *         schema:
- *           type: boolean
  *     responses:
  *       200:
+ *         description: Reactivos obtenidos
  *         content:
  *           application/json:
  *             example:
- *               message: "Reactivos por sub tipo obtenidos exitosamente"
- *               data: [
- *                 {
- *                   "id": 1,
- *                   "nombre": "Casa",
- *                   "imagen_url": "https://cloudinary.com/imagen1.jpg",
- *                   "tipo_id": 1,
- *                   "sub_tipo_id": 1,
- *                   "activo": true
- *                 }
- *               ]
- *               pagination: {
- *                 "totalItems": 50,
- *                 "totalPages": 3,
- *                 "currentPage": 1
- *               }
+ *               message: "Reactivos obtenidos"
+ *               reactivos: [ { "id": 1, "nombre": "Casa" } ]
+ *       404:
+ *         description: No se encontraron reactivos
  */
 router.get('/sub-tipo/:sub_tipo_id', verifyToken, reactivoController.obtenerReactivosPorSubTipo);
 
@@ -361,6 +378,7 @@ router.get('/sub-tipo/:sub_tipo_id', verifyToken, reactivoController.obtenerReac
  * @swagger
  * /api/reactivos/tipo/{tipo_id}:
  *   get:
+ *     summary: Obtiene los reactivos de un tipo
  *     tags: [Reactivos]
  *     security:
  *       - bearerAuth: []
@@ -372,25 +390,14 @@ router.get('/sub-tipo/:sub_tipo_id', verifyToken, reactivoController.obtenerReac
  *           type: integer
  *     responses:
  *       200:
+ *         description: Reactivos obtenidos
  *         content:
  *           application/json:
  *             example:
- *               message: "Reactivos por tipo obtenidos exitosamente"
- *               data: [
- *                 {
- *                   "id": 1,
- *                   "nombre": "Casa",
- *                   "imagen_url": "https://cloudinary.com/imagen1.jpg",
- *                   "tipo_id": 1,
- *                   "sub_tipo_id": 1,
- *                   "activo": true
- *                 }
- *               ]
- *               pagination: {
- *                 "totalItems": 50,
- *                 "totalPages": 3,
- *                 "currentPage": 1
- *               }
+ *               message: "Reactivos obtenidos"
+ *               reactivos: [ { "id": 1, "nombre": "Casa" } ]
+ *       404:
+ *         description: No se encontraron reactivos
  */
 router.get('/tipo/:tipo_id', verifyToken, reactivoController.obtenerReactivosPorTipo);
 
@@ -398,6 +405,7 @@ router.get('/tipo/:tipo_id', verifyToken, reactivoController.obtenerReactivosPor
  * @swagger
  * /api/reactivos/compatibilidad/{ejercicio_id}/{tipo_id}:
  *   get:
+ *     summary: Verifica la compatibilidad de un ejercicio con un tipo de reactivo
  *     tags: [Reactivos]
  *     security:
  *       - bearerAuth: []
@@ -414,16 +422,13 @@ router.get('/tipo/:tipo_id', verifyToken, reactivoController.obtenerReactivosPor
  *           type: integer
  *     responses:
  *       200:
+ *         description: Compatibilidad verificada
  *         content:
  *           application/json:
  *             example:
- *               message: "Compatibilidad verificada"
  *               compatible: true
- *               mensaje: "Compatible con el tipo existente"
- *               tipoExistente: {
- *                 "tipo_id": 1,
- *                 "tipo_nombre": "Sustantivos"
- *               }
+ *       400:
+ *         description: Datos inválidos
  */
 router.get('/compatibilidad/:ejercicio_id/:tipo_id', verifyToken, reactivoController.verificarCompatibilidadTipo);
 
@@ -431,6 +436,7 @@ router.get('/compatibilidad/:ejercicio_id/:tipo_id', verifyToken, reactivoContro
  * @swagger
  * /api/reactivos/{id}:
  *   get:
+ *     summary: Obtiene un reactivo por su ID
  *     tags: [Reactivos]
  *     security:
  *       - bearerAuth: []
@@ -442,27 +448,16 @@ router.get('/compatibilidad/:ejercicio_id/:tipo_id', verifyToken, reactivoContro
  *           type: integer
  *     responses:
  *       200:
+ *         description: Reactivo encontrado
  *         content:
  *           application/json:
  *             example:
- *               message: "Reactivo obtenido exitosamente"
- *               reactivo: {
- *                 "id": 1,
- *                 "nombre": "Casa",
- *                 "imagen_url": "https://cloudinary.com/imagen1.jpg",
- *                 "tipo_id": 1,
- *                 "sub_tipo_id": 1,
- *                 "activo": true,
- *                 "creado_por": 1,
- *                 "fecha_creacion": "2024-01-01T10:00:00Z"
- *               }
- */
-router.get('/:id', verifyToken, reactivoController.obtenerReactivoPorId);
-
-/**
- * @swagger
- * /api/reactivos/{id}:
+ *               message: "Reactivo encontrado"
+ *               reactivo: { "id": 1, "nombre": "Casa" }
+ *       404:
+ *         description: Reactivo no encontrado
  *   put:
+ *     summary: Actualiza un reactivo por su ID
  *     tags: [Reactivos]
  *     security:
  *       - bearerAuth: []
@@ -476,32 +471,21 @@ router.get('/:id', verifyToken, reactivoController.obtenerReactivoPorId);
  *       content:
  *         application/json:
  *           example:
- *             nombre: "Casa Actualizada"
- *             imagen_url: "https://cloudinary.com/nueva_imagen.jpg"
- *             tipo_id: 1
- *             sub_tipo_id: 2
- *             activo: true
+ *             nombre: "Nuevo nombre"
  *     responses:
  *       200:
+ *         description: Reactivo actualizado
  *         content:
  *           application/json:
  *             example:
- *               message: "Reactivo actualizado exitosamente"
- *               reactivo: {
- *                 "id": 1,
- *                 "nombre": "Casa Actualizada",
- *                 "imagen_url": "https://cloudinary.com/nueva_imagen.jpg",
- *                 "tipo_id": 1,
- *                 "sub_tipo_id": 2,
- *                 "activo": true
- *               }
- */
-router.put('/:id', verifyToken, reactivoController.actualizarReactivo);
-
-/**
- * @swagger
- * /api/reactivos/{id}:
+ *               message: "Reactivo actualizado"
+ *               reactivo: { "id": 1, "nombre": "Nuevo nombre" }
+ *       400:
+ *         description: Datos inválidos
+ *       404:
+ *         description: Reactivo no encontrado
  *   delete:
+ *     summary: Elimina un reactivo por su ID
  *     tags: [Reactivos]
  *     security:
  *       - bearerAuth: []
@@ -513,16 +497,16 @@ router.put('/:id', verifyToken, reactivoController.actualizarReactivo);
  *           type: integer
  *     responses:
  *       200:
+ *         description: Reactivo eliminado
  *         content:
  *           application/json:
  *             example:
- *               message: "Reactivo eliminado exitosamente"
- *               reactivo: {
- *                 "id": 1,
- *                 "nombre": "Casa",
- *                 "activo": false
- *               }
+ *               message: "Reactivo eliminado"
+ *       404:
+ *         description: Reactivo no encontrado
  */
+router.get('/:id', verifyToken, reactivoController.obtenerReactivoPorId);
+router.put('/:id', verifyToken, reactivoController.actualizarReactivo);
 router.delete('/:id', verifyToken, reactivoController.eliminarReactivo);
 
 /**
@@ -768,6 +752,53 @@ router.post('/imagen-correcta', crearReactivoImagenCorrectaController);
  *         description: Error en los datos enviados
  */
 router.post('/imagen-correcta/resultado', guardarResultadoImagenCorrectaController);
+
+/**
+ * @swagger
+ * /api/reactivos/imagen-correcta/archivos:
+ *   post:
+ *     summary: Crea un nuevo reactivo de tipo Imagen Correcta subiendo archivos de imagen
+ *     tags: [Reactivos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               id_sub_tipo:
+ *                 type: integer
+ *                 example: 7
+ *               tiempo_duracion:
+ *                 type: integer
+ *                 example: 30
+ *               oracion:
+ *                 type: string
+ *                 example: "El niño jugando con la pelota roja"
+ *               es_correcta_index:
+ *                 type: integer
+ *                 example: 1
+ *                 description: Índice (0-3) de la imagen correcta
+ *               imagenes:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Sube exactamente 4 archivos de imagen
+ *     responses:
+ *       201:
+ *         description: Reactivo creado exitosamente
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: "Reactivo Imagen Correcta creado exitosamente (archivos)"
+ *               id_reactivo: 1
+ *       400:
+ *         description: Error en los datos enviados
+ */
+router.post('/imagen-correcta/archivos', uploadImagenes, crearReactivoImagenCorrectaArchivosController);
 
 // Endpoint para guardar resultado de lectura de pseudopalabras (audio y datos)
 
