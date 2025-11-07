@@ -151,8 +151,7 @@ const obtenerEjercicioPorId = async (ejercicioId) => {
             e.activo,
             u.nombre as creador_nombre,
             u.correo as creador_correo,
-            t.tipo_nombre as tipo_nombre,
-            t.descripcion as tipo_descripcion
+            t.tipo_nombre as tipo_nombre
         FROM ejercicios e
         INNER JOIN usuario u ON e.creado_por = u.usuario_id
         LEFT JOIN tipos t ON e.tipo_ejercicio = t.id_tipo
