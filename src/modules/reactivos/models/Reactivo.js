@@ -241,8 +241,7 @@ const obtenerReactivosPorSubTipo = async (idSubTipo, filtros = {}) => {
                 r.id_sub_tipo,
                 r.tiempo_duracion,
                 r.created_at,
-                st.sub_tipo_nombre as sub_tipo_nombre,
-                st.descripcion as sub_tipo_descripcion
+                st.sub_tipo_nombre as sub_tipo_nombre
             FROM reactivo_lectura_pseudopalabras r
             LEFT JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
             WHERE r.id_sub_tipo = $1
@@ -434,16 +433,14 @@ const obtenerReactivosDeEjercicio = async (ejercicioId) => {
                 er.activo,
                 r.pseudopalabra,
                 r.tiempo_duracion,
-                st.sub_tipo_id,
+                st.id_sub_tipo as sub_tipo_id,
                 st.sub_tipo_nombre as sub_tipo_nombre,
-                st.descripcion as sub_tipo_descripcion,
-                st.tipo_id,
-                t.nombre as tipo_nombre,
-                t.descripcion as tipo_descripcion
+                st.tipo as tipo_id,
+                t.tipo_nombre as tipo_nombre
             FROM ejercicio_reactivos er
             JOIN reactivo_lectura_pseudopalabras r ON er.reactivo_id = r.id_reactivo
-            JOIN sub_tipo st ON r.id_sub_tipo = st.sub_tipo_id
-            JOIN tipos t ON st.tipo_id = t.tipo_id
+            JOIN sub_tipo st ON r.id_sub_tipo = st.id_sub_tipo
+            JOIN tipos t ON st.tipo = t.id_tipo
             WHERE er.ejercicio_id = $1 AND er.activo = true
             ORDER BY er.orden ASC
         `, [ejercicioId]);
