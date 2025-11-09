@@ -628,6 +628,78 @@ router.get('/auth/doctor-patient-links', verifyToken, directoryController.getDoc
  */
 router.get('/auth/users', verifyToken, directoryController.getAllUsers);
 
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   put:
+ *     summary: Actualizar perfil de usuario (propio)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *                 example: "Juan Pérez"
+ *               numero_telefono:
+ *                 type: string
+ *                 example: "5512345678"
+ *               domicilio:
+ *                 type: string
+ *                 example: "Calle Falsa 123"
+ *               imagen:
+ *                 type: string
+ *                 format: binary
+ *                 description: Imagen de perfil (opcional)
+ *     responses:
+ *       200:
+ *         description: Usuario actualizado exitosamente
+ *       403:
+ *         description: Sin permisos
+ */
+router.put('/auth/profile', verifyToken, upload.single('imagen'), authController.updateUserProfile);
 
+/**
+ * @swagger
+ * /api/auth/users/{id}:
+ *   put:
+ *     summary: Actualizar usuario por ID (solo admin)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *               numero_telefono:
+ *                 type: string
+ *               domicilio:
+ *                 type: string
+ *               imagen:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Usuario actualizado exitosamente
+ *       403:
+ *         description: Sin permisos
+ */
+router.put('/auth/users/:id', verifyToken, upload.single('imagen'), authController.updateUserProfile);
 
 module.exports = router;

@@ -298,14 +298,41 @@ const actualizarKit = async (kitId, datosActualizacion) => {
  * Eliminar un kit (soft delete)
  */
 const eliminarKit = async (kitId) => {
-    const query = `
-        UPDATE kits 
-        SET activo = false
-        WHERE kit_id = $1
-        RETURNING *;
-    `;
-    const result = await pool.query(query, [kitId]);
-    return result.rows[0];
+    const client = await pool.connect();
+    
+    try {
+        await client.query('BEGIN');
+        
+        // Verificar si el kit tiene asignaciones activas
+        const asignacionesQuery = `
+            SELECT COUNT(*) as count 
+            FROM kits_asignados 
+            WHERE kit_id = $1 AND estado IN ('pendiente', 'en_progreso')
+        `;
+        const asignacionesResult = await client.query(asignacionesQuery, [kitId]);
+        
+        if (parseInt(asignacionesResult.rows[0].count) > 0) {
+            throw new Error('No se puede eliminar el kit porque tiene asignaciones activas. Cancele las asignaciones primero.');
+        }
+        
+        // Si no hay asignaciones activas, proceder con soft delete
+        const query = `
+            UPDATE kits 
+            SET activo = false, updated_at = CURRENT_TIMESTAMP
+            WHERE kit_id = $1
+            RETURNING *;
+        `;
+        const result = await client.query(query, [kitId]);
+        
+        await client.query('COMMIT');
+        return result.rows[0];
+        
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
 };
 
 /**

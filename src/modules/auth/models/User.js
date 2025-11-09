@@ -332,6 +332,57 @@ const loginUserMethod = async (correo) => {
     return usuario;
 };
 
+/**
+ * Actualiza los datos del usuario, incluyendo imagen si se proporciona
+ */
+const updateUser = async (userId, userData, file = null) => {
+    const client = await pool.connect();
+    
+    try {
+        await client.query('BEGIN');
+        
+        let updateData = { ...userData };
+        
+        // Si hay archivo de imagen, subir a Cloudinary
+        if (file) {
+            const result = await cloudinary.uploader.upload(file.path, {
+                folder: 'users',
+                public_id: `user_${userId}_${Date.now()}`,
+                transformation: [
+                    { width: 300, height: 300, crop: 'fill' },
+                    { quality: 'auto', fetch_format: 'auto' }
+                ]
+            });
+            
+            updateData.imagen_url = result.secure_url;
+            updateData.imagen_id = result.public_id;
+        }
+        
+        // Construir query dinámico
+        const fields = Object.keys(updateData);
+        const values = Object.values(updateData);
+        const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
+        
+        const query = `
+            UPDATE Usuario 
+            SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+            WHERE usuario_id = $1
+            RETURNING usuario_id, nombre, correo, fecha_de_nacimiento, numero_telefono, sexo, tipo, imagen_url, imagen_id, domicilio, codigo_postal
+        `;
+        
+        const result = await client.query(query, [userId, ...values]);
+        
+        await client.query('COMMIT');
+        return result.rows[0];
+        
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 module.exports = {
     createUser,
     findUserByEmail,
@@ -339,6 +390,7 @@ module.exports = {
     setResetToken,
     validateResetToken,
     updatePassword,
+    updateUser,
     /**
      * Obtiene todos los doctores con sus datos de usuario y detalle de Doctor.
      * @returns {Promise<Array>} Lista de doctores

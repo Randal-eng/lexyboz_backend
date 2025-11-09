@@ -275,9 +275,49 @@ const resetPassword = async (req, res) => {
   }
 };
 
+/**
+ * Actualiza los datos del usuario, incluyendo foto de perfil
+ */
+const updateUserProfile = async (req, res) => {
+  try {
+    // Helper function para obtener el ID del usuario (funciona tanto para usuarios como admins)
+    const getUserId = (user) => {
+        return user.role === 'admin' ? user.id : user.usuario_id;
+    };
+    
+    const userId = req.params.id || getUserId(req.user);
+    const updateData = req.body;
+    
+    // Solo admin puede actualizar otros usuarios
+    if (req.user.role !== 'admin' && req.params.id && parseInt(req.params.id) !== getUserId(req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permisos para actualizar este usuario'
+      });
+    }
+    
+    const updatedUser = await userModel.updateUser(userId, updateData, req.file);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Usuario actualizado exitosamente',
+      user: updatedUser
+    });
+    
+  } catch (error) {
+    console.error('Error al actualizar usuario:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al actualizar usuario',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  updateUserProfile,
   requestPasswordReset,
   resetPassword
 };
