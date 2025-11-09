@@ -72,45 +72,70 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { correo, contrasenia } = req.body;
-    const user = await userModel.loginUserMethod(correo);
+    
+    // Primero intentar login como usuario normal
+    let user = await userModel.loginUserMethod(correo);
+    let isAdmin = false;
+    
+    // Si no se encuentra como usuario, intentar como administrador
+    if (!user) {
+      const adminModel = require('../models/Admin');
+      const admin = await adminModel.findAdminByEmail(correo);
+      if (admin) {
+        user = admin;
+        isAdmin = true;
+      }
+    }
 
     if (!user) {
       return res.status(401).json({ message: 'Correo o contraseña incorrectos.' });
     }
 
-    const validPassword = await bcrypt.compare(contrasenia, user.contrasenia);
+    // Para admins, la contraseña no está encriptada, para usuarios sí
+    let validPassword;
+    if (isAdmin) {
+      validPassword = contrasenia === user.contraseña;
+    } else {
+      validPassword = await bcrypt.compare(contrasenia, user.contrasenia);
+    }
+    
     if (!validPassword) {
       return res.status(401).json({ message: 'Correo o contraseña incorrectos.' });
     }
 
-    // Removemos la contraseña del objeto de usuario
-    const { contrasenia: _, ...userWithoutPassword } = user;
+    // Removemos la contraseña del objeto
+    const { contrasenia: _, contraseña: __, ...userWithoutPassword } = user;
 
     // Generamos el token JWT
-    const token = jwt.sign(
-      { 
-        id: user.usuario_id,
-        email: user.correo,
-        role: user.tipo // Usar 'tipo' en lugar de 'rol'
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '24h' }
-    );
+    const tokenPayload = isAdmin ? {
+      id: user.id,
+      email: user.correo,
+      role: 'admin',
+      nombre_usuario: user.nombre_usuario
+    } : {
+      id: user.usuario_id,
+      email: user.correo,
+      role: user.tipo
+    };
 
-    // Agregar doctor_id o paciente_id si existen
-    let tipoId = null;
-    if (user.doctor_id) tipoId = user.doctor_id;
-    if (user.paciente_id) tipoId = user.paciente_id;
+    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+    // Respuesta diferente para admin y usuario
+    const responseData = isAdmin ? {
+      ...userWithoutPassword,
+      admin_id: user.id,
+      tipo: 'admin'
+    } : {
+      ...userWithoutPassword,
+      usuario_id: user.usuario_id,
+      tipo_id: user.doctor_id || user.paciente_id || null
+    };
 
     res.status(200).json({ 
       success: true,
       message: 'Inicio de sesión exitoso.',
       token,
-      user: {
-        ...userWithoutPassword,
-        usuario_id: user.usuario_id,
-        tipo_id: tipoId
-      }
+      user: responseData
     });
   } catch (error) {
     console.error('Error en login:', error);
