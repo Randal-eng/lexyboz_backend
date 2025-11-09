@@ -293,6 +293,62 @@ router.post('/', verifyToken, reactivoController.crearReactivo);
 
 /**
  * @swagger
+ * /api/reactivos/palabras-normales:
+ *   post:
+ *     summary: Crear un nuevo reactivo de palabras normales
+ *     tags: [Reactivos]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - contenido
+ *               - sub_tipo_id
+ *             properties:
+ *               contenido:
+ *                 type: string
+ *                 description: Palabra normal (real)
+ *                 example: "casa"
+ *               sub_tipo_id:
+ *                 type: integer
+ *                 description: ID del subtipo para palabras normales
+ *                 example: 2
+ *               tiempo_limite:
+ *                 type: integer
+ *                 description: Tiempo límite en milisegundos
+ *                 example: 4000
+ *               orden:
+ *                 type: integer
+ *                 description: Orden del reactivo
+ *                 example: 1
+ *     responses:
+ *       201:
+ *         description: Reactivo de palabra normal creado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Reactivo de palabra normal creado exitosamente"
+ *                 reactivo:
+ *                   type: object
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autorizado
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.post('/palabras-normales', verifyToken, reactivoController.crearReactivoPalabraNormal);
+
+/**
+ * @swagger
  * /api/reactivos:
  *   get:
  *     tags: [Reactivos]

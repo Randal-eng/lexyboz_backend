@@ -216,6 +216,7 @@ const guardarResultadoLecturaPseudopalabrasDirecto = async (req, res) => {
     }
 };
 const reactivoModel = require('../models/Reactivo');
+const reactivoPalabrasNormalesModel = require('../models/ReactivoLecturaPalabras');
 const ResultadoLecturaPseudopalabras = require('../models/ResultadoLecturaPseudopalabras');
 const cloudinary = require('../../../config/cloudinary/cloudinaryConfig');
 const multer = require('multer');
@@ -254,6 +255,41 @@ const crearReactivo = async (req, res) => {
 
     } catch (error) {
         console.error('Error al crear reactivo:', error);
+        res.status(500).json({
+            message: 'Error interno del servidor',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Crear un nuevo reactivo de palabras normales
+ */
+const crearReactivoPalabraNormal = async (req, res) => {
+    console.log('Datos recibidos para palabras normales:', req.body);
+    try {
+        const { contenido, orden, sub_tipo_id, tiempo_limite } = req.body;
+
+        if (!contenido || !sub_tipo_id) {
+            return res.status(400).json({
+                message: 'El contenido (palabra) y sub_tipo_id son requeridos.'
+            });
+        }
+
+        // Mapear campos del controlador al modelo
+        const nuevoReactivo = await reactivoPalabrasNormalesModel.crearReactivoPalabraNormal({
+            palabra: contenido,                // Mapear contenido → palabra
+            id_sub_tipo: sub_tipo_id,          // Mapear sub_tipo_id → id_sub_tipo
+            tiempo_duracion: tiempo_limite     // Mapear tiempo_limite → tiempo_duracion
+        });
+
+        res.status(201).json({
+            message: 'Reactivo de palabra normal creado exitosamente',
+            reactivo: nuevoReactivo
+        });
+
+    } catch (error) {
+        console.error('Error al crear reactivo de palabra normal:', error);
         res.status(500).json({
             message: 'Error interno del servidor',
             error: error.message
@@ -837,6 +873,7 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
 
 module.exports = {
     crearReactivo,
+    crearReactivoPalabraNormal,
     obtenerReactivos,
     obtenerReactivoPorId,
     actualizarReactivo,
