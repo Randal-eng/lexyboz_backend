@@ -1,5 +1,10 @@
 const kitModel = require('../models/Kit');
 
+// Helper function para obtener el ID del usuario (funciona tanto para usuarios como admins)
+const getUserId = (user) => {
+    return user.role === 'admin' ? user.id : user.usuario_id;
+};
+
 // =====================================================
 // CONTROLADORES DE KITS
 // =====================================================
@@ -10,7 +15,7 @@ const kitModel = require('../models/Kit');
 const crearKit = async (req, res) => {
     try {
     const { name, descripcion, creado_por: creadoPorBody } = req.body;
-    const creado_por = creadoPorBody || (req.user && req.user.usuario_id);
+    const creado_por = creadoPorBody || (req.user && getUserId(req.user));
 
         if (!name) {
             return res.status(400).json({ 
@@ -168,7 +173,7 @@ const actualizarKit = async (req, res) => {
     try {
         const { id } = req.params;
         const datosActualizacion = req.body;
-        const usuarioId = req.user.usuario_id;
+        const usuarioId = getUserId(req.user);
 
         if (!id || isNaN(id)) {
             return res.status(400).json({ 
@@ -185,7 +190,7 @@ const actualizarKit = async (req, res) => {
         }
 
         // Verificar permisos (solo el creador o admin puede editar)
-        if (kitExistente.creado_por !== usuarioId && req.user.tipo !== 'Admin') {
+        if (kitExistente.creado_por !== usuarioId && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 message: 'No tienes permisos para editar este kit' 
             });
@@ -213,7 +218,7 @@ const actualizarKit = async (req, res) => {
 const eliminarKit = async (req, res) => {
     try {
         const { id } = req.params;
-        const usuarioId = req.user.usuario_id;
+        const usuarioId = getUserId(req.user);
 
         if (!id || isNaN(id)) {
             return res.status(400).json({ 
@@ -230,7 +235,7 @@ const eliminarKit = async (req, res) => {
         }
 
         // Verificar permisos (solo el creador o admin puede eliminar)
-        if (kitExistente.creado_por !== usuarioId && req.user.tipo !== 'Admin') {
+        if (kitExistente.creado_por !== usuarioId && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 message: 'No tienes permisos para eliminar este kit' 
             });
@@ -259,7 +264,7 @@ const agregarEjercicioAKit = async (req, res) => {
     try {
         const { id } = req.params;
         const { ejercicio_id, orden_en_kit } = req.body;
-        const usuarioId = req.user.usuario_id;
+        const usuarioId = getUserId(req.user);
 
         if (!id || isNaN(id)) {
             return res.status(400).json({ 
@@ -281,7 +286,7 @@ const agregarEjercicioAKit = async (req, res) => {
             });
         }
 
-        if (kitExistente.creado_por !== usuarioId && req.user.tipo !== 'Admin') {
+        if (kitExistente.creado_por !== usuarioId && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 message: 'No tienes permisos para modificar este kit' 
             });
@@ -320,7 +325,7 @@ const agregarEjercicioAKit = async (req, res) => {
 const removerEjercicioDeKit = async (req, res) => {
     try {
         const { id, ejercicio_id } = req.params;
-        const usuarioId = req.user.usuario_id;
+        const usuarioId = getUserId(req.user);
 
         if (!id || isNaN(id) || !ejercicio_id || isNaN(ejercicio_id)) {
             return res.status(400).json({ 
@@ -336,7 +341,7 @@ const removerEjercicioDeKit = async (req, res) => {
             });
         }
 
-        if (kitExistente.creado_por !== usuarioId && req.user.tipo !== 'Admin') {
+        if (kitExistente.creado_por !== usuarioId && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 message: 'No tienes permisos para modificar este kit' 
             });
@@ -373,7 +378,7 @@ const reordenarEjerciciosEnKit = async (req, res) => {
     try {
         const { id } = req.params;
         const { nuevos_ordenes } = req.body;
-        const usuarioId = req.user.usuario_id;
+        const usuarioId = getUserId(req.user);
 
         if (!id || isNaN(id)) {
             return res.status(400).json({ 
@@ -395,7 +400,7 @@ const reordenarEjerciciosEnKit = async (req, res) => {
             });
         }
 
-        if (kitExistente.creado_por !== usuarioId && req.user.tipo !== 'Admin') {
+        if (kitExistente.creado_por !== usuarioId && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 message: 'No tienes permisos para modificar este kit' 
             });
