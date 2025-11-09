@@ -240,12 +240,11 @@ const crearReactivo = async (req, res) => {
             });
         }
 
+        // Mapear campos del controlador al modelo
         const nuevoReactivo = await reactivoModel.crearReactivo({
-            contenido,
-            orden: orden || 1,
-            sub_tipo_id,
-            tiempo_limite,
-            configuracion
+            pseudopalabra: contenido,           // Mapear contenido → pseudopalabra
+            id_sub_tipo: sub_tipo_id,          // Mapear sub_tipo_id → id_sub_tipo
+            tiempo_duracion: tiempo_limite     // Mapear tiempo_limite → tiempo_duracion
         });
 
         res.status(201).json({
