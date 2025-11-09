@@ -2,6 +2,11 @@ const ejercicioModel = require('../models/Ejercicio');
 const reactivoModel = require('../../reactivos/models/Reactivo');
 const TipoModel = require('../../tipos/models/Tipo');
 
+// Helper function para obtener el ID del usuario (funciona tanto para usuarios como admins)
+const getUserId = (user) => {
+    return user.role === 'admin' ? user.id : user.usuario_id;
+};
+
 // =====================================================
 // CONTROLADORES DE EJERCICIOS
 // =====================================================
@@ -14,7 +19,7 @@ const crearEjercicio = async (req, res) => {
         const { titulo, descripcion, tipo_ejercicio, creado_por } = req.body;
         
         // Usar creado_por del JSON si está presente, sino del token JWT
-        const creadorId = creado_por || req.user?.usuario_id;
+        const creadorId = creado_por || getUserId(req.user);
 
         if (!titulo) {
             return res.status(400).json({ 
@@ -183,7 +188,7 @@ const actualizarEjercicio = async (req, res) => {
 const eliminarEjercicio = async (req, res) => {
     try {
         const { id } = req.params;
-        const usuarioId = req.user.usuario_id;
+        const usuarioId = req.user.id; // Para admin usa 'id', para usuarios 'usuario_id'
 
         if (!id || isNaN(id)) {
             return res.status(400).json({ 
@@ -200,7 +205,7 @@ const eliminarEjercicio = async (req, res) => {
         }
 
         // Verificar permisos (solo el creador o admin puede eliminar)
-        if (ejercicioExistente.creado_por !== usuarioId && req.user.tipo !== 'Admin') {
+        if (ejercicioExistente.creado_por !== usuarioId && req.user.role !== 'admin') {
             return res.status(403).json({ 
                 message: 'No tienes permisos para eliminar este ejercicio' 
             });
