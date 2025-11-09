@@ -24,12 +24,41 @@ const userSchema = Joi.object({
 });
 
 /**
+ * Esquema de validación para actualización de usuarios (todos los campos opcionales)
+ */
+const userUpdateSchema = Joi.object({
+    nombre: Joi.string().min(3).max(100).optional(),
+    correo: Joi.string().email().optional(),
+    fecha_de_nacimiento: Joi.date().iso().optional(),
+    numero_telefono: Joi.string().pattern(/^\d{10}$/).optional(),
+    sexo: Joi.string().valid('Masculino', 'Femenino', 'Otro').optional(),
+    domicilio: Joi.string().optional(),
+    codigo_postal: Joi.string().pattern(/^\d{5}$/).optional(),
+    escolaridad: Joi.string().allow(null, '').optional(),
+    especialidad: Joi.string().allow(null, '').optional(),
+    imagen_url: Joi.string().uri().allow(null, '').optional(),
+    imagen_id: Joi.string().allow(null, '').optional()
+});
+
+/**
  * Valida los datos del usuario contra el esquema definido.
  * @param {Object} user - Objeto con los datos del usuario a validar
  * @throws {Error} Si la validación falla, lanza un error con el mensaje de validación
  */
 const validateUser = (user) => {
     const { error } = userSchema.validate(user);
+    if (error) {
+        throw new Error(`Error de validación: ${error.details[0].message}`);
+    }
+};
+
+/**
+ * Valida los datos de actualización del usuario
+ * @param {Object} userData - Objeto con los datos a actualizar
+ * @throws {Error} Si la validación falla, lanza un error con el mensaje de validación
+ */
+const validateUserUpdate = (userData) => {
+    const { error } = userUpdateSchema.validate(userData);
     if (error) {
         throw new Error(`Error de validación: ${error.details[0].message}`);
     }
@@ -336,6 +365,9 @@ const loginUserMethod = async (correo) => {
  * Actualiza los datos del usuario, incluyendo imagen si se proporciona
  */
 const updateUser = async (userId, userData, file = null) => {
+    // Validar datos de entrada
+    validateUserUpdate(userData);
+    
     const client = await pool.connect();
     
     try {
@@ -391,6 +423,7 @@ module.exports = {
     validateResetToken,
     updatePassword,
     updateUser,
+    validateUserUpdate,
     /**
      * Obtiene todos los doctores con sus datos de usuario y detalle de Doctor.
      * @returns {Promise<Array>} Lista de doctores
