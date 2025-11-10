@@ -859,4 +859,65 @@ router.post('/imagen-correcta/archivos', uploadImagenes, crearReactivoImagenCorr
 // Endpoint para guardar resultado de lectura de pseudopalabras (audio y datos)
 router.post('/resultados-lectura-pseudopalabras', upload.single('audio'), guardarResultadoLecturaPseudopalabras);
 
+// Endpoint para guardar resultado de pseudopalabras SIN audio (solo JSON)
+router.post('/resultados-lectura-pseudopalabras-json', reactivoController.guardarResultadoLecturaPseudopalabrasDirecto);
+
+/**
+ * @swagger
+ * /api/reactivos/resultados-lectura-pseudopalabras:
+ *   get:
+ *     summary: Obtiene resultados de lectura de pseudopalabras
+ *     tags: [ResultadosLecturaPseudopalabras]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: paciente_id
+ *         schema:
+ *           type: integer
+ *         description: ID del paciente (opcional)
+ *       - in: query
+ *         name: id_reactivo
+ *         schema:
+ *           type: integer
+ *         description: ID del reactivo (opcional)
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Número de resultados por página
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Número de resultados a saltar
+ *     responses:
+ *       200:
+ *         description: Resultados obtenidos exitosamente
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: true
+ *               message: "Resultados obtenidos exitosamente"
+ *               data: [
+ *                 {
+ *                   resultado_reactivo_usuario_id: 1,
+ *                   usuario_id: 123,
+ *                   id_reactivo: 45,
+ *                   voz_usuario_url: "https://audio.com/file.mp3",
+ *                   tiempo_respuesta: 3200,
+ *                   es_correcto: true,
+ *                   fecha_realizacion: "2025-11-10T10:30:00Z"
+ *                 }
+ *               ]
+ *               total: 1
+ *       400:
+ *         description: Parámetros inválidos
+ *       500:
+ *         description: Error interno del servidor
+ */
+router.get('/resultados-lectura-pseudopalabras', verifyToken, reactivoController.obtenerResultadosLecturaPseudopalabras);
+
 module.exports = router;

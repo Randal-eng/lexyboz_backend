@@ -863,8 +863,93 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
             paciente_id: usuario_id
         });
     } catch (error) {
-        console.error('Error al guardar resultado:', error);
+        console.error('Error al obtener reporte por kit y paciente:', error);
         res.status(500).json({
+            message: 'Error interno del servidor',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Obtener resultados de lectura de pseudopalabras
+ */
+const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
+    try {
+        const { paciente_id, id_reactivo, limit = 20, offset = 0 } = req.query;
+
+        // Construir query dinámico
+        let whereConditions = [];
+        let queryParams = [];
+        let paramCounter = 1;
+
+        if (paciente_id) {
+            whereConditions.push(`r.usuario_id = $${paramCounter}`);
+            queryParams.push(parseInt(paciente_id));
+            paramCounter++;
+        }
+
+        if (id_reactivo) {
+            whereConditions.push(`r.id_reactivo = $${paramCounter}`);
+            queryParams.push(parseInt(id_reactivo));
+            paramCounter++;
+        }
+
+        const whereClause = whereConditions.length > 0 
+            ? `WHERE ${whereConditions.join(' AND ')}`
+            : '';
+
+        const query = `
+            SELECT 
+                r.resultado_reactivo_usuario_id,
+                r.usuario_id,
+                r.id_reactivo,
+                r.voz_usuario_url,
+                r.tiempo_respuesta,
+                r.es_correcto,
+                r.fecha_realizacion,
+                r.created_at,
+                rp.pseudopalabra,
+                u.nombre as usuario_nombre
+            FROM resultados_lectura_pseudopalabras r
+            LEFT JOIN reactivo_lectura_pseudopalabras rp ON r.id_reactivo = rp.reactivo_id
+            LEFT JOIN Usuario u ON r.usuario_id = u.usuario_id
+            ${whereClause}
+            ORDER BY r.fecha_realizacion DESC
+            LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
+        `;
+
+        queryParams.push(parseInt(limit), parseInt(offset));
+
+        // Query para contar total
+        const countQuery = `
+            SELECT COUNT(*) as total
+            FROM resultados_lectura_pseudopalabras r
+            ${whereClause}
+        `;
+
+        const pool = require('../../../db/connection');
+        const [resultados, countResult] = await Promise.all([
+            pool.query(query, queryParams),
+            pool.query(countQuery, queryParams.slice(0, -2)) // Sin limit y offset para count
+        ]);
+
+        const total = parseInt(countResult.rows[0].total);
+
+        res.status(200).json({
+            success: true,
+            message: 'Resultados obtenidos exitosamente',
+            data: resultados.rows,
+            total,
+            limit: parseInt(limit),
+            offset: parseInt(offset),
+            hasMore: (parseInt(offset) + parseInt(limit)) < total
+        });
+
+    } catch (error) {
+        console.error('Error al obtener resultados de pseudopalabras:', error);
+        res.status(500).json({
+            success: false,
             message: 'Error interno del servidor',
             error: error.message
         });
@@ -889,5 +974,6 @@ module.exports = {
     guardarResultadoLecturaPseudopalabrasDirecto,
     guardarResultadoLecturaPseudopalabrasDirectoFull,
     obtenerReportePorKitPaciente,
+    obtenerResultadosLecturaPseudopalabras,
     upload
 };
