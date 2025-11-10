@@ -306,7 +306,11 @@ const updateUserProfile = async (req, res) => {
     
   } catch (error) {
     console.error('Error al actualizar usuario:', error);
-    res.status(500).json({
+    console.error('Datos recibidos:', req.body);
+    console.error('Usuario ID:', req.params.id);
+    console.error('Usuario del token:', req.user);
+    
+    res.status(400).json({
       success: false,
       message: 'Error al actualizar usuario',
       error: error.message
