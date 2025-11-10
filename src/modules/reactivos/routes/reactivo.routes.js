@@ -857,5 +857,6 @@ router.post('/imagen-correcta/resultado', guardarResultadoImagenCorrectaControll
 router.post('/imagen-correcta/archivos', uploadImagenes, crearReactivoImagenCorrectaArchivosController);
 
 // Endpoint para guardar resultado de lectura de pseudopalabras (audio y datos)
+router.post('/resultados-lectura-pseudopalabras', upload.single('audio'), guardarResultadoLecturaPseudopalabras);
 
 module.exports = router;
