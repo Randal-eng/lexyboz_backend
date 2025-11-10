@@ -34,10 +34,12 @@ const userUpdateSchema = Joi.object({
     sexo: Joi.string().valid('Masculino', 'Femenino', 'Otro').optional(),
     domicilio: Joi.string().optional(),
     codigo_postal: Joi.string().pattern(/^\d{5}$/).optional(),
-    escolaridad: Joi.string().allow(null, '').optional(),
-    especialidad: Joi.string().allow(null, '').optional(),
     imagen_url: Joi.string().uri().allow(null, '').optional(),
-    imagen_id: Joi.string().allow(null, '').optional()
+    imagen_id: Joi.string().allow(null, '').optional(),
+    // Campos que se ignoran pero no causan error
+    escolaridad: Joi.any().optional(),
+    especialidad: Joi.any().optional(),
+    tipo: Joi.any().optional()
 });
 
 /**
@@ -375,6 +377,12 @@ const updateUser = async (userId, userData, file = null) => {
         
         let updateData = { ...userData };
         
+        // Filtrar campos que existen en la tabla Usuario
+        const allowedFields = ['nombre', 'correo', 'fecha_de_nacimiento', 'numero_telefono', 'sexo', 'domicilio', 'codigo_postal', 'imagen_url', 'imagen_id'];
+        updateData = Object.fromEntries(
+            Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
+        );
+        
         // Si hay archivo de imagen, subir a Cloudinary
         if (file) {
             const result = await cloudinary.uploader.upload(file.path, {
@@ -390,6 +398,11 @@ const updateUser = async (userId, userData, file = null) => {
             updateData.imagen_id = result.public_id;
         }
         
+        // Si no hay campos para actualizar
+        if (Object.keys(updateData).length === 0) {
+            throw new Error('No hay campos válidos para actualizar');
+        }
+        
         // Construir query dinámico
         const fields = Object.keys(updateData);
         const values = Object.values(updateData);
@@ -397,12 +410,16 @@ const updateUser = async (userId, userData, file = null) => {
         
         const query = `
             UPDATE Usuario 
-            SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+            SET ${setClause}
             WHERE usuario_id = $1
             RETURNING usuario_id, nombre, correo, fecha_de_nacimiento, numero_telefono, sexo, tipo, imagen_url, imagen_id, domicilio, codigo_postal
         `;
         
         const result = await client.query(query, [userId, ...values]);
+        
+        if (result.rows.length === 0) {
+            throw new Error('Usuario no encontrado');
+        }
         
         await client.query('COMMIT');
         return result.rows[0];
