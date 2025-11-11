@@ -940,4 +940,98 @@ router.post('/resultados-lectura-pseudopalabras-json', reactivoController.guarda
  */
 router.get('/resultados-lectura-pseudopalabras', verifyToken, reactivoController.obtenerResultadosLecturaPseudopalabras);
 
+// =====================================================
+// RUTAS MEJORADAS PARA RESULTADOS CON PARÁMETROS DE RUTA
+// =====================================================
+
+/**
+ * @swagger
+ * /api/reactivos/resultados/paciente/{paciente_id}:
+ *   get:
+ *     summary: Obtiene resultados por ID de paciente
+ *     tags: [ResultadosLecturaPseudopalabras]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: paciente_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del paciente
+ *     responses:
+ *       200:
+ *         description: Resultados obtenidos exitosamente
+ */
+router.get('/resultados/paciente/:paciente_id', verifyToken, reactivoController.obtenerResultadosPorPaciente);
+
+/**
+ * @swagger
+ * /api/reactivos/resultados/kit/{kit_id}:
+ *   get:
+ *     summary: Obtiene resultados por ID de kit
+ *     tags: [ResultadosLecturaPseudopalabras]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: kit_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del kit
+ *     responses:
+ *       200:
+ *         description: Resultados obtenidos exitosamente
+ */
+router.get('/resultados/kit/:kit_id', verifyToken, reactivoController.obtenerResultadosPorKit);
+
+/**
+ * @swagger
+ * /api/reactivos/resultados/ejercicio/{ejercicio_id}:
+ *   get:
+ *     summary: Obtiene resultados por ID de ejercicio
+ *     tags: [ResultadosLecturaPseudopalabras]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: ejercicio_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del ejercicio
+ *     responses:
+ *       200:
+ *         description: Resultados obtenidos exitosamente
+ */
+router.get('/resultados/ejercicio/:ejercicio_id', verifyToken, reactivoController.obtenerResultadosPorEjercicio);
+
+/**
+ * @swagger
+ * /api/reactivos/resultados/paciente/{paciente_id}/kit/{kit_id}:
+ *   get:
+ *     summary: Obtiene resultados por paciente y kit específicos
+ *     tags: [ResultadosLecturaPseudopalabras]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: paciente_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del paciente
+ *       - in: path
+ *         name: kit_id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID del kit
+ *     responses:
+ *       200:
+ *         description: Resultados obtenidos exitosamente
+ */
+router.get('/resultados/paciente/:paciente_id/kit/:kit_id', verifyToken, reactivoController.obtenerResultadosPacienteKit);
+
 module.exports = router;

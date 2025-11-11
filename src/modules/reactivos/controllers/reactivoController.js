@@ -1055,6 +1055,20 @@ const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
     try {
         const { paciente_id, id_reactivo, kit_id, ejercicio_id, limit = 20, offset = 0 } = req.query;
 
+        // Validar parámetros numéricos si se proporcionan
+        if (paciente_id && (isNaN(paciente_id) || parseInt(paciente_id) <= 0)) {
+            return res.status(400).json({ message: 'ID de paciente inválido' });
+        }
+        if (id_reactivo && (isNaN(id_reactivo) || parseInt(id_reactivo) <= 0)) {
+            return res.status(400).json({ message: 'ID de reactivo inválido' });
+        }
+        if (kit_id && (isNaN(kit_id) || parseInt(kit_id) <= 0)) {
+            return res.status(400).json({ message: 'ID de kit inválido' });
+        }
+        if (ejercicio_id && (isNaN(ejercicio_id) || parseInt(ejercicio_id) <= 0)) {
+            return res.status(400).json({ message: 'ID de ejercicio inválido' });
+        }
+
         // Construir query dinámico
         let whereConditions = [];
         let queryParams = [];
@@ -1176,6 +1190,117 @@ const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
     }
 };
 
+// =====================================================
+// FUNCIONES MEJORADAS PARA RUTAS CON PARÁMETROS
+// =====================================================
+
+/**
+ * Obtener resultados por paciente específico
+ */
+const obtenerResultadosPorPaciente = async (req, res) => {
+    try {
+        const { paciente_id } = req.params;
+        const { limit = 20, offset = 0 } = req.query;
+
+        // Validar parámetro
+        if (!paciente_id || isNaN(paciente_id) || parseInt(paciente_id) <= 0) {
+            return res.status(400).json({ message: 'ID de paciente inválido' });
+        }
+
+        // Reutilizar la función existente
+        req.query = { paciente_id, limit, offset };
+        return await obtenerResultadosLecturaPseudopalabras(req, res);
+    } catch (error) {
+        console.error('Error al obtener resultados por paciente:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Obtener resultados por kit específico
+ */
+const obtenerResultadosPorKit = async (req, res) => {
+    try {
+        const { kit_id } = req.params;
+        const { limit = 20, offset = 0 } = req.query;
+
+        // Validar parámetro
+        if (!kit_id || isNaN(kit_id) || parseInt(kit_id) <= 0) {
+            return res.status(400).json({ message: 'ID de kit inválido' });
+        }
+
+        // Reutilizar la función existente
+        req.query = { kit_id, limit, offset };
+        return await obtenerResultadosLecturaPseudopalabras(req, res);
+    } catch (error) {
+        console.error('Error al obtener resultados por kit:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Obtener resultados por ejercicio específico
+ */
+const obtenerResultadosPorEjercicio = async (req, res) => {
+    try {
+        const { ejercicio_id } = req.params;
+        const { limit = 20, offset = 0 } = req.query;
+
+        // Validar parámetro
+        if (!ejercicio_id || isNaN(ejercicio_id) || parseInt(ejercicio_id) <= 0) {
+            return res.status(400).json({ message: 'ID de ejercicio inválido' });
+        }
+
+        // Reutilizar la función existente
+        req.query = { ejercicio_id, limit, offset };
+        return await obtenerResultadosLecturaPseudopalabras(req, res);
+    } catch (error) {
+        console.error('Error al obtener resultados por ejercicio:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Obtener resultados por paciente y kit específicos
+ */
+const obtenerResultadosPacienteKit = async (req, res) => {
+    try {
+        const { paciente_id, kit_id } = req.params;
+        const { limit = 20, offset = 0 } = req.query;
+
+        // Validar parámetros
+        if (!paciente_id || isNaN(paciente_id) || parseInt(paciente_id) <= 0) {
+            return res.status(400).json({ message: 'ID de paciente inválido' });
+        }
+        if (!kit_id || isNaN(kit_id) || parseInt(kit_id) <= 0) {
+            return res.status(400).json({ message: 'ID de kit inválido' });
+        }
+
+        // Reutilizar la función existente
+        req.query = { paciente_id, kit_id, limit, offset };
+        return await obtenerResultadosLecturaPseudopalabras(req, res);
+    } catch (error) {
+        console.error('Error al obtener resultados por paciente y kit:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     crearReactivo,
     crearReactivoPalabraNormal,
@@ -1195,5 +1320,9 @@ module.exports = {
     guardarResultadoLecturaPseudopalabrasDirectoFull,
     obtenerReportePorKitPaciente,
     obtenerResultadosLecturaPseudopalabras,
+    obtenerResultadosPorPaciente,
+    obtenerResultadosPorKit,
+    obtenerResultadosPorEjercicio,
+    obtenerResultadosPacienteKit,
     upload
 };
