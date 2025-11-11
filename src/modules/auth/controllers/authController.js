@@ -295,6 +295,10 @@ const updateUserProfile = async (req, res) => {
     console.log('Datos a actualizar:', updateData);
     console.log('Archivo recibido (req.file):', req.file);
     console.log('Tiene buffer?:', req.file ? !!req.file.buffer : false);
+    console.log('Headers Content-Type:', req.headers['content-type']);
+    console.log('req.body keys:', Object.keys(req.body));
+    console.log('req.files:', req.files);
+    console.log('Todos los headers:', req.headers);
     
     // Solo admin puede actualizar otros usuarios
     if (req.user.role !== 'admin' && req.params.id && parseInt(req.params.id) !== getUserId(req.user)) {
