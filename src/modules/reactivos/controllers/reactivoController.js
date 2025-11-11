@@ -35,13 +35,13 @@ const obtenerReportePorKitPaciente = async (req, res) => {
                     total: 0,
                     porcentaje: 0,
                     tiempo_promedio: 0,
-                    ia_ultima_respuesta: null
+                    ultimo_resultado: null
                 });
                 continue;
             }
             // 3. Buscar resultados del paciente para esos reactivos
             const resultadosRes = await pool.query(
-                `SELECT es_correcto, tiempo_respuesta, ia_respuesta FROM resultados_lectura_pseudopalabras WHERE usuario_id = $1 AND id_reactivo = ANY($2::int[]) ORDER BY fecha_realizacion ASC`,
+                `SELECT es_correcto, tiempo_respuesta, voz_usuario_url, fecha_realizacion FROM resultados_lectura_pseudopalabras WHERE usuario_id = $1 AND id_reactivo = ANY($2::int[]) ORDER BY fecha_realizacion ASC`,
                 [paciente_id, reactivoIds]
             );
             const total = resultadosRes.rows.length;
@@ -49,25 +49,25 @@ const obtenerReportePorKitPaciente = async (req, res) => {
             // Calcular tiempo promedio
             const tiempos = resultadosRes.rows.map(r => Number(r.tiempo_respuesta)).filter(t => !isNaN(t));
             const tiempo_promedio = tiempos.length > 0 ? (tiempos.reduce((a, b) => a + b, 0) / tiempos.length) : 0;
-            // Obtener última respuesta de IA (si existe)
-            let ia_ultima_respuesta = null;
-            for (let i = resultadosRes.rows.length - 1; i >= 0; i--) {
-                if (resultadosRes.rows[i].ia_respuesta) {
-                    try {
-                        ia_ultima_respuesta = JSON.parse(resultadosRes.rows[i].ia_respuesta);
-                    } catch {
-                        ia_ultima_respuesta = resultadosRes.rows[i].ia_respuesta;
-                    }
-                    break;
-                }
+            // Obtener información del último resultado (si existe)
+            let ultimo_resultado = null;
+            if (resultadosRes.rows.length > 0) {
+                const ultimoResultado = resultadosRes.rows[resultadosRes.rows.length - 1];
+                ultimo_resultado = {
+                    es_correcto: ultimoResultado.es_correcto,
+                    tiempo_respuesta: ultimoResultado.tiempo_respuesta,
+                    voz_usuario_url: ultimoResultado.voz_usuario_url,
+                    fecha_realizacion: ultimoResultado.fecha_realizacion
+                };
             }
+            
             ejercicios.push({
                 ejercicio_id: ejercicio.ejercicio_id,
                 aciertos,
                 total,
                 porcentaje: total > 0 ? Math.round((aciertos / total) * 100) : 0,
                 tiempo_promedio: Number(tiempo_promedio.toFixed(2)),
-                ia_ultima_respuesta
+                ultimo_resultado
             });
         }
         return res.json({
@@ -1157,15 +1157,31 @@ const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
             ${whereClause}${whereClause ? ' AND' : 'WHERE'} r.es_correcto = true
         `;
 
+        // Query para calcular tiempo total
+        const tiempoTotalQuery = `
+            SELECT 
+                COALESCE(SUM(r.tiempo_respuesta), 0) as tiempo_total_segundos,
+                COALESCE(AVG(r.tiempo_respuesta), 0) as tiempo_promedio_segundos
+            FROM resultados_lectura_pseudopalabras r
+            LEFT JOIN ejercicio_reactivos er ON r.id_reactivo = er.reactivo_id
+            LEFT JOIN ejercicios e ON er.ejercicio_id = e.ejercicio_id
+            LEFT JOIN ejercicios_kits ek ON e.ejercicio_id = ek.ejercicio_id AND ek.activo = true
+            LEFT JOIN kits k ON ek.kit_id = k.kit_id
+            ${whereClause}
+        `;
+
         const pool = require('../../../db/connection');
-        const [resultados, countResult, correctosResult] = await Promise.all([
+        const [resultados, countResult, correctosResult, tiempoResult] = await Promise.all([
             pool.query(query, queryParams),
             pool.query(countQuery, queryParams.slice(0, -2)), // Sin limit y offset para count
-            pool.query(correctosQuery, queryParams.slice(0, -2)) // Sin limit y offset para correctos
+            pool.query(correctosQuery, queryParams.slice(0, -2)), // Sin limit y offset para correctos
+            pool.query(tiempoTotalQuery, queryParams.slice(0, -2)) // Sin limit y offset para tiempo
         ]);
 
         const total = parseInt(countResult.rows[0].total);
         const correctos = parseInt(correctosResult.rows[0].correctos);
+        const tiempoTotalSegundos = parseFloat(tiempoResult.rows[0].tiempo_total_segundos);
+        const tiempoPromedioSegundos = parseFloat(tiempoResult.rows[0].tiempo_promedio_segundos);
 
         res.status(200).json({
             success: true,
@@ -1175,6 +1191,9 @@ const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
             correctos,
             incorrectos: total - correctos,
             porcentaje_aciertos: total > 0 ? Math.round((correctos / total) * 100) : 0,
+            tiempo_total_segundos: tiempoTotalSegundos,
+            tiempo_promedio_segundos: Math.round(tiempoPromedioSegundos * 100) / 100, // Redondear a 2 decimales
+            tiempo_total_minutos: Math.round((tiempoTotalSegundos / 60) * 100) / 100, // Convertir a minutos
             limit: parseInt(limit),
             offset: parseInt(offset),
             hasMore: (parseInt(offset) + parseInt(limit)) < total
