@@ -282,11 +282,17 @@ const updateUserProfile = async (req, res) => {
   try {
     // Helper function para obtener el ID del usuario (funciona tanto para usuarios como admins)
     const getUserId = (user) => {
-        return user.role === 'admin' ? user.id : user.usuario_id;
+        // El token siempre tiene 'id', independientemente del rol
+        return user.id || user.usuario_id;
     };
     
     const userId = req.params.id || getUserId(req.user);
     const updateData = req.body;
+    
+    console.log('=== DEBUG updateUserProfile ===');
+    console.log('Usuario del token:', req.user);
+    console.log('ID extraído:', userId);
+    console.log('Datos a actualizar:', updateData);
     
     // Solo admin puede actualizar otros usuarios
     if (req.user.role !== 'admin' && req.params.id && parseInt(req.params.id) !== getUserId(req.user)) {
