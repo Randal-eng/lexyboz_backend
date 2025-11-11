@@ -926,9 +926,11 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
             tiempo_respuesta,
             ia: iaToSave
         });
+        
         // Usar la función del modelo para guardar el resultado de la IA
         let resultado;
         try {
+            console.log('[Controller] ANTES de llamar guardarResultadoIA');
             resultado = await reactivoModel.guardarResultadoIA({
                 usuario_id,
                 id_reactivo,
@@ -936,7 +938,12 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
                 tiempo_respuesta,
                 ia: iaToSave
             });
+            console.log('[Controller] RESULTADO de guardarResultadoIA:', resultado);
         } catch (err) {
+            console.error('[Controller] ERROR en guardarResultadoIA:', {
+                message: err.message,
+                stack: err.stack
+            });
             return res.status(500).json({
                 message: 'Error al guardar resultado en la base de datos',
                 error: err.message
@@ -945,8 +952,11 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
 
         // Marcar el kit como done después del guardado exitoso
         try {
+            console.log('[Controller] ANTES de actualizar kit a done, kit_id:', kit_id);
             await pool.query('UPDATE kits SET done = true WHERE kit_id = $1', [kit_id]);
+            console.log('[Controller] Kit marcado como done exitosamente');
         } catch (err) {
+            console.error('[Controller] ERROR al marcar kit como done:', err.message);
             // Si falla el update, igual se retorna el resultado guardado
             return res.status(201).json({
                 message: 'Resultado guardado, pero no se pudo actualizar el kit a done',
@@ -956,6 +966,7 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
             });
         }
 
+        console.log('[Controller] ÉXITO COMPLETO - Devolviendo respuesta final');
         return res.status(201).json({
             message: 'Resultado guardado exitosamente',
             resultado,
