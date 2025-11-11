@@ -218,17 +218,26 @@ const actualizarKit = async (req, res) => {
 const eliminarKit = async (req, res) => {
     try {
         const { id } = req.params;
+        console.log('Eliminando kit con ID:', id);
+        console.log('Usuario autenticado:', req.user);
+        
         const usuarioId = getUserId(req.user);
+        console.log('Usuario ID extraído:', usuarioId);
 
         if (!id || isNaN(id)) {
+            console.log('ID inválido:', id);
             return res.status(400).json({ 
                 message: 'ID de kit inválido' 
             });
         }
 
         // Verificar que el kit existe y el usuario tiene permisos
+        console.log('Buscando kit con ID:', parseInt(id));
         const kitExistente = await kitModel.obtenerKitPorId(parseInt(id));
+        console.log('Kit encontrado:', kitExistente);
+        
         if (!kitExistente) {
+            console.log('Kit no encontrado para ID:', id);
             return res.status(404).json({ 
                 message: 'Kit no encontrado' 
             });
@@ -250,6 +259,15 @@ const eliminarKit = async (req, res) => {
 
     } catch (error) {
         console.error('Error al eliminar kit:', error);
+        
+        // Si el error es sobre asignaciones activas, devolver 409 (Conflict) en lugar de 500
+        if (error.message && error.message.includes('asignaciones activas')) {
+            return res.status(409).json({ 
+                message: error.message,
+                codigo: 'KIT_HAS_ACTIVE_ASSIGNMENTS'
+            });
+        }
+        
         res.status(500).json({ 
             message: 'Error interno del servidor',
             error: error.message 
