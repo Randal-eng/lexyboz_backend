@@ -666,6 +666,54 @@ router.put('/auth/profile', verifyToken, upload.single('imagen'), authController
 
 /**
  * @swagger
+ * /api/auth/profile-json:
+ *   put:
+ *     summary: Actualizar perfil de usuario (JSON, sin imagen)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *                 example: "Jashe"
+ *               correo:
+ *                 type: string
+ *                 example: "jashe@gmail.com"
+ *               contrasenia:
+ *                 type: string
+ *                 example: "yared999"
+ *               fecha_de_nacimiento:
+ *                 type: string
+ *                 format: date
+ *                 example: "2002-09-15"
+ *               numero_telefono:
+ *                 type: string
+ *                 example: "3312345678"
+ *               sexo:
+ *                 type: string
+ *                 example: "Masculino"
+ *               domicilio:
+ *                 type: string
+ *                 example: "Calle Juárez 123"
+ *               codigo_postal:
+ *                 type: string
+ *                 example: "44100"
+ *     responses:
+ *       200:
+ *         description: Usuario actualizado exitosamente
+ *       403:
+ *         description: Sin permisos
+ */
+router.put('/auth/profile-json', verifyToken, authController.updateUserProfile);
+
+/**
+ * @swagger
  * /api/auth/users/{id}:
  *   put:
  *     summary: Actualizar usuario por ID (solo admin)

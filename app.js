@@ -189,7 +189,21 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
+// Middleware para manejar errores de parseo JSON
 app.use(express.json());
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('Error de JSON inválido:', err.message);
+    console.error('Body recibido:', req.body);
+    return res.status(400).json({
+      success: false,
+      message: 'JSON inválido en el cuerpo de la petición',
+      error: err.message,
+      ayuda: 'Verifica que el JSON esté correctamente formateado (sin comas finales, comillas bien cerradas, etc.)'
+    });
+  }
+  next();
+});
 
 // CORS robusto con múltiples orígenes permitidos (separados por comas en FRONTEND_ORIGIN)
 const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'http://localhost:3000')
