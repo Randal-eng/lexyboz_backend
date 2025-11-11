@@ -770,6 +770,8 @@ const reordenarReactivosEnEjercicio = async (req, res) => {
 const guardarResultadoLecturaPseudopalabras = async (req, res) => {
     try {
         console.log('Datos recibidos en endpoint guardarResultadoLecturaPseudopalabras:', req.body);
+        console.log('Archivos recibidos:', req.files);
+        console.log('Archivo individual (req.file):', req.file);
         // Limpiar nombres y valores de campos y normalizar id_reactivo
         const cleanBody = {};
         Object.keys(req.body).forEach(key => {
