@@ -1118,7 +1118,7 @@ const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
                 e.titulo as ejercicio_titulo,
                 e.descripcion as ejercicio_descripcion,
                 k.kit_id,
-                k.titulo as kit_titulo,
+                k.name as kit_titulo,
                 k.descripcion as kit_descripcion,
                 k.done as kit_completado
             FROM resultados_lectura_pseudopalabras r
