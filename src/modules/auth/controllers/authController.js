@@ -293,6 +293,8 @@ const updateUserProfile = async (req, res) => {
     console.log('Usuario del token:', req.user);
     console.log('ID extraído:', userId);
     console.log('Datos a actualizar:', updateData);
+    console.log('Archivo recibido (req.file):', req.file);
+    console.log('Tiene buffer?:', req.file ? !!req.file.buffer : false);
     
     // Solo admin puede actualizar otros usuarios
     if (req.user.role !== 'admin' && req.params.id && parseInt(req.params.id) !== getUserId(req.user)) {

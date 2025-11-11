@@ -399,14 +399,38 @@ const updateUser = async (userId, userData, file = null) => {
         
         // Si hay archivo de imagen, subir a Cloudinary
         if (file) {
-            const result = await cloudinary.uploader.upload(file.path, {
+            console.log('=== DEBUG: Subiendo imagen a Cloudinary ===');
+            console.log('File object:', file);
+            
+            // Cloudinary acepta buffer cuando usamos memoryStorage
+            const uploadOptions = {
                 folder: 'users',
                 public_id: `user_${userId}_${Date.now()}`,
                 transformation: [
                     { width: 300, height: 300, crop: 'fill' },
                     { quality: 'auto', fetch_format: 'auto' }
                 ]
-            });
+            };
+            
+            let result;
+            if (file.buffer) {
+                // Usar buffer cuando se usa memoryStorage
+                result = await new Promise((resolve, reject) => {
+                    cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result);
+                    }).end(file.buffer);
+                });
+            } else if (file.path) {
+                // Usar path cuando se usa diskStorage
+                result = await cloudinary.uploader.upload(file.path, uploadOptions);
+            } else {
+                throw new Error('El archivo no tiene buffer ni path');
+            }
+            
+            console.log('=== Cloudinary upload result ===');
+            console.log('URL:', result.secure_url);
+            console.log('Public ID:', result.public_id);
             
             updateDataUsuario.imagen_url = result.secure_url;
             updateDataUsuario.imagen_id = result.public_id;
