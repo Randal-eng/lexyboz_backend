@@ -184,12 +184,29 @@ const guardarResultadoLecturaPseudopalabrasDirecto = async (req, res) => {
             const trimmedKey = key.trim();
             cleanBody[trimmedKey] = typeof req.body[key] === 'string' ? req.body[key].trim() : req.body[key];
         });
-    let paciente_id = cleanBody.paciente_id ? Number(cleanBody.paciente_id) : null;
+        // Aceptar tanto paciente_id como usuario_id
+        let usuario_id = cleanBody.usuario_id ? Number(cleanBody.usuario_id) : 
+                        cleanBody.paciente_id ? Number(cleanBody.paciente_id) : null;
         let id_reactivo = cleanBody.id_reactivo ? Number(cleanBody.id_reactivo) : null;
         let voz_usuario_url = cleanBody.voz_usuario_url || null;
         let tiempo_respuesta = cleanBody.tiempo_respuesta ? Number(cleanBody.tiempo_respuesta) : null;
         let probabilidad = cleanBody.probabilidad ? Number(cleanBody.probabilidad) : 0;
         let es_correcto = probabilidad >= 80;
+
+        // Validar datos requeridos
+        if (!usuario_id) {
+            return res.status(400).json({ 
+                message: 'usuario_id o paciente_id es requerido',
+                received: cleanBody
+            });
+        }
+        
+        if (!id_reactivo) {
+            return res.status(400).json({ 
+                message: 'id_reactivo es requerido',
+                received: cleanBody
+            });
+        }
 
         // Insertar en la base de datos
         const pool = require('../../../db/connection');
@@ -199,7 +216,7 @@ const guardarResultadoLecturaPseudopalabrasDirecto = async (req, res) => {
             ) VALUES ($1, $2, $3, $4, $5, NOW())
             RETURNING *;
         `;
-    const values = [paciente_id, id_reactivo, voz_usuario_url, tiempo_respuesta, es_correcto];
+        const values = [usuario_id, id_reactivo, voz_usuario_url, tiempo_respuesta, es_correcto];
         const result = await pool.query(query, values);
         if (result.rows.length === 0) {
             return res.status(500).json({ message: 'No se pudo insertar el resultado.' });
