@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { obtenerReportePorKitPaciente, guardarResultadoLecturaPseudopalabras, upload } = require('../controllers/reactivoController');
+const { obtenerReportePorKitPaciente, guardarResultadoLecturaPseudopalabras, upload, obtenerResultadosPorPaciente, obtenerResultadosPorKit, obtenerResultadosPorEjercicio, obtenerResultadosPacienteKit } = require('../controllers/reactivoController');
 const reactivoController = require('../controllers/reactivoController');
 const { verifyToken } = require('../../auth/middleware/authMiddleware');
 const { crearReactivoImagenCorrectaController, guardarResultadoImagenCorrectaController } = require('../controllers/reactivoImagenCorrectaController');
@@ -963,7 +963,7 @@ router.get('/resultados-lectura-pseudopalabras', verifyToken, reactivoController
  *       200:
  *         description: Resultados obtenidos exitosamente
  */
-router.get('/resultados/paciente/:paciente_id', verifyToken, reactivoController.obtenerResultadosPorPaciente);
+router.get('/resultados/paciente/:paciente_id', verifyToken, obtenerResultadosPorPaciente);
 
 /**
  * @swagger
@@ -984,7 +984,7 @@ router.get('/resultados/paciente/:paciente_id', verifyToken, reactivoController.
  *       200:
  *         description: Resultados obtenidos exitosamente
  */
-router.get('/resultados/kit/:kit_id', verifyToken, reactivoController.obtenerResultadosPorKit);
+router.get('/resultados/kit/:kit_id', verifyToken, obtenerResultadosPorKit);
 
 /**
  * @swagger
@@ -1005,7 +1005,7 @@ router.get('/resultados/kit/:kit_id', verifyToken, reactivoController.obtenerRes
  *       200:
  *         description: Resultados obtenidos exitosamente
  */
-router.get('/resultados/ejercicio/:ejercicio_id', verifyToken, reactivoController.obtenerResultadosPorEjercicio);
+router.get('/resultados/ejercicio/:ejercicio_id', verifyToken, obtenerResultadosPorEjercicio);
 
 /**
  * @swagger
@@ -1032,6 +1032,6 @@ router.get('/resultados/ejercicio/:ejercicio_id', verifyToken, reactivoControlle
  *       200:
  *         description: Resultados obtenidos exitosamente
  */
-router.get('/resultados/paciente/:paciente_id/kit/:kit_id', verifyToken, reactivoController.obtenerResultadosPacienteKit);
+router.get('/resultados/paciente/:paciente_id/kit/:kit_id', verifyToken, obtenerResultadosPacienteKit);
 
 module.exports = router;
