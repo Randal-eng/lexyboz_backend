@@ -652,7 +652,7 @@ router.get('/auth/users', verifyToken, directoryController.getAllUsers);
  *               domicilio:
  *                 type: string
  *                 example: "Calle Falsa 123"
- *               imagen:
+ *               imagen_url:
  *                 type: string
  *                 format: binary
  *                 description: Imagen de perfil (opcional)
@@ -662,7 +662,7 @@ router.get('/auth/users', verifyToken, directoryController.getAllUsers);
  *       403:
  *         description: Sin permisos
  */
-router.put('/auth/profile', verifyToken, upload.single('imagen'), authController.updateUserProfile);
+router.put('/auth/profile', verifyToken, upload.single('imagen_url'), authController.updateUserProfile);
 
 /**
  * @swagger
@@ -748,6 +748,6 @@ router.put('/auth/profile-json', verifyToken, authController.updateUserProfile);
  *       403:
  *         description: Sin permisos
  */
-router.put('/auth/users/:id', verifyToken, upload.single('imagen'), authController.updateUserProfile);
+router.put('/auth/users/:id', verifyToken, upload.single('imagen_url'), authController.updateUserProfile);
 
 module.exports = router;
