@@ -930,6 +930,9 @@ router.post('/resultados-lectura-pseudopalabras-json', reactivoController.guarda
  *                 }
  *               ]
  *               total: 1
+ *               correctos: 1
+ *               incorrectos: 0
+ *               porcentaje_aciertos: 100
  *       400:
  *         description: Parámetros inválidos
  *       500:

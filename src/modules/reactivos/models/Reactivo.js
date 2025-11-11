@@ -520,7 +520,13 @@ const guardarResultadoIA = async ({ usuario_id, id_reactivo, voz_usuario_url, ti
             ia
         });
         
-        const es_correcto = ia && ia.probabilidad ? ia.probabilidad >= 80 : false;
+        const es_correcto = ia && ia.probabilidad ? ia.probabilidad >= 70 : false;
+        
+        console.log('[guardarResultadoIA] Cálculo es_correcto:', {
+            probabilidad: ia?.probabilidad,
+            es_correcto,
+            umbral: 70
+        });
         
         const query = `
             INSERT INTO resultados_lectura_pseudopalabras (

@@ -168,7 +168,13 @@ const guardarResultadoLecturaPseudopalabrasDirectoFull = async (req, res) => {
         if (!iaToSave || typeof iaToSave.probabilidad !== 'number' || isNaN(iaToSave.probabilidad)) {
             iaToSave = { clase: null, probabilidad: 0 };
         }
-        let es_correcto = iaToSave.probabilidad >= 80;
+        let es_correcto = iaToSave.probabilidad >= 70;
+
+        console.log('[Controller] Cálculo es_correcto:', {
+            probabilidad: iaToSave.probabilidad,
+            es_correcto,
+            umbral: 70
+        });
 
         // Insertar en la base de datos y devolver el registro
         const pool = require('../../../db/connection');
@@ -215,7 +221,13 @@ const guardarResultadoLecturaPseudopalabrasDirecto = async (req, res) => {
         let voz_usuario_url = cleanBody.voz_usuario_url || null;
         let tiempo_respuesta = cleanBody.tiempo_respuesta ? Number(cleanBody.tiempo_respuesta) : null;
         let probabilidad = cleanBody.probabilidad ? Number(cleanBody.probabilidad) : 0;
-        let es_correcto = probabilidad >= 80;
+        let es_correcto = probabilidad >= 70;
+
+        console.log('[Controller JSON] Cálculo es_correcto:', {
+            probabilidad,
+            es_correcto,
+            umbral: 70
+        });
 
         // Validar datos requeridos
         if (!usuario_id) {
@@ -1113,22 +1125,42 @@ const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
         const countQuery = `
             SELECT COUNT(*) as total
             FROM resultados_lectura_pseudopalabras r
+            LEFT JOIN ejercicio_reactivos er ON r.id_reactivo = er.reactivo_id
+            LEFT JOIN ejercicios e ON er.ejercicio_id = e.ejercicio_id
+            LEFT JOIN ejercicios_kits ek ON e.ejercicio_id = ek.ejercicio_id AND ek.activo = true
+            LEFT JOIN kits k ON ek.kit_id = k.kit_id
             ${whereClause}
         `;
 
+        // Query para contar correctos (es_correcto = true)
+        const correctosQuery = `
+            SELECT COUNT(*) as correctos
+            FROM resultados_lectura_pseudopalabras r
+            LEFT JOIN ejercicio_reactivos er ON r.id_reactivo = er.reactivo_id
+            LEFT JOIN ejercicios e ON er.ejercicio_id = e.ejercicio_id
+            LEFT JOIN ejercicios_kits ek ON e.ejercicio_id = ek.ejercicio_id AND ek.activo = true
+            LEFT JOIN kits k ON ek.kit_id = k.kit_id
+            ${whereClause}${whereClause ? ' AND' : 'WHERE'} r.es_correcto = true
+        `;
+
         const pool = require('../../../db/connection');
-        const [resultados, countResult] = await Promise.all([
+        const [resultados, countResult, correctosResult] = await Promise.all([
             pool.query(query, queryParams),
-            pool.query(countQuery, queryParams.slice(0, -2)) // Sin limit y offset para count
+            pool.query(countQuery, queryParams.slice(0, -2)), // Sin limit y offset para count
+            pool.query(correctosQuery, queryParams.slice(0, -2)) // Sin limit y offset para correctos
         ]);
 
         const total = parseInt(countResult.rows[0].total);
+        const correctos = parseInt(correctosResult.rows[0].correctos);
 
         res.status(200).json({
             success: true,
             message: 'Resultados obtenidos exitosamente',
             data: resultados.rows,
             total,
+            correctos,
+            incorrectos: total - correctos,
+            porcentaje_aciertos: total > 0 ? Math.round((correctos / total) * 100) : 0,
             limit: parseInt(limit),
             offset: parseInt(offset),
             hasMore: (parseInt(offset) + parseInt(limit)) < total
