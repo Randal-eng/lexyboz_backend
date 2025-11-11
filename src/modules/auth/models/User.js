@@ -377,10 +377,24 @@ const updateUser = async (userId, userData, file = null) => {
         
         let updateData = { ...userData };
         
-        // Filtrar campos que existen en la tabla Usuario
-        const allowedFields = ['nombre', 'correo', 'fecha_de_nacimiento', 'numero_telefono', 'sexo', 'domicilio', 'codigo_postal', 'imagen_url', 'imagen_id'];
-        updateData = Object.fromEntries(
-            Object.entries(updateData).filter(([key]) => allowedFields.includes(key))
+        // Separar campos por tabla
+        const allowedFieldsUsuario = ['nombre', 'correo', 'fecha_de_nacimiento', 'numero_telefono', 'sexo', 'domicilio', 'codigo_postal', 'imagen_url', 'imagen_id'];
+        const allowedFieldsDoctor = ['especialidad'];
+        const allowedFieldsPaciente = ['escolaridad'];
+        
+        // Filtrar campos de la tabla Usuario
+        const updateDataUsuario = Object.fromEntries(
+            Object.entries(updateData).filter(([key]) => allowedFieldsUsuario.includes(key))
+        );
+        
+        // Campos para Doctor
+        const updateDataDoctor = Object.fromEntries(
+            Object.entries(updateData).filter(([key]) => allowedFieldsDoctor.includes(key))
+        );
+        
+        // Campos para Paciente
+        const updateDataPaciente = Object.fromEntries(
+            Object.entries(updateData).filter(([key]) => allowedFieldsPaciente.includes(key))
         );
         
         // Si hay archivo de imagen, subir a Cloudinary
@@ -394,35 +408,84 @@ const updateUser = async (userId, userData, file = null) => {
                 ]
             });
             
-            updateData.imagen_url = result.secure_url;
-            updateData.imagen_id = result.public_id;
+            updateDataUsuario.imagen_url = result.secure_url;
+            updateDataUsuario.imagen_id = result.public_id;
         }
         
-        // Si no hay campos para actualizar
-        if (Object.keys(updateData).length === 0) {
-            throw new Error('No hay campos válidos para actualizar');
+        let updatedUser = null;
+        
+        // Actualizar tabla Usuario si hay campos
+        if (Object.keys(updateDataUsuario).length > 0) {
+            const fields = Object.keys(updateDataUsuario);
+            const values = Object.values(updateDataUsuario);
+            const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
+            
+            const query = `
+                UPDATE Usuario 
+                SET ${setClause}
+                WHERE usuario_id = $1
+                RETURNING usuario_id, nombre, correo, fecha_de_nacimiento, numero_telefono, sexo, tipo, imagen_url, imagen_id, domicilio, codigo_postal
+            `;
+            
+            const result = await client.query(query, [userId, ...values]);
+            
+            if (result.rows.length === 0) {
+                throw new Error('Usuario no encontrado');
+            }
+            
+            updatedUser = result.rows[0];
+        } else {
+            // Si no hay campos de Usuario, al menos obtener los datos actuales
+            const querySelect = 'SELECT usuario_id, nombre, correo, fecha_de_nacimiento, numero_telefono, sexo, tipo, imagen_url, imagen_id, domicilio, codigo_postal FROM Usuario WHERE usuario_id = $1';
+            const result = await client.query(querySelect, [userId]);
+            
+            if (result.rows.length === 0) {
+                throw new Error('Usuario no encontrado');
+            }
+            
+            updatedUser = result.rows[0];
         }
         
-        // Construir query dinámico
-        const fields = Object.keys(updateData);
-        const values = Object.values(updateData);
-        const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
+        // Actualizar tabla Doctor si es doctor y hay campos
+        if (updatedUser.tipo === 'Doctor' && Object.keys(updateDataDoctor).length > 0) {
+            const fields = Object.keys(updateDataDoctor);
+            const values = Object.values(updateDataDoctor);
+            const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
+            
+            const queryDoctor = `
+                UPDATE doctor 
+                SET ${setClause}
+                WHERE usuario_id = $1
+                RETURNING especialidad
+            `;
+            
+            const doctorResult = await client.query(queryDoctor, [userId, ...values]);
+            if (doctorResult.rows.length > 0) {
+                updatedUser = { ...updatedUser, ...doctorResult.rows[0] };
+            }
+        }
         
-        const query = `
-            UPDATE Usuario 
-            SET ${setClause}
-            WHERE usuario_id = $1
-            RETURNING usuario_id, nombre, correo, fecha_de_nacimiento, numero_telefono, sexo, tipo, imagen_url, imagen_id, domicilio, codigo_postal
-        `;
-        
-        const result = await client.query(query, [userId, ...values]);
-        
-        if (result.rows.length === 0) {
-            throw new Error('Usuario no encontrado');
+        // Actualizar tabla Paciente si es paciente y hay campos
+        if (updatedUser.tipo === 'Paciente' && Object.keys(updateDataPaciente).length > 0) {
+            const fields = Object.keys(updateDataPaciente);
+            const values = Object.values(updateDataPaciente);
+            const setClause = fields.map((field, index) => `${field} = $${index + 2}`).join(', ');
+            
+            const queryPaciente = `
+                UPDATE paciente 
+                SET ${setClause}
+                WHERE usuario_id = $1
+                RETURNING escolaridad
+            `;
+            
+            const pacienteResult = await client.query(queryPaciente, [userId, ...values]);
+            if (pacienteResult.rows.length > 0) {
+                updatedUser = { ...updatedUser, ...pacienteResult.rows[0] };
+            }
         }
         
         await client.query('COMMIT');
-        return result.rows[0];
+        return updatedUser;
         
     } catch (error) {
         await client.query('ROLLBACK');
