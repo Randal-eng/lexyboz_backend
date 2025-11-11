@@ -115,14 +115,33 @@ const guardarResultadoLecturaPseudopalabrasDirectoFull = async (req, res) => {
                 contentType: audioFile.mimetype || 'audio/wav'
             });
             try {
+                console.log('Enviando audio a IA...', {
+                    url: 'https://lexyvoz-ai.onrender.com/inferir/',
+                    filename: audioFile.originalname,
+                    size: audioFile.size,
+                    mimetype: audioFile.mimetype
+                });
+                
                 const iaRes = await axios.post('https://lexyvoz-ai.onrender.com/inferir/', form, {
                     headers: form.getHeaders(),
                     maxBodyLength: Infinity,
                     timeout: 30000
                 });
+                
+                console.log('Respuesta de IA recibida:', {
+                    status: iaRes.status,
+                    data: iaRes.data
+                });
+                
                 iaResponse = iaRes.data;
             } catch (err) {
-                iaResponse = { error: 'Error al procesar el audio con la IA' };
+                console.error('Error al enviar audio a la IA:', {
+                    message: err.message,
+                    code: err.code,
+                    response: err.response?.data,
+                    status: err.response?.status
+                });
+                iaResponse = { error: 'Error al procesar el audio con la IA', details: err.message };
             }
         }
 
@@ -836,15 +855,33 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
                 contentType: audioFile.mimetype || 'audio/wav'
             });
             try {
+                console.log('Enviando audio a IA...', {
+                    url: 'https://lexyvoz-ai.onrender.com/inferir/',
+                    filename: audioFile.originalname,
+                    size: audioFile.size,
+                    mimetype: audioFile.mimetype
+                });
+                
                 const iaRes = await axios.post('https://lexyvoz-ai.onrender.com/inferir/', form, {
                     headers: form.getHeaders(),
                     maxBodyLength: Infinity,
                     timeout: 30000 // 30 segundos
                 });
+                
+                console.log('Respuesta de IA recibida:', {
+                    status: iaRes.status,
+                    data: iaRes.data
+                });
+                
                 iaResponse = iaRes.data;
             } catch (err) {
-                console.error('Error al enviar audio a la IA:', err);
-                iaResponse = { error: 'Error al procesar el audio con la IA' };
+                console.error('Error al enviar audio a la IA:', {
+                    message: err.message,
+                    code: err.code,
+                    response: err.response?.data,
+                    status: err.response?.status
+                });
+                iaResponse = { error: 'Error al procesar el audio con la IA', details: err.message };
             }
         }
 
