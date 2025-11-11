@@ -260,6 +260,72 @@ const reactivoModel = require('../models/Reactivo');
 const reactivoPalabrasNormalesModel = require('../models/ReactivoLecturaPalabras');
 const ResultadoLecturaPseudopalabras = require('../models/ResultadoLecturaPseudopalabras');
 const cloudinary = require('../../../config/cloudinary/cloudinaryConfig');
+
+// =====================================================
+// FUNCIÓN HELPER PARA VERIFICAR PROGRESO DEL EJERCICIO
+// =====================================================
+const verificarYMarcarKitCompleto = async (kit_id, usuario_id, pool) => {
+    try {
+        console.log('[Helper] Verificando progreso del ejercicio para kit:', kit_id);
+        
+        // 1. Obtener el ejercicio_id del kit_id
+        const ejercicioEnKitQuery = `
+            SELECT ek.ejercicio_id 
+            FROM ejercicios_kits ek 
+            WHERE ek.kit_id = $1 AND ek.activo = true
+            LIMIT 1
+        `;
+        const ejercicioResult = await pool.query(ejercicioEnKitQuery, [kit_id]);
+        
+        if (ejercicioResult.rows.length === 0) {
+            console.log('[Helper] No se encontró ejercicio activo para el kit');
+            return false;
+        }
+        
+        const ejercicio_id = ejercicioResult.rows[0].ejercicio_id;
+        console.log('[Helper] Ejercicio encontrado:', ejercicio_id);
+        
+        // 2. Contar total de reactivos en el ejercicio
+        const totalReactivosQuery = `
+            SELECT COUNT(*) as total
+            FROM ejercicio_reactivos er
+            WHERE er.ejercicio_id = $1
+        `;
+        const totalResult = await pool.query(totalReactivosQuery, [ejercicio_id]);
+        const totalReactivos = parseInt(totalResult.rows[0].total);
+        
+        // 3. Contar reactivos completados por el usuario en este ejercicio
+        const completadosQuery = `
+            SELECT COUNT(DISTINCT r.id_reactivo) as completados
+            FROM resultados_lectura_pseudopalabras r
+            INNER JOIN ejercicio_reactivos er ON r.id_reactivo = er.reactivo_id
+            WHERE r.usuario_id = $1 AND er.ejercicio_id = $2
+        `;
+        const completadosResult = await pool.query(completadosQuery, [usuario_id, ejercicio_id]);
+        const reactivosCompletados = parseInt(completadosResult.rows[0].completados);
+        
+        console.log('[Helper] Progreso:', {
+            ejercicio_id,
+            totalReactivos,
+            reactivosCompletados,
+            porcentaje: Math.round((reactivosCompletados / totalReactivos) * 100)
+        });
+        
+        // 4. Solo marcar kit como done si completó TODOS los reactivos
+        if (reactivosCompletados >= totalReactivos) {
+            console.log('[Helper] ¡Ejercicio completado! Marcando kit como done');
+            await pool.query('UPDATE kits SET done = true WHERE kit_id = $1', [kit_id]);
+            console.log('[Helper] Kit marcado como done exitosamente');
+            return true;
+        } else {
+            console.log(`[Helper] Ejercicio aún no completado: ${reactivosCompletados}/${totalReactivos}`);
+            return false;
+        }
+    } catch (err) {
+        console.error('[Helper] ERROR al verificar progreso del ejercicio:', err.message);
+        return false;
+    }
+};
 const multer = require('multer');
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -950,28 +1016,16 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
             });
         }
 
-        // Marcar el kit como done después del guardado exitoso
-        try {
-            console.log('[Controller] ANTES de actualizar kit a done, kit_id:', kit_id);
-            await pool.query('UPDATE kits SET done = true WHERE kit_id = $1', [kit_id]);
-            console.log('[Controller] Kit marcado como done exitosamente');
-        } catch (err) {
-            console.error('[Controller] ERROR al marcar kit como done:', err.message);
-            // Si falla el update, igual se retorna el resultado guardado
-            return res.status(201).json({
-                message: 'Resultado guardado, pero no se pudo actualizar el kit a done',
-                resultado,
-                ia: iaResponse,
-                error: err.message
-            });
-        }
+        // Verificar si se han completado todos los reactivos del ejercicio en este kit
+        const kitCompleto = await verificarYMarcarKitCompleto(kit_id, usuario_id, pool);
 
         console.log('[Controller] ÉXITO COMPLETO - Devolviendo respuesta final');
         return res.status(201).json({
             message: 'Resultado guardado exitosamente',
             resultado,
             ia: iaResponse,
-            paciente_id: usuario_id
+            paciente_id: usuario_id,
+            kit_completo: kitCompleto
         });
     } catch (error) {
         console.error('Error al obtener reporte por kit y paciente:', error);
