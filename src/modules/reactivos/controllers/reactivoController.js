@@ -1122,7 +1122,7 @@ const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
                 k.descripcion as kit_descripcion,
                 k.done as kit_completado
             FROM resultados_lectura_pseudopalabras r
-            LEFT JOIN reactivo_lectura_pseudopalabras rp ON r.id_reactivo = rp.reactivo_id
+            LEFT JOIN reactivo_lectura_pseudopalabras rp ON r.id_reactivo = rp.id_reactivo
             LEFT JOIN Usuario u ON r.usuario_id = u.usuario_id
             LEFT JOIN ejercicio_reactivos er ON r.id_reactivo = er.reactivo_id
             LEFT JOIN ejercicios e ON er.ejercicio_id = e.ejercicio_id
