@@ -101,13 +101,16 @@ const guardarResultadoLecturaPseudopalabrasDirectoFull = async (req, res) => {
 
         // Enviar audio a la IA si existe
         let iaResponse = null;
-        if (req.file) {
+        // Buscar el archivo de audio en req.files
+        const audioFile = req.files ? req.files.find(f => f.fieldname === 'audio') : null;
+        
+        if (audioFile) {
             const FormData = require('form-data');
             const axios = require('axios');
             const form = new FormData();
-            form.append('file', req.file.buffer, {
-                filename: req.file.originalname || 'audio.wav',
-                contentType: req.file.mimetype || 'audio/wav'
+            form.append('file', audioFile.buffer, {
+                filename: audioFile.originalname || 'audio.wav',
+                contentType: audioFile.mimetype || 'audio/wav'
             });
             try {
                 const iaRes = await axios.post('https://lexyvoz-ai.onrender.com/inferir/', form, {
@@ -123,7 +126,7 @@ const guardarResultadoLecturaPseudopalabrasDirectoFull = async (req, res) => {
 
         // Subir audio a Cloudinary si existe
         let voz_usuario_url = null;
-        if (req.file) {
+        if (audioFile) {
             voz_usuario_url = await new Promise((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
                     { resource_type: 'video', folder: 'resultados_voz_usuarios' },
@@ -132,7 +135,7 @@ const guardarResultadoLecturaPseudopalabrasDirectoFull = async (req, res) => {
                         resolve(result.secure_url);
                     }
                 );
-                stream.end(req.file.buffer);
+                stream.end(audioFile.buffer);
             });
         }
 
@@ -238,7 +241,18 @@ const ResultadoLecturaPseudopalabras = require('../models/ResultadoLecturaPseudo
 const cloudinary = require('../../../config/cloudinary/cloudinaryConfig');
 const multer = require('multer');
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({ 
+    storage,
+    fileFilter: (req, file, cb) => {
+        // Aceptar cualquier archivo
+        cb(null, true);
+    },
+    limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB límite
+        fields: 20, // Permitir hasta 20 campos
+        files: 5    // Permitir hasta 5 archivos
+    }
+});
 
 // =====================================================
 // CONTROLADORES DE REACTIVOS
@@ -781,13 +795,16 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
         }
 
         let iaResponse = null;
-        if (req.file) {
+        // Buscar el archivo de audio en req.files
+        const audioFile = req.files ? req.files.find(f => f.fieldname === 'audio') : null;
+        
+        if (audioFile) {
             const FormData = require('form-data');
             const axios = require('axios');
             const form = new FormData();
-            form.append('file', req.file.buffer, {
-                filename: req.file.originalname || 'audio.wav',
-                contentType: req.file.mimetype || 'audio/wav'
+            form.append('file', audioFile.buffer, {
+                filename: audioFile.originalname || 'audio.wav',
+                contentType: audioFile.mimetype || 'audio/wav'
             });
             try {
                 const iaRes = await axios.post('https://lexyvoz-ai.onrender.com/inferir/', form, {
@@ -811,7 +828,7 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
         }
 
         let voz_usuario_url = null;
-        if (req.file) {
+        if (audioFile) {
             voz_usuario_url = await new Promise((resolve, reject) => {
                 const stream = cloudinary.uploader.upload_stream(
                     { resource_type: 'video', folder: 'resultados_voz_usuarios' },
@@ -820,7 +837,7 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
                         resolve(result.secure_url);
                     }
                 );
-                stream.end(req.file.buffer);
+                stream.end(audioFile.buffer);
             });
         }
 
