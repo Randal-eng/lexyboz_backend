@@ -1041,7 +1041,7 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
  */
 const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
     try {
-        const { paciente_id, id_reactivo, limit = 20, offset = 0 } = req.query;
+        const { paciente_id, id_reactivo, kit_id, ejercicio_id, limit = 20, offset = 0 } = req.query;
 
         // Construir query dinámico
         let whereConditions = [];
@@ -1060,6 +1060,18 @@ const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
             paramCounter++;
         }
 
+        if (kit_id) {
+            whereConditions.push(`k.kit_id = $${paramCounter}`);
+            queryParams.push(parseInt(kit_id));
+            paramCounter++;
+        }
+
+        if (ejercicio_id) {
+            whereConditions.push(`e.ejercicio_id = $${paramCounter}`);
+            queryParams.push(parseInt(ejercicio_id));
+            paramCounter++;
+        }
+
         const whereClause = whereConditions.length > 0 
             ? `WHERE ${whereConditions.join(' AND ')}`
             : '';
@@ -1075,10 +1087,21 @@ const obtenerResultadosLecturaPseudopalabras = async (req, res) => {
                 r.fecha_realizacion,
                 r.created_at,
                 rp.pseudopalabra,
-                u.nombre as usuario_nombre
+                u.nombre as usuario_nombre,
+                e.ejercicio_id,
+                e.titulo as ejercicio_titulo,
+                e.descripcion as ejercicio_descripcion,
+                k.kit_id,
+                k.titulo as kit_titulo,
+                k.descripcion as kit_descripcion,
+                k.done as kit_completado
             FROM resultados_lectura_pseudopalabras r
             LEFT JOIN reactivo_lectura_pseudopalabras rp ON r.id_reactivo = rp.reactivo_id
             LEFT JOIN Usuario u ON r.usuario_id = u.usuario_id
+            LEFT JOIN ejercicio_reactivos er ON r.id_reactivo = er.reactivo_id
+            LEFT JOIN ejercicios e ON er.ejercicio_id = e.ejercicio_id
+            LEFT JOIN ejercicios_kits ek ON e.ejercicio_id = ek.ejercicio_id AND ek.activo = true
+            LEFT JOIN kits k ON ek.kit_id = k.kit_id
             ${whereClause}
             ORDER BY r.fecha_realizacion DESC
             LIMIT $${paramCounter} OFFSET $${paramCounter + 1}

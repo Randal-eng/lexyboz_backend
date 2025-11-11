@@ -882,6 +882,16 @@ router.post('/resultados-lectura-pseudopalabras-json', reactivoController.guarda
  *           type: integer
  *         description: ID del reactivo (opcional)
  *       - in: query
+ *         name: kit_id
+ *         schema:
+ *           type: integer
+ *         description: ID del kit (opcional)
+ *       - in: query
+ *         name: ejercicio_id
+ *         schema:
+ *           type: integer
+ *         description: ID del ejercicio (opcional)
+ *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
@@ -909,7 +919,14 @@ router.post('/resultados-lectura-pseudopalabras-json', reactivoController.guarda
  *                   voz_usuario_url: "https://audio.com/file.mp3",
  *                   tiempo_respuesta: 3200,
  *                   es_correcto: true,
- *                   fecha_realizacion: "2025-11-10T10:30:00Z"
+ *                   fecha_realizacion: "2025-11-10T10:30:00Z",
+ *                   pseudopalabra: "blavo",
+ *                   usuario_nombre: "Juan Pérez",
+ *                   ejercicio_id: 3,
+ *                   ejercicio_titulo: "Lectura Básica",
+ *                   kit_id: 6,
+ *                   kit_titulo: "Kit Nivel 1",
+ *                   kit_completado: true
  *                 }
  *               ]
  *               total: 1
