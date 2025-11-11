@@ -39,7 +39,8 @@ const userUpdateSchema = Joi.object({
     // Campos que se ignoran pero no causan error
     escolaridad: Joi.any().optional(),
     especialidad: Joi.any().optional(),
-    tipo: Joi.any().optional()
+    tipo: Joi.any().optional(),
+    imagen: Joi.any().optional() // Campo del archivo que viene en req.file, se ignora en validación
 });
 
 /**
