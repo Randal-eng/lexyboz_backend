@@ -101,8 +101,10 @@ const guardarResultadoLecturaPseudopalabrasDirectoFull = async (req, res) => {
 
         // Enviar audio a la IA si existe
         let iaResponse = null;
-        // Buscar el archivo de audio en req.files
-        const audioFile = req.files ? req.files.find(f => f.fieldname === 'audio') : null;
+        // Buscar el archivo de audio en req.files (puede ser 'audio' o 'voz_usuario')
+        const audioFile = req.files ? req.files.find(f => 
+            f.fieldname === 'audio' || f.fieldname === 'voz_usuario'
+        ) : null;
         
         if (audioFile) {
             const FormData = require('form-data');
@@ -769,9 +771,25 @@ const reordenarReactivosEnEjercicio = async (req, res) => {
  */
 const guardarResultadoLecturaPseudopalabras = async (req, res) => {
     try {
-        console.log('Datos recibidos en endpoint guardarResultadoLecturaPseudopalabras:', req.body);
-        console.log('Archivos recibidos:', req.files);
-        console.log('Archivo individual (req.file):', req.file);
+        console.log('=== DEBUGGING ENDPOINT ===');
+        console.log('req.body:', req.body);
+        console.log('req.files:', req.files);
+        console.log('req.file:', req.file);
+        console.log('Content-Type:', req.headers['content-type']);
+        console.log('Multer detectó archivos:', req.files?.length || 0);
+        
+        if (req.files && req.files.length > 0) {
+            req.files.forEach((file, index) => {
+                console.log(`Archivo ${index}:`, {
+                    fieldname: file.fieldname,
+                    originalname: file.originalname,
+                    mimetype: file.mimetype,
+                    size: file.size
+                });
+            });
+        }
+        console.log('========================');
+        
         // Limpiar nombres y valores de campos y normalizar id_reactivo
         const cleanBody = {};
         Object.keys(req.body).forEach(key => {
@@ -797,8 +815,17 @@ const guardarResultadoLecturaPseudopalabras = async (req, res) => {
         }
 
         let iaResponse = null;
-        // Buscar el archivo de audio en req.files
-        const audioFile = req.files ? req.files.find(f => f.fieldname === 'audio') : null;
+        // Buscar el archivo de audio en req.files (puede ser 'audio' o 'voz_usuario')
+        const audioFile = req.files ? req.files.find(f => 
+            f.fieldname === 'audio' || f.fieldname === 'voz_usuario'
+        ) : null;
+        
+        console.log('Audio file encontrado:', audioFile ? {
+            fieldname: audioFile.fieldname,
+            originalname: audioFile.originalname,
+            size: audioFile.size,
+            mimetype: audioFile.mimetype
+        } : 'No encontrado');
         
         if (audioFile) {
             const FormData = require('form-data');
