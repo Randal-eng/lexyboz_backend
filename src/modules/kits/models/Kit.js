@@ -465,10 +465,10 @@ const agregarEjerciciosAKit = async (kitId, ejerciciosData) => {
         // Insertar ejercicios en el kit
         const insertPromises = value.ejercicios.map(ejercicio => {
             return client.query(`
-                INSERT INTO ejercicios_kits (kit_id, ejercicio_id, orden_en_kit)
-                VALUES ($1, $2, $3)
+                INSERT INTO ejercicios_kits (kit_id, ejercicio_id, orden_en_kit, activo)
+                VALUES ($1, $2, $3, true)
                 ON CONFLICT (kit_id, ejercicio_id) 
-                DO UPDATE SET orden_en_kit = $3, activo = true, fecha_actualizacion = NOW()
+                DO UPDATE SET orden_en_kit = $3, activo = true
                 RETURNING *
             `, [kitId, ejercicio.ejercicio_id, ejercicio.orden]);
         });
@@ -504,7 +504,7 @@ const obtenerEjerciciosDeKit = async (kitId, filtros = {}) => {
                 ek.ejercicio_id,
                 ek.orden_en_kit,
                 ek.activo as activo_en_kit,
-                ek.fecha_creacion as fecha_agregado,
+                ek.created_at as fecha_agregado,
                 e.titulo,
                 e.descripcion,
                 e.tipo_ejercicio,
@@ -516,7 +516,7 @@ const obtenerEjerciciosDeKit = async (kitId, filtros = {}) => {
             INNER JOIN ejercicios e ON ek.ejercicio_id = e.ejercicio_id
             INNER JOIN usuario u ON e.creado_por = u.usuario_id
             WHERE ek.kit_id = $1 ${activo ? 'AND ek.activo = true' : ''}
-            ORDER BY ek.orden_en_kit ASC, ek.fecha_creacion ASC
+            ORDER BY ek.orden_en_kit ASC, ek.created_at ASC
             LIMIT $2 OFFSET $3
         `;
 
@@ -568,7 +568,7 @@ const removerEjerciciosDeKit = async (kitId, ejercicioIds) => {
         // Marcar ejercicios como inactivos en lugar de eliminarlos
         const result = await client.query(`
             UPDATE ejercicios_kits 
-            SET activo = false, fecha_actualizacion = NOW()
+            SET activo = false
             WHERE kit_id = $1 AND ejercicio_id = ANY($2)
             RETURNING *
         `, [kitId, ejercicioIds]);
